@@ -38,3 +38,4 @@ Health Potion:
   type: minor
   heal: 5
   cost: 5
+  ascii_art: ascii_art/potion.txt
