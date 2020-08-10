@@ -77,15 +77,25 @@ def next_action():
     if answer in valid:
         return(answer)
 
-def shop():
+def shop(hero):
+    clear()
+    print('''
+                                      __  ._._._.
+______ ___.__.   _____ _____ ________/  |_| | | |
+\____ <   |  |  /     \\__  \\_  __ \   __\ | | |
+|  |_> >___  | |  Y Y  \/ __ \|  | \/|  |  \|\|\|
+|   __// ____| |__|_|  (____  /__|   |__|  ______
+|__|   \/            \/     \/             \/\/\/
+    ''')
     play_sound('store.mp3')
     print("Welcome to the shop! here are the items!")
     store = open("store.yaml")
     store_yaml =  yaml.safe_load(store)
 
     for item in store_yaml:
-#        if 'class' in store_yaml[item] and store_yaml[item]['class'] == hero['class']:
-#            print ('YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        if 'class' in store_yaml[item]:
+            if hero['class'] != store_yaml[item]['class']:
+                continue
         if 'ascii_art' in store_yaml[item]:
             with open(store_yaml[item]['ascii_art'], 'r') as file:
                 art = file.read()
@@ -202,7 +212,7 @@ while not hero:
 while True:
     next = next_action()
     if next == "1":
-        shop()
+        shop(hero)
     if next == "2":
         fight_monster()
     if next == "3":
