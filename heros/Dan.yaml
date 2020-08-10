@@ -1,0 +1,12 @@
+Destroyer Dan:
+  age: 25
+  weapon:
+    name: Simple Sword
+    attack: 10
+  height: '6 foot 6 inches'
+  hp: 15
+  maxhp: 15
+  defense: 5
+  class: 'Warrior'
+  lives_left: 3
+  gold: 50

@@ -1,0 +1,38 @@
+Excalibur:
+  name: Excalibur
+  attack: 100
+  cost: 200
+  class: Warrior
+  ascii_art: ascii_art/sword.txt
+Titanium Sword:
+  name: Titanium Sword
+  attack: 30
+  cost: 20
+  class: Warrior
+  ascii_art: ascii_art/sword.txt
+Phoenix Wand:
+  name: Phoenix Wand
+  attack: 100
+  cost: 200
+  class: Magician
+  ascii_art: ascii_art/wand.txt
+Staff of Warding:
+  name: Staff of Warding
+  attack: 30
+  cost: 20
+  class: Magician
+Lightsaber:
+  name: Lightsaber
+  attack: 100
+  cost: 200
+  class: Ninja
+Nunchucks:
+  name: Nunchucks
+  attack: 30
+  cost: 20
+  class: Ninja
+  ascii_art: ascii_art/nunchucks.txt
+Health Potion:
+  type: minor
+  heal: 5
+  cost: 5

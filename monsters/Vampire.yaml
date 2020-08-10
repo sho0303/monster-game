@@ -1,0 +1,5 @@
+Vampire:
+  hp: 1000
+  attack: 10
+  defense: 20
+  gold: 2
