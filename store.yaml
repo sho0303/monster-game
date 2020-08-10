@@ -21,11 +21,13 @@ Staff of Warding:
   attack: 30
   cost: 20
   class: Magician
+  ascii_art: ascii_art/staff.txt
 Lightsaber:
   name: Lightsaber
   attack: 100
   cost: 200
   class: Ninja
+  ascii_art: ascii_art/lightsaber.txt
 Nunchucks:
   name: Nunchucks
   attack: 30
