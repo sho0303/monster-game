@@ -58,6 +58,8 @@ def damage_calculator(attack, defense):
         damage = 1
     return damage
 
+def use_item(hero):
+    print(hero)
 
 def hero_status(hero):
     print("\nHero stats:")
@@ -72,8 +74,8 @@ def monster_status(monster):
     print("\n")
 
 def next_action():
-    answer = input("what would you like to do next 1. shop 2. fight a monster? 3. See your heros status? ")
-    valid = ['1','2', '3']
+    answer = input("what would you like to do next? 1. shop 2. fight a monster 3. Hero status 4. Use item ")
+    valid = ['1','2', '3', '4']
     if answer in valid:
         return(answer)
 
@@ -217,5 +219,7 @@ while True:
         fight_monster()
     if next == "3":
         hero_status(hero)
+    if next == "4":
+        use_item(hero)
     sleep(5)
     clear()
