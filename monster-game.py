@@ -77,6 +77,8 @@ def damage_calculator(attack, defense):
         damage = 1
     return damage
 
+def use_item(hero):
+    print(hero)
 
 def use_item():
     print("TO DO")
