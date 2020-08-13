@@ -1,6 +1,7 @@
 Zombie Ninja:
   name: Zombie Ninja
   hp: 15
+  maxhp: 15
   attack: 2
   defense: 2
   gold: 20

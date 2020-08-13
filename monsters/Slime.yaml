@@ -1,6 +1,7 @@
 Bright Orange Slime:
   name: Bright Orange Slime
   hp: 3
+  maxhp: 3
   attack: 4
   defense: 18
   gold: 10

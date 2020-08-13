@@ -1,6 +1,7 @@
 Caveman:
   name: Caveman
   hp: 17
+  maxhp: 17
   attack: 3
   defense: 1
   gold: 20

@@ -35,7 +35,7 @@ Nunchucks:
   class: Ninja
   ascii_art: ascii_art/nunchucks.txt
 Health Potion:
+  name: Health Potion
   type: minor
-  heal: 5
-  cost: 5
+  cost: 20
   ascii_art: ascii_art/potion.txt

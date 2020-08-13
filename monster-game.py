@@ -78,12 +78,27 @@ def damage_calculator(attack, defense):
     return damage
 
 def use_item(hero):
-    print(hero)
+    if not 'item' in hero:
+        print(' You do not have an item yet')
+        return
+    if hero['item']['name'] == 'Health Potion':
+        if hero['hp'] == hero['maxhp']:
+            answer = input('you have max life the potion will not to anything. Are you sure you wand to do this?')
+            if answer == 'yes':
+                print("OK!")
+            if answer == 'no':
+                return
+            else:
+                print('that is not a valid answer')
+                return
+        hero['hp'] = hero['maxhp']
+        print(f' You used the {hero["item"]["name"]}. You now have {hero["hp"]} hp!')
+        hero['item'] = None
 
-def use_item():
-    print("TO DO")
+
+
+
     sleep(2)
-
 
 def hero_status(hero):
     print("\nHero stats:")
@@ -135,11 +150,17 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
         print("\n")
 
 
-    answer = input(f"Gold: {hero['gold'] }, What would you like in the store? ")
+    answer = input(f" Your gold is {hero['gold'] }, What would you like in the pymart ? ")
     if answer in store_yaml:
         print(f"you picked {answer} it cost {store_yaml[answer]['cost']}" )
-
-        if store_yaml[answer]['cost'] > hero['gold']:
+        hero['item'] = []
+        if answer == 'Health Potion':
+            hero['item'] = store_yaml[answer]
+            print(f" You got an item it is {hero['item']['name']}")
+            hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
+            print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left. The Health Potion increases life. ")
+            sleep(2)
+        elif store_yaml[answer]['cost'] > hero['gold']:
             print("you dont have enough money.")
         elif store_yaml[answer]['class'] != hero['class']:
             print(f"You are not the class {store_yaml[answer]['class']}")
@@ -174,6 +195,7 @@ def fight_monster():
             play_sound('tada.mp3')
             print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
             hero['gold'] += monster['gold']
+            monster['hp'] = monster['maxhp']
         if result == 'lost':
             print(f'You lost to {monster["name"]} and lost all of your gold!')
             hero['gold'] = 0
@@ -246,6 +268,6 @@ while True:
     if next == "2":
         fight_monster()
     if next == "3":
-        use_item()
+        use_item(hero)
     sleep(1)
     clear()

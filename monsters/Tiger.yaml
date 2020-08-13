@@ -1,6 +1,7 @@
 Sabertooth Tiger:
   name: Sabertooth Tiger
   hp: 10
+  maxhp: 10
   attack: 5
   defense: 5
   gold: 20
