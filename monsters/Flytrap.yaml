@@ -1,5 +1,6 @@
 Mutant Venus Flytrap:
+  name: Mutant Venus Flytrap
   hp: 23
   attack: 8
   defense: 1
-  gold: 2
+  gold: 20

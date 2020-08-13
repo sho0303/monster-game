@@ -17,6 +17,23 @@ def clear():
    else:
       _= system('clear')
 
+def print_fight_data(hero, monster):
+    print_keys = ['name', 'defense', 'hp', 'attack']
+    max_length = 0
+    for key in print_keys:
+        string = f"  {key}: {hero[key]}"
+        if len(string) > max_length:
+            max_length = len(string)
+
+    for key in print_keys:
+        string = f"  {key}: {hero[key]}"
+        buffer = 5
+        buffer = buffer + (max_length - len(string))
+        string += (" " * buffer)
+        string += f"{key}: {monster[key]}"
+        print(string)
+
+
 def yaml_file_to_dictionary(file, dict):
     fh = open(file)
     fh_yaml = yaml.safe_load(fh)
@@ -34,15 +51,17 @@ ___________.___  ________  ___ ______________   _______    _______    ._._._.
  \___  /   |___|\______  /\___|_  / |____|       \_____  /\____|__  /  ______
      \/                \/       \/                     \/         \/   \/\/\/
     ''')
+    sleep(3)
     while hero['hp'] > 0 and monster['hp'] > 0:
+        clear()
+        print_fight_data(hero, monster)
+        print("\n")
         damage = damage_calculator(hero['weapon']['attack'], monster['defense'])
-        print(f"You hit for {damage} damage!!!")
+        print(f"You hit for {damage} damage!!!\n")
         monster['hp'] = monster['hp'] - damage
-        print(f'The monster now has {monster["hp"]}')
         damage = damage_calculator(monster['attack'] , hero['defense'])
-        print(f" {monster['name']} hit for {damage} damage!!!")
+        print(f"{monster['name']} hit for {damage} damage!!!")
         hero['hp'] = hero['hp'] - damage
-        print(f'The hero now has {hero["hp"]}')
         sleep(3)
     if hero['hp'] < 1:
         return 'lost'
@@ -59,6 +78,11 @@ def damage_calculator(attack, defense):
     return damage
 
 
+def use_item():
+    print("TO DO")
+    sleep(2)
+
+
 def hero_status(hero):
     print("\nHero stats:")
     for key, value in hero.items():
@@ -72,7 +96,9 @@ def monster_status(monster):
     print("\n")
 
 def next_action():
-    answer = input("what would you like to do next 1. shop 2. fight a monster? 3. See your heros status? ")
+    clear()
+    hero_status(hero)
+    answer = input("\nWhat would you like to do next (1) shop (2) fight a monster? (3) Use an item? ")
     valid = ['1','2', '3']
     if answer in valid:
         return(answer)
@@ -107,7 +133,7 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
         print("\n")
 
 
-    answer = input("what would you like in the store? ")
+    answer = input(f"Gold: {hero['gold'] }, What would you like in the store? ")
     if answer in store_yaml:
         print(f"you picked {answer} it cost {store_yaml[answer]['cost']}" )
 
@@ -119,32 +145,32 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
             hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
             print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left ")
             hero['weapon'] = store_yaml[answer]
+            hero['attack'] = hero['weapon']['attack']
             print(f"{hero['name']} equiped!!\n\t{hero['weapon']}\n")
-            hero_status(hero)
+            sleep(3)
 
 def fight_monster():
     key, value = random.choice(list(monsters.items()))
     monster = value
-    monster['name'] = key
-    print(f"A {monster['name']} has appeared!")
+    key
+    print(f"A {key} has appeared!")
     monster_status(monster)
-    options = ['fight', 'run']
+    options = ['1', '2']
     valid = None
     while not valid:
-        answer = input("Do you (fight) it or (run)? ")
+        answer = input("Do you (1) fight or (2) run? ")
         if answer in options:
-            print(f"Okay lets {answer}")
             valid = True
         else:
             continue
-    if answer == 'run':
+    if answer == '2':
         print("You've run away!")
-    elif answer == 'fight':
-        sleep(3)
+        sleep(2)
+    elif answer == '1':
         result = fight_calculator(hero, monster)
         if result == 'won':
             play_sound('tada.mp3')
-            print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']}.")
+            print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
             hero['gold'] += monster['gold']
         if result == 'lost':
             print(f'You lost to {monster["name"]} and lost all of your gold!')
@@ -208,6 +234,8 @@ while not hero:
         print(choices[answer], "\n")
         hero = heros[choices[answer]]
         hero['name'] = choices[answer]
+        hero['attack'] = hero['weapon']['attack']
+        sleep(2)
 
 while True:
     next = next_action()
@@ -216,6 +244,6 @@ while True:
     if next == "2":
         fight_monster()
     if next == "3":
-        hero_status(hero)
-    sleep(5)
+        use_item()
+    sleep(1)
     clear()
