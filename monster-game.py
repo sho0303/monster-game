@@ -56,7 +56,8 @@ ___________.___  ________  ___ ______________   _______    _______    ._._._.
         clear()
         print_fight_data(hero, monster)
         print("\n")
-        damage = damage_calculator(hero['weapon']['attack'], monster['defense'])
+        damage = damage_calculator(hero['attack'], monster['defense'])
+        play_sound('punch.mp3')
         print(f"You hit for {damage} damage!!!\n")
         monster['hp'] = monster['hp'] - damage
         damage = damage_calculator(monster['attack'] , hero['defense'])
@@ -70,6 +71,11 @@ ___________.___  ________  ___ ______________   _______    _______    ._._._.
 
 
 def damage_calculator(attack, defense):
+    i = 1
+    while i < 4:
+        print("." * i)
+        i = i + 1
+        sleep(0.1)
     strike = random.randint(1, attack)
     strike = strike * 2
     damage = strike - defense
@@ -167,7 +173,7 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
         else:
             hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
             print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left ")
-            hero['weapon'] = store_yaml[answer]
+            hero['weapon'] = store_yaml[answer]['name']
             hero['attack'] = hero['weapon']['attack']
             print(f"{hero['name']} equiped!!\n\t{hero['weapon']}\n")
             sleep(3)
@@ -258,7 +264,6 @@ while not hero:
         print(choices[answer], "\n")
         hero = heros[choices[answer]]
         hero['name'] = choices[answer]
-        hero['attack'] = hero['weapon']['attack']
         sleep(2)
 
 while True:

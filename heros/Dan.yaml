@@ -1,8 +1,7 @@
 Destroyer Dan:
   age: 25
-  weapon:
-    name: Simple Sword
-    attack: 10
+  weapon: Simple Sword
+  attack: 10
   height: '6 foot 6 inches'
   hp: 15
   maxhp: 15
