@@ -5,6 +5,8 @@ import sys
 from os import system, name
 from time import sleep
 from pygame import mixer
+import colorama
+from colorama import Fore, Style
 
 def play_sound(name):
     mixer.init()
@@ -58,10 +60,10 @@ ___________.___  ________  ___ ______________   _______    _______    ._._._.
         print("\n")
         damage = damage_calculator(hero['attack'], monster['defense'])
         play_sound('punch.mp3')
-        print(f"You hit for {damage} damage!!!\n")
+        print(f"You hit for {Fore.RED}{damage}{Style.RESET_ALL} damage!!!\n")
         monster['hp'] = monster['hp'] - damage
         damage = damage_calculator(monster['attack'] , hero['defense'])
-        print(f"{monster['name']} hit for {damage} damage!!!")
+        print(f"{monster['name']} hit for {Fore.RED}{damage}{Style.RESET_ALL} damage!!!")
         hero['hp'] = hero['hp'] - damage
         sleep(3)
     if hero['hp'] < 1:
