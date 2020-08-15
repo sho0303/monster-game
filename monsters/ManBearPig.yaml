@@ -1,0 +1,7 @@
+ManBearPig:
+  name: ManBearPig
+  hp: 99
+  maxhp: 99
+  attack: 10
+  defense: 5
+  gold: 30
