@@ -86,7 +86,7 @@ def damage_calculator(attack, defense):
     return damage
 
 def use_item(hero):
-    if not 'item' in hero:
+    if not 'item' in hero or hero['item'] == None:
         print(' You do not have an item yet')
         return
     if hero['item']['name'] == 'Health Potion':
@@ -108,7 +108,7 @@ def hero_status(hero):
     print("\nHero stats:")
     for key, value in hero.items():
         if key == 'xp':
-            print(f"{key}: {value}/{hero['level']*10}")
+            print(f"{key}: {value}/{hero['level']*5}")
         elif key == 'item' and value != None:
             print(f"{key}: {value['name']}")
         else:
@@ -163,7 +163,7 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
 
     if answer in store_yaml:
         print(f"you picked {answer} it cost {store_yaml[answer]['cost']}" )
-        hero['item'] = []
+        hero['item'] = None
         if answer == 'Health Potion':
             hero['item'] = store_yaml[answer]
             print(f" You got an item it is {hero['item']['name']}")
@@ -185,7 +185,7 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
 
 def level_up(hero , monster):
     hero['xp'] += monster['level']
-    if hero['xp'] >= hero['level'] * 10:
+    if hero['xp'] >= hero['level'] * 5:
         play_sound('levelup.wav')
         print("You have leveled up !!!!")
         print(f' Your level is now {hero["level"] + 1}')
@@ -200,7 +200,7 @@ def fight_monster():
     valid_level = False
     while not valid_level:
         key, value = random.choice(list(monsters.items()))
-        if value['level'] <= hero['level'] * 2:
+        if value['level'] <= hero['level'] * 2 and value['level'] >= hero['level'] - 1:
             monster = value
             valid_level = True
     print(f"A {key} has appeared!")
@@ -234,7 +234,6 @@ _____.___.________   ____ ___     __      __________    _______      ._._._.
             sleep(1)
             print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
             hero['gold'] += monster['gold']
-            monster['hp'] = monster['maxhp']
             level_up(hero,monster)
         if result == 'lost':
             clear()
@@ -270,6 +269,7 @@ _____.___.________   ____ ___    .____    ________    ____________________   ._.
             sleep(3)
             sys.exit()
         sleep(3)
+        monster['hp'] = monster['maxhp']
     print("\n")
 
 
