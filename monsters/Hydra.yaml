@@ -1,0 +1,8 @@
+Dragon:
+  name: 9 Headed Hydra
+  hp: 75
+  maxhp: 75
+  attack: 20
+  defense: 3
+  gold: 50
+  level: 5

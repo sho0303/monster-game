@@ -1,0 +1,8 @@
+Spider:
+  name: The Itsy Bitsy Spider
+  hp: 1
+  maxhp: 1
+  attack: 9
+  defense: 0
+  gold: 10
+  level: 1

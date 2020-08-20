@@ -2,10 +2,7 @@ Shadow Billy Bob:
     age: 16
     weapon: Ninja Stars
     attack: 5
-    height: 'five foot ten'
     hp: 15
     maxhp: 15
     defense: 10
     class: 'Ninja'
-    lives_left: 3
-    gold: 50

@@ -4,5 +4,6 @@ Vampire:
   maxhp: 1000
   attack: 10
   defense: 20
-  gold: 500
+  gold: 100
+  level: 10
   finalboss: True

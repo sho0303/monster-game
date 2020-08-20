@@ -1,0 +1,8 @@
+Snake:
+  name: Vicious Venemous Viper
+  hp: 15
+  maxhp: 15
+  attack: 13
+  defense: 2
+  gold: 30
+  level: 3

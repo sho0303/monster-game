@@ -102,16 +102,17 @@ def use_item(hero):
         hero['hp'] = hero['maxhp']
         print(f' You used the {hero["item"]["name"]}. You now have {hero["hp"]} hp!')
         hero['item'] = None
-
-
-
-
     sleep(2)
 
 def hero_status(hero):
     print("\nHero stats:")
     for key, value in hero.items():
-        print(f"{key}: {value}")
+        if key == 'xp':
+            print(f"{key}: {value}/{hero['level']*10}")
+        elif key == 'item' and value != None:
+            print(f"{key}: {value['name']}")
+        else:
+            print(f"{key}: {value}")
     print("\n")
 
 def monster_status(monster):
@@ -158,7 +159,8 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
         print("\n")
 
 
-    answer = input(f" Your gold is {hero['gold'] }, What would you like in the pymart ? ")
+    answer = input(f" Your gold is {Fore.YELLOW}{hero['gold']}{Style.RESET_ALL}, What would you like in the pymart ? ")
+
     if answer in store_yaml:
         print(f"you picked {answer} it cost {store_yaml[answer]['cost']}" )
         hero['item'] = []
@@ -176,14 +178,31 @@ ______ ___.__.   _____ _____ ________/  |_| | | |
             hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
             print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left ")
             hero['weapon'] = store_yaml[answer]['name']
-            hero['attack'] = hero['weapon']['attack']
+            hero['attack'] = store_yaml[answer]['attack']
             print(f"{hero['name']} equiped!!\n\t{hero['weapon']}\n")
             sleep(3)
 
+
+def level_up(hero , monster):
+    hero['xp'] += monster['level']
+    if hero['xp'] >= hero['level'] * 10:
+        play_sound('levelup.wav')
+        print("You have leveled up !!!!")
+        print(f' Your level is now {hero["level"] + 1}')
+        sleep(2)
+        hero['maxhp'] = hero['maxhp'] * 2
+        hero['hp'] = hero['maxhp']
+        hero['xp'] = 0
+        hero['level'] += 1
+
+
 def fight_monster():
-    key, value = random.choice(list(monsters.items()))
-    monster = value
-    key
+    valid_level = False
+    while not valid_level:
+        key, value = random.choice(list(monsters.items()))
+        if value['level'] <= hero['level'] * 2:
+            monster = value
+            valid_level = True
     print(f"A {key} has appeared!")
     monster_status(monster)
     options = ['1', '2']
@@ -216,6 +235,7 @@ _____.___.________   ____ ___     __      __________    _______      ._._._.
             print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
             hero['gold'] += monster['gold']
             monster['hp'] = monster['maxhp']
+            level_up(hero,monster)
         if result == 'lost':
             clear()
             print('''
@@ -290,6 +310,10 @@ while not hero:
         print(choices[answer], "\n")
         hero = heros[choices[answer]]
         hero['name'] = choices[answer]
+        hero['lives_left'] = 3
+        hero['gold'] = 50
+        hero['level'] = 1
+        hero['xp'] = 0
         sleep(2)
 
 while True:

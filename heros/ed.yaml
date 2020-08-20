@@ -2,10 +2,7 @@ Eduardo the wise:
   age: 60
   weapon: Basic Staff
   attack: 15
-  height: '5 foot 2 inches'
   hp: 10
   maxhp: 10
   defense: 5
   class: 'Magician'
-  lives_left: 3
-  gold: 50

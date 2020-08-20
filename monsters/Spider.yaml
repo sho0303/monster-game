@@ -4,4 +4,5 @@ Giant Spider:
   maxhp: 13
   attack: 5
   defense: 9
-  gold: 25
+  gold: 20
+  level: 2
