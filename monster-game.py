@@ -8,6 +8,7 @@ from pygame import mixer
 import colorama
 from colorama import Fore, Style
 
+
 def play_sound(name):
     mixer.init()
     mixer.music.load(f'./sounds/{name}')
@@ -18,6 +19,9 @@ def clear():
       _= system('cls')
    else:
       _= system('clear')
+
+#def valid_answer(question):
+#    list = ['1', '2', '3']
 
 def print_fight_data(hero, monster):
     print_keys = ['name', 'defense', 'hp', 'attack']
@@ -123,6 +127,14 @@ def monster_status(monster):
 
 def next_action():
     clear()
+    print ('''
+_______________.___. ________   ____ ______________ ____________________
+\______   \__  |   | \_____  \ |    |   \_   _____//   _____/\__    ___/
+ |     ___//   |   |  /  / \  \|    |   /|    __)_ \_____  \   |    |
+ |    |    \____   | /   \_/.  \    |  / |        \/        \  |    |
+ |____|    / ______| \_____\ \_/______/ /_______  /_______  /  |____|
+           \/               \__>                \/        \/
+    ''')
     hero_status(hero)
     answer = input("\nWhat would you like to do next (1) shop (2) fight a monster? (3) Use an item? ")
     valid = ['1','2', '3']
@@ -130,57 +142,81 @@ def next_action():
         return(answer)
 
 def shop(hero):
-    clear()
-    print('''
-                                      __  ._._._.
-______ ___.__.   _____ _____ ________/  |_| | | |
-\____ <   |  |  /     \\__  \\_  __ \   __\ | | |
-|  |_> >___  | |  Y Y  \/ __ \|  | \/|  |  \|\|\|
-|   __// ____| |__|_|  (____  /__|   |__|  ______
-|__|   \/            \/     \/             \/\/\/
-    ''')
     play_sound('store.mp3')
-    print("Welcome to the shop! here are the items!")
     store = open("store.yaml")
     store_yaml =  yaml.safe_load(store)
+    valid = False
+    while valid == False:
+        clear()
+        print('''
+                                          __  ._._._.
+    ______ ___.__.   _____ _____ ________/  |_| | | |
+    \____ <   |  |  /     \\__  \\_  __ \   __\ | | |
+    |  |_> >___  | |  Y Y  \/ __ \|  | \/|  |  \|\|\|
+    |   __// ____| |__|_|  (____  /__|   |__|  ______
+    |__|   \/            \/     \/             \/\/\/
+        ''')
+        i = 1
+        valid_answer = {}
+        for category in store_yaml:
+            print(f"{i}. {category}")
+            valid_answer[str(i)] = category
+            i += 1
+        choice = input("\nWhat's your selection? ")
+        if choice in valid_answer:
+            valid = True
+            category = valid_answer[choice]
+            clear()
 
-    for item in store_yaml:
-        if 'class' in store_yaml[item]:
-            if hero['class'] != store_yaml[item]['class']:
-                continue
-        if 'ascii_art' in store_yaml[item]:
-            with open(store_yaml[item]['ascii_art'], 'r') as file:
+    i = 1
+    item_choices = {}
+    for item in store_yaml[category]:
+        if item['class'] != hero['class'] and item['class'] != 'All':
+            continue
+        if 'ascii_art' in item:
+            with open(item['ascii_art'], 'r') as file:
                 art = file.read()
                 print(art)
-        for info in store_yaml[item]:
-            if info == 'ascii_art':
+        print(f"{Fore.GREEN}({i}){Style.RESET_ALL}")
+        for key, value in item.items():
+            if key == 'ascii_art':
                 continue
-            print(f"  {info} : {store_yaml[item][info]}")
+            else:
+                print(f"{key}: {value}")
+                item_choices[str(i)] = item
+
+        i += 1
         print("\n")
 
+    item_choices['x'] = True
+    print(f"{Fore.GREEN}(x) to exit{Style.RESET_ALL}\n")
 
-    answer = input(f" Your gold is {Fore.YELLOW}{hero['gold']}{Style.RESET_ALL}, What would you like in the pymart ? ")
+    valid = False
+    while valid == False:
+        selection = input(f" Your gold is {Fore.YELLOW}{hero['gold']}{Style.RESET_ALL}, Which item would you like to purchase? ")
+        if selection in item_choices:
+            valid = True
 
-    if answer in store_yaml:
-        print(f"you picked {answer} it cost {store_yaml[answer]['cost']}" )
-        hero['item'] = None
-        if answer == 'Health Potion':
-            hero['item'] = store_yaml[answer]
-            print(f" You got an item it is {hero['item']['name']}")
-            hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
-            print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left. The Health Potion increases life. ")
-            sleep(2)
-        elif store_yaml[answer]['cost'] > hero['gold']:
-            print("you dont have enough money.")
-        elif store_yaml[answer]['class'] != hero['class']:
-            print(f"You are not the class {store_yaml[answer]['class']}")
-        else:
-            hero['gold'] = hero['gold'] - store_yaml[answer]['cost']
-            print(f"you spent {store_yaml[answer]['cost']} of gold you have {hero['gold']} gold left ")
-            hero['weapon'] = store_yaml[answer]['name']
-            hero['attack'] = store_yaml[answer]['attack']
-            print(f"{hero['name']} equiped!!\n\t{hero['weapon']}\n")
-            sleep(3)
+    if selection == 'x':
+        return
+
+    item = item_choices[selection]
+    if item['cost'] > hero['gold']:
+        print(f"You can not afford {item['name']}")
+        sleep(2)
+        return()
+    else:
+        hero['gold'] = hero['gold'] - item['cost']
+    if category == 'Armour':
+        hero['armour'] = item['name']
+        hero['defense'] = item['defense']
+    elif category == 'Weapons':
+        hero['weapon'] = item['name']
+        hero['attack'] = item['attack']
+    elif category == 'Items':
+        hero['item'] = item
+    print(f"Equipping {item['name']} !!")
+    sleep(2)
 
 
 def level_up(hero , monster):
@@ -232,9 +268,27 @@ _____.___.________   ____ ___     __      __________    _______      ._._._.
             sleep(2.5)
             clear()
             sleep(1)
-            print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
-            hero['gold'] += monster['gold']
-            level_up(hero,monster)
+            if monster['finalboss'] == True:
+                print(f'Congradulations! You beat the final boss and won the game!!')
+                clear()
+                play_sound('win.mp3')
+                print(f' You won playing {hero["name"]} you beat Monster Game by Adam Walker and Aaron Walker!!!')
+                sleep(5)
+                clear()
+                print('''
+      ________    _____      _____  ___________   ___________   _________________________   ._._._.
+     /  _____/  /  _  \    /     \ \_   _____/   \   _  \   \ /   /\_   _____/\______   \   | | | |
+    /   \  ___  /  /_\  \  /  \ /  \ |    __)_    /  /_\  \   Y   /  |    __)_  |       _/  | | | |
+    \    \_\  \/    |    \/    Y    \|        \   \  \_/   \     /   |        \ |    |   \   \|\|\|
+     \______  /\____|__  /\____|__  /_______  /    \_____  /\___/   /_______  / |____|_  /   ______
+            \/         \/         \/        \/           \/                 \/         \/    \/\/\/
+                ''')
+                sys.exit()
+
+            else:
+                print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
+                hero['gold'] += monster['gold']
+                level_up(hero,monster)
         if result == 'lost':
             clear()
             print('''
@@ -311,8 +365,8 @@ while not hero:
         hero = heros[choices[answer]]
         hero['name'] = choices[answer]
         hero['lives_left'] = 3
-        hero['gold'] = 50
-        hero['level'] = 1
+        hero['gold'] = 5000
+        hero['level'] = 5
         hero['xp'] = 0
         sleep(2)
 
