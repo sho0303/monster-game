@@ -366,8 +366,8 @@ while not hero:
         hero = heros[choices[answer]]
         hero['name'] = choices[answer]
         hero['lives_left'] = 3
-        hero['gold'] = 5000
-        hero['level'] = 5
+        hero['gold'] = 50
+        hero['level'] = 1
         hero['xp'] = 0
         sleep(2)
 
