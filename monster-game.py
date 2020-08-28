@@ -268,27 +268,28 @@ _____.___.________   ____ ___     __      __________    _______      ._._._.
             sleep(2.5)
             clear()
             sleep(1)
-            if monster['finalboss'] == True:
-                print(f'Congradulations! You beat the final boss and won the game!!')
-                clear()
-                play_sound('win.mp3')
-                print(f' You won playing {hero["name"]} you beat Monster Game by Adam Walker and Aaron Walker!!!')
-                sleep(5)
-                clear()
-                print('''
-      ________    _____      _____  ___________   ___________   _________________________   ._._._.
-     /  _____/  /  _  \    /     \ \_   _____/   \   _  \   \ /   /\_   _____/\______   \   | | | |
-    /   \  ___  /  /_\  \  /  \ /  \ |    __)_    /  /_\  \   Y   /  |    __)_  |       _/  | | | |
-    \    \_\  \/    |    \/    Y    \|        \   \  \_/   \     /   |        \ |    |   \   \|\|\|
-     \______  /\____|__  /\____|__  /_______  /    \_____  /\___/   /_______  / |____|_  /   ______
-            \/         \/         \/        \/           \/                 \/         \/    \/\/\/
-                ''')
-                sys.exit()
+            if 'finalboss' in monster:
+                if monster['finalboss'] == True:
+                    print(f'Congradulations! You beat the final boss and won the game!!')
+                    clear()
+                    play_sound('win.mp3')
+                    print(f' You won playing {hero["name"]} you beat Monster Game by Adam Walker and Aaron Walker!!!')
+                    sleep(5)
+                    clear()
+                    print('''
+          ________    _____      _____  ___________   ___________   _________________________   ._._._.
+         /  _____/  /  _  \    /     \ \_   _____/   \   _  \   \ /   /\_   _____/\______   \   | | | |
+        /   \  ___  /  /_\  \  /  \ /  \ |    __)_    /  /_\  \   Y   /  |    __)_  |       _/  | | | |
+        \    \_\  \/    |    \/    Y    \|        \   \  \_/   \     /   |        \ |    |   \   \|\|\|
+         \______  /\____|__  /\____|__  /_______  /    \_____  /\___/   /_______  / |____|_  /   ______
+                \/         \/         \/        \/           \/                 \/         \/    \/\/\/
+                    ''')
+                    sys.exit()
 
-            else:
-                print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
-                hero['gold'] += monster['gold']
-                level_up(hero,monster)
+                else:
+                    print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
+                    hero['gold'] += monster['gold']
+                    level_up(hero,monster)
         if result == 'lost':
             clear()
             print('''
