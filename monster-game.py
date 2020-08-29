@@ -285,11 +285,10 @@ _____.___.________   ____ ___     __      __________    _______      ._._._.
                 \/         \/         \/        \/           \/                 \/         \/    \/\/\/
                     ''')
                     sys.exit()
-
-                else:
-                    print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
-                    hero['gold'] += monster['gold']
-                    level_up(hero,monster)
+            else:
+                print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
+                hero['gold'] += monster['gold']
+                level_up(hero,monster)
         if result == 'lost':
             clear()
             print('''
