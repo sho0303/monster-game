@@ -1,0 +1,8 @@
+Dragon:
+  name: Wild Wyvern
+  hp: 100
+  maxhp: 100
+  attack: 18
+  defense: 9
+  gold: 70
+  level: 7
