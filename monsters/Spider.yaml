@@ -1,8 +1,8 @@
 Giant Spider:
   name: The Spider Queen
-  hp: 13
-  maxhp: 13
-  attack: 5
+  hp: 15
+  maxhp: 15
+  attack: 6
   defense: 9
   gold: 20
   level: 2

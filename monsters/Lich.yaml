@@ -1,8 +1,8 @@
 Undead:
   name: Lethal Lich
-  hp: 90
-  maxhp: 90
+  hp: 99
+  maxhp: 99
   attack: 25
-  defense: 2
+  defense: 5
   gold: 70
   level: 7

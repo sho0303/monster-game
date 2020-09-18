@@ -1,8 +1,8 @@
 Cyclops:
   name: Cyclops
-  hp: 50
-  maxhp: 50
+  hp: 55
+  maxhp: 55
   attack: 7
-  defense: 7
+  defense: 10
   gold: 50
   level: 5

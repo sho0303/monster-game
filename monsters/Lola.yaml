@@ -1,7 +1,7 @@
 Dog:
   name: Lola the Psychotic Dog
-  hp: 8
-  maxhp: 8
+  hp: 11
+  maxhp: 11
   attack: 10
   defense: 3
   gold: 20

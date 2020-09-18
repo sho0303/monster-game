@@ -3,6 +3,6 @@ Caveman:
   hp: 17
   maxhp: 17
   attack: 3
-  defense: 1
+  defense: 2
   gold: 20
   level: 2

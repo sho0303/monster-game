@@ -253,14 +253,7 @@ def fight_monster():
                     print(f' You won playing {hero["name"]} you beat Monster Game by Adam Walker and Aaron Walker!!!')
                     sleep(5)
                     clear()
-                    print('''
-          ________    _____      _____  ___________   ___________   _________________________   ._._._.
-         /  _____/  /  _  \    /     \ \_   _____/   \   _  \   \ /   /\_   _____/\______   \   | | | |
-        /   \  ___  /  /_\  \  /  \ /  \ |    __)_    /  /_\  \   Y   /  |    __)_  |       _/  | | | |
-        \    \_\  \/    |    \/    Y    \|        \   \  \_/   \     /   |        \ |    |   \   \|\|\|
-         \______  /\____|__  /\____|__  /_______  /    \_____  /\___/   /_______  / |____|_  /   ______
-                \/         \/         \/        \/           \/                 \/         \/    \/\/\/
-                    ''')
+                    print_ascii('ascii_art/pyquest.txt', '\036[46m')
                     sys.exit()
             else:
                 print(f"You fought the {monster['name']} and {result}!! You won {monster['gold']} gold.")
@@ -268,14 +261,8 @@ def fight_monster():
                 level_up(hero,monster)
         if result == 'lost':
             clear()
-            print('''
-_____.___.________   ____ ___    .____    ________    ____________________   ._._._.
-\__  |   |\_____  \ |    |   \   |    |   \_____  \  /   _____/\__    ___/   | | | |
- /   |   | /   |   \|    |   /   |    |    /   |   \ \_____  \   |    |      | | | |
- \____   |/    |    \    |  /    |    |___/    |    \/        \  |    |       \|\|\|
- / ______|\_______  /______/     |_______ \_______  /_______  /  |____|       ______
- \/               \/                     \/       \/        \/                \/\/\/
-            ''')
+            print_ascii('ascii_art/lost.txt', '\033[31m')
+            play_sound('death.mp3')
             sleep(2.5)
             clear()
 

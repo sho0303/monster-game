@@ -1,9 +1,9 @@
 Vampire:
   name: Vlad the Vampire
-  hp: 1000
-  maxhp: 1000
-  attack: 25
-  defense: 25
+  hp: 900
+  maxhp: 900
+  attack: 30
+  defense: 30
   gold: 100
   level: 10
   finalboss: True

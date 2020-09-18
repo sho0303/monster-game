@@ -1,8 +1,8 @@
 Manticore:
   name: Merciless Manticore
-  hp: 50
-  maxhp: 50
-  attack: 12
-  defense: 10
+  hp: 55
+  maxhp: 55
+  attack: 15
+  defense: 12
   gold: 40
   level: 4
