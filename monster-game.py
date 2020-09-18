@@ -55,7 +55,7 @@ def fight_calculator(hero, monster):
     clear()
     play_sound('buzzer.mp3')
     print_ascii('ascii_art/fighton.txt', '\033[31m')
-    sleep(3)
+    sleep(2)
     while hero['hp'] > 0 and monster['hp'] > 0:
         clear()
         print_fight_data(hero, monster)
@@ -67,7 +67,7 @@ def fight_calculator(hero, monster):
         damage = damage_calculator(monster['attack'] , hero['defense'])
         print(f"{monster['name']} hit for {Fore.RED}{damage}{Style.RESET_ALL} damage!!!")
         hero['hp'] = hero['hp'] - damage
-        sleep(3)
+        sleep(2)
     if hero['hp'] < 1:
         return 'lost'
     else:
@@ -235,7 +235,7 @@ def fight_monster():
             continue
     if answer == '2':
         print("You've run away!")
-        sleep(2)
+        sleep(1.5)
     elif answer == '1':
         result = fight_calculator(hero, monster)
         if result == 'won':
@@ -244,14 +244,13 @@ def fight_monster():
             play_sound('tada.mp3')
             sleep(2.5)
             clear()
-            sleep(1)
             if 'finalboss' in monster:
                 if monster['finalboss'] == True:
                     print(f'Congradulations! You beat the final boss and won the game!!')
                     clear()
                     play_sound('win.mp3')
                     print(f' You won playing {hero["name"]} you beat Monster Game by Adam Walker and Aaron Walker!!!')
-                    sleep(5)
+                    sleep(4)
                     clear()
                     print_ascii('ascii_art/pyquest.txt', '\036[46m')
                     sys.exit()
