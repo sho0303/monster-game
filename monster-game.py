@@ -25,9 +25,6 @@ def clear():
    else:
       _= system('clear')
 
-#def valid_answer(question):
-#    list = ['1', '2', '3']
-
 def print_fight_data(hero, monster):
     print_keys = ['name', 'defense', 'hp', 'attack']
     max_length = 0
@@ -93,7 +90,7 @@ def use_item(hero):
         return
     if hero['item']['name'] == 'Health Potion':
         if hero['hp'] == hero['maxhp']:
-            answer = input('you have max life the potion will not to anything. Are you sure you wand to do this?')
+            answer = input('you have max life the potion will not do anything. Are you sure you wand to do this?')
             if answer == 'yes':
                 print("OK!")
             if answer == 'no':
