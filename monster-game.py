@@ -242,7 +242,7 @@ def fight_monster():
             clear()
             print_ascii('ascii_art/youwon.txt', '\033[33m')
             play_sound('tada.mp3')
-            sleep(2.5)
+            sleep(2)
             clear()
             if 'finalboss' in monster:
                 if monster['finalboss'] == True:
@@ -262,7 +262,7 @@ def fight_monster():
             clear()
             print_ascii('ascii_art/lost.txt', '\033[31m')
             play_sound('death.mp3')
-            sleep(2.5)
+            sleep(2)
             clear()
 
             print(f'You lost to {monster["name"]} and lost all of your gold!')
@@ -274,11 +274,11 @@ def fight_monster():
             sleep(3)
             clear()
 
-            print_ascii('ascii_art/pyquest.txt', '\036[35m')
+            print_ascii('ascii_art/lost.txt', '\033[31m')
             play_sound('death.mp3')
             sleep(3)
             sys.exit()
-        sleep(3)
+        sleep(2)
         monster['hp'] = monster['maxhp']
     print("\n")
 
