@@ -9,6 +9,11 @@ import colorama
 from colorama import Fore, Style
 
 
+def print_ascii(filename, color='\033[31m'):
+    with open(filename, 'r') as file:
+        ascii = file.read()
+        print(f"{color}{ascii}{Style.RESET_ALL}")
+
 def play_sound(name):
     mixer.init()
     mixer.music.load(f'./sounds/{name}')
@@ -49,14 +54,7 @@ def yaml_file_to_dictionary(file, dict):
 def fight_calculator(hero, monster):
     clear()
     play_sound('buzzer.mp3')
-    print('''
-___________.___  ________  ___ ______________   _______    _______    ._._._.
-\_   _____/|   |/  _____/ /   |   \__    ___/   \   _  \   \      \   | | | |
- |    __)  |   /   \  ___/    ~    \|    |      /  /_\  \  /   |   \  | | | |
- |     \   |   \    \_\  \    Y    /|    |      \  \_/   \/    |    \  \|\|\|
- \___  /   |___|\______  /\___|_  / |____|       \_____  /\____|__  /  ______
-     \/                \/       \/                     \/         \/   \/\/\/
-    ''')
+    print_ascii('ascii_art/fighton.txt', '\033[31m')
     sleep(3)
     while hero['hp'] > 0 and monster['hp'] > 0:
         clear()
@@ -127,14 +125,7 @@ def monster_status(monster):
 
 def next_action():
     clear()
-    print ('''
-_______________.___. ________   ____ ______________ ____________________
-\______   \__  |   | \_____  \ |    |   \_   _____//   _____/\__    ___/
- |     ___//   |   |  /  / \  \|    |   /|    __)_ \_____  \   |    |
- |    |    \____   | /   \_/.  \    |  / |        \/        \  |    |
- |____|    / ______| \_____\ \_/______/ /_______  /_______  /  |____|
-           \/               \__>                \/        \/
-    ''')
+    print_ascii('ascii_art/pyquest.txt', '\033[35m')
     hero_status(hero)
     answer = input("\nWhat would you like to do next (1) shop (2) fight a monster? (3) Use an item? ")
     valid = ['1','2', '3']
@@ -148,14 +139,7 @@ def shop(hero):
     valid = False
     while valid == False:
         clear()
-        print('''
-                                          __  ._._._.
-    ______ ___.__.   _____ _____ ________/  |_| | | |
-    \____ <   |  |  /     \\__  \\_  __ \   __\ | | |
-    |  |_> >___  | |  Y Y  \/ __ \|  | \/|  |  \|\|\|
-    |   __// ____| |__|_|  (____  /__|   |__|  ______
-    |__|   \/            \/     \/             \/\/\/
-        ''')
+        print_ascii('ascii_art/pymart.txt', '\033[34m')
         i = 1
         valid_answer = {}
         for category in store_yaml:
@@ -329,14 +313,7 @@ _____.___.________   ____ ___    .____    ________    ____________________   ._.
 
 clear()
 play_sound('start.mp3')
-print ('''
-_______________.___. ________   ____ ______________ ____________________
-\______   \__  |   | \_____  \ |    |   \_   _____//   _____/\__    ___/
- |     ___//   |   |  /  / \  \|    |   /|    __)_ \_____  \   |    |
- |    |    \____   | /   \_/.  \    |  / |        \/        \  |    |
- |____|    / ______| \_____\ \_/______/ /_______  /_______  /  |____|
-           \/               \__>                \/        \/
-''')
+print_ascii('ascii_art/pyquest.txt', '\033[35m')
 monsters = {}
 files = os.listdir('monsters/')
 for file in files:
