@@ -316,13 +316,62 @@ while not hero:
         hero['xp'] = 0
         sleep(2)
 
+class GameState:
+    def __init__(self):
+        self.hero = {}
+        self.monsters = {}
+        self.heros = {}
+        self.hero_defaults = {}
+        self.choices = {}
+
+def initialize_game_state():
+    state = GameState()
+
+    # Load monsters
+    files = os.listdir('monsters/')
+    for file in files:
+        state.monsters = yaml_file_to_dictionary(f"monsters/{file}", state.monsters)
+
+    # Load heros
+    files = os.listdir('heros/')
+    for file in files:
+        state.heros = yaml_file_to_dictionary(f"heros/{file}", state.heros)
+
+    state.hero_defaults = state.heros
+    i = 1
+    for hero in state.heros:
+        print(f"{hero}: {i}")
+        state.choices[str(i)] = hero
+        i += 1
+        hero_status(state.heros[hero])
+
+    return state
+
+# Replace global variables with GameState instance
+game_state = initialize_game_state()
+
+# Update hero selection logic
+while not game_state.hero:
+    answer = input("What hero would you like? (1), (2), (3): ")
+    if answer in ['1', '2', '3']:
+        print("You chose hero:")
+        print(game_state.choices[answer], "\n")
+        game_state.hero = game_state.heros[game_state.choices[answer]]
+        game_state.hero['name'] = game_state.choices[answer]
+        game_state.hero['lives_left'] = 3
+        game_state.hero['gold'] = 50
+        game_state.hero['level'] = 1
+        game_state.hero['xp'] = 0
+        sleep(2)
+
+# Update next_action to use game_state
 while True:
     next = next_action()
     if next == "1":
-        shop(hero)
+        shop(game_state.hero)
     if next == "2":
         fight_monster()
     if next == "3":
-        use_item(hero)
+        use_item(game_state.hero)
     sleep(1)
     clear()
