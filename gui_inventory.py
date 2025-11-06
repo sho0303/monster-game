@@ -1,0 +1,24 @@
+"""
+Inventory system for GUI
+"""
+
+
+class InventoryGUI:
+    """Inventory system for GUI"""
+    def __init__(self, gui):
+        self.gui = gui
+    
+    def use_item(self):
+        """Use item"""
+        hero = self.gui.game_state.hero
+        if hero.get('item') is None:
+            self.gui.print_text("\n❌ You don't have any items!")
+            self.gui.root.after(2000, self.gui.main_menu)
+            return
+        
+        if hero['item']['name'] == 'Health Potion':
+            hero['hp'] = hero['maxhp']
+            self.gui.print_text(f"\n✓ Used {hero['item']['name']}! HP restored to {hero['hp']}!")
+            hero['item'] = None
+        
+        self.gui.root.after(2000, self.gui.main_menu)

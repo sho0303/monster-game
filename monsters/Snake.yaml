@@ -6,3 +6,4 @@ Snake:
   defense: 3
   gold: 30
   level: 3
+  xp: 3
