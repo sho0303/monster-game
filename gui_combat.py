@@ -12,6 +12,11 @@ class CombatGUI:
     def fight(self, hero, monster, callback):
         """Execute fight with GUI updates"""
         self.gui.clear_text()
+        # Show monster art during combat if available
+        if 'art' in monster and monster['art']:
+            self.gui.show_image(monster['art'])
+        else:
+            self.gui.show_image('art/crossed_swords.png')
         self.gui.print_text("\n⚔️  FIGHT! ⚔️\n")
         
         round_num = 1

@@ -7,3 +7,4 @@ Snake:
   gold: 30
   level: 3
   xp: 3
+  art: art/snake_monster.png

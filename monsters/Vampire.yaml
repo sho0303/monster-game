@@ -8,3 +8,4 @@ Vampire:
   level: 10
   xp: 10
   finalboss: True
+  art: art/vampire_monster.png

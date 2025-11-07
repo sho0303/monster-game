@@ -289,7 +289,7 @@ class GameGUI:
         self.audio.play_sound('start.mp3')
         self.show_image('art/pyquest.png')
         self.print_text("=" * 60)
-        self.print_text("Welcome to PyQuest - Monster Game!")
+        self.print_text("Welcome to Monster Game!")
         self.print_text("=" * 60)
         
         # Initialize game state
@@ -334,13 +334,14 @@ class GameGUI:
         if self.game_state.hero['xp'] >= self.game_state.hero['level'] * 5:
             self.clear_text()
             self.print_text("\n🎉  Level Up! 🎉\n")
+            self.audio.play_sound('levelup.wav')
             self.game_state.hero['level'] += 1
             self.game_state.hero['xp'] = 0
-            self.game_state.hero['max_hp'] += 5
+            self.game_state.hero['maxhp'] += 5
             self.game_state.hero['attack'] += 2
             self.game_state.hero['defense'] += 2
             self.print_text(f"Your hero has reached level {self.game_state.hero['level']}!")
-            sleep(0.5)
+            sleep(2)
 
     
     def main_menu(self):
