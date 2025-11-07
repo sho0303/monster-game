@@ -48,10 +48,60 @@ class MonsterEncounterGUI:
                 
                 self.gui.combat.fight(self.gui.game_state.hero, monster, after_fight)
             else:
-                self.gui.print_text("\nYou ran away!")
-                self.gui.root.after(1500, self.gui.main_menu)
+                # Attempt to run away with 50% chance of monster attack
+                self._attempt_run_away(monster)
         
         self.gui.set_buttons(["⚔️ Fight", "🏃 Run", ""], on_choice)
+    
+    def _attempt_run_away(self, monster):
+        """Attempt to run away with 50% chance of monster attack"""
+        # Lock interface during run attempt
+        self.gui.lock_interface()
+        
+        # 50% chance of monster getting an attack in
+        monster_attacks = random.choice([True, False])
+        
+        if monster_attacks:
+            self.gui.print_text("\n🏃 You try to run away...")
+            self.gui.print_text(f"💀 But {monster['name']} attacks as you flee!")
+            
+            # Use combat system's damage calculation
+            hero = self.gui.game_state.hero
+            damage = self.gui.combat.calculate_damage(monster['attack'], hero['defense'])
+            
+            # Show monster attack animation
+            self.gui.combat.current_hero_image = self.current_hero_image
+            self.gui.combat.current_monster_image = self.current_monster_image
+            self.gui.combat._show_monster_attack_animation(monster)
+            
+            # After animation, show damage and complete run away
+            self.gui.root.after(1500, lambda: self._complete_run_away_with_damage(damage, monster))
+        else:
+            self.gui.print_text("\n🏃 You successfully ran away!")
+            self.gui.root.after(1500, self.gui.main_menu)
+    
+    def _complete_run_away_with_damage(self, damage, monster):
+        """Complete run away after taking damage from monster attack"""
+        hero = self.gui.game_state.hero
+        
+        # Apply damage
+        hero['hp'] = max(0, hero['hp'] - damage)
+        
+        # Play attack sound and show damage
+        self.gui.audio.play_sound_effect('buzzer.mp3')
+        self.gui.print_text(f"💔 {monster['name']} hits you for {damage} damage as you escape!")
+        self.gui.print_text(f"Your HP: {hero['hp']}")
+        
+        # Check if hero died while running away
+        if hero['hp'] <= 0:
+            self.gui.print_text("\n💀 You collapsed while trying to escape!")
+            self.gui.game_state.hero['gold'] = 0
+            self.gui.game_state.hero['lives_left'] -= 1
+            self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
+        else:
+            self.gui.print_text("\n🏃 You managed to escape, but not unscathed!")
+        
+        self.gui.root.after(2500, self.gui.main_menu)
     
     def _display_hero_vs_monster_images(self, hero, monster):
         """Display hero and monster images side by side in top frame"""
@@ -88,6 +138,10 @@ class MonsterEncounterGUI:
         
         # Display both images side by side in the top frame
         self.gui.show_images(image_paths, layout="horizontal")
+        
+        # Store current images for combat animations
+        self.current_hero_image = image_paths[0]
+        self.current_monster_image = image_paths[1] if len(image_paths) > 1 else 'art/crossed_swords.png'
 
     def _display_vs_stats(self, hero, monster):
         """Display hero and monster stats side by side"""
