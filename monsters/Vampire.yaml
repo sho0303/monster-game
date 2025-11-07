@@ -6,4 +6,5 @@ Vampire:
   defense: 30
   gold: 100
   level: 10
+  xp: 10
   finalboss: True
