@@ -32,7 +32,7 @@ class ShopGUI:
         except Exception as e:
             self.gui.print_text(f"❌ Error loading store: {e}")
             self.store_data = {}
-
+    
     def _select_category(self):
         """Display categories and let user select"""
         self.gui.show_image('art/monstermart.png')
@@ -92,6 +92,21 @@ class ShopGUI:
             self.gui.root.after(2000, self._select_category)
             return
         
+        # Show multiple images of available items using the same logic as show_category_preview
+        item_images = []
+        for item in available_items:
+            if 'ascii_art' in item and os.path.exists(item['ascii_art']):
+                item_images.append(item['ascii_art'])
+        
+        if item_images:
+            # Show multiple images based on count
+            if len(item_images) == 1:
+                self.gui.show_image(item_images[0])
+            elif len(item_images) <= 2:
+                self.gui.show_images(item_images, "horizontal")
+            else:
+                self.gui.show_images(item_images, "grid")
+        
         # Show up to 3 items
         for i, item in enumerate(available_items[:3], 1):
             self.gui.print_text(f"\n{i}. {item['name']} - 💰 {item['cost']} gold")
@@ -112,19 +127,42 @@ class ShopGUI:
                 # Go back to main menu
                 self.gui.main_menu()
             elif 1 <= choice <= len(available_items):
-                self._purchase_item(available_items[choice - 1])
+                # Show item image before purchase
+                selected_item = available_items[choice - 1]
+                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
+                    self.gui.show_image(selected_item['ascii_art'])
+                self._purchase_item(selected_item)
         
-        # Set buttons
+        # Set buttons for item interaction
+        def on_item_action(choice):
+            if choice == 1 and len(available_items) > 0:
+                # Buy first item and show its image
+                selected_item = available_items[0]
+                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
+                    self.gui.show_image(selected_item['ascii_art'])
+                self._purchase_item(selected_item)
+            elif choice == 2 and len(available_items) > 1:
+                # Buy second item and show its image  
+                selected_item = available_items[1]
+                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
+                    self.gui.show_image(selected_item['ascii_art'])
+                self._purchase_item(selected_item)
+            elif choice == 3:
+                # Go back to main menu
+                self.gui.main_menu()
+        
+        # Set button labels
         button_labels = []
         for i in range(3):
-            if i < len(available_items) and i < 2:  # Only first 2 buttons for items
-                button_labels.append(f"Buy #{i+1}")
+            if i < len(available_items) and i < 2:  # First 2 buttons for items
+                item = available_items[i]
+                button_labels.append(f"Buy {item['name']}")
             elif i == 2:
                 button_labels.append("🏠 Main Menu")
             else:
                 button_labels.append("")
         
-        self.gui.set_buttons(button_labels, on_item_select)
+        self.gui.set_buttons(button_labels, on_item_action)
     
     def _purchase_item(self, item):
         """Handle item purchase"""

@@ -3,32 +3,32 @@ Weapons:
     attack: 40
     cost: 500
     class: Warrior
-    ascii_art: art/sword.txt
+    ascii_art: art/strong_sword.png
   - name: Titanium Sword
     attack: 20
     cost: 100
     class: Warrior
-    ascii_art: art/sword.txt
+    ascii_art: art/weak_sword.png
   - name: Phoenix Wand
     attack: 60
     cost: 500
     class: Magician
-    ascii_art: art/wand.txt
+    ascii_art: art/magic_wand.png
   - name: Staff of Warding
     attack: 30
     cost: 100
     class: Magician
-    ascii_art: art/staff.txt
+    ascii_art: art/wizard_staff.png
   - name: Lightsaber
     attack: 20
     cost: 500
     class: Ninja
-    ascii_art: art/lightsaber.txt
+    ascii_art: art/lightsaber.png
   - name: Nunchucks
     attack: 10
     cost: 100
     class: Ninja
-    ascii_art: art/nunchucks.txt
+    ascii_art: art/nunchucks.png
 Armour:
   - name: Ninja Armour
     cost: 100
@@ -38,29 +38,29 @@ Armour:
     cost: 500
     defense: 40
     class: Ninja
-  - name: Bronze Chain Mail
-    cost: 100
-    defense: 10
-    class: Warrior
-  - name: Golden Plate Mail
-    cost: 500
-    defense: 20
-    class: Warrior
-  - name: Silk Robe
+  - name: Magic Hat
     cost: 100
     defense: 10
     class: Magician
+    ascii_art: art/wizard_hat.png
   - name: Magic Silk Robe
     cost: 500
     defense: 20
     class: Magician
-  - name: Golden Plate Mail
-    cost: 500
+    ascii_art: art/wizard_robe.png
+  - name: Plate Mail
+    cost: 100
     defense: 20
     class: Warrior
+    ascii_art: art/steel_plate_mail.png
+  - name: Golden Plate Mail
+    cost: 500
+    defense: 40
+    class: Warrior
+    ascii_art: art/gold_plate_mail.png
 Items:
   - name: Health Potion
     type: minor
     cost: 20
-    ascii_art: art/potion.txt
+    ascii_art: art/health_potion.png
     class: All

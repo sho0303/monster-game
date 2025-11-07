@@ -47,9 +47,14 @@ class GameGUI:
         self.image_frame.pack(fill=tk.BOTH, pady=10)
         self.image_frame.pack_propagate(False)
         
-        # Image label
+        # Image labels - support for multiple images
+        self.image_labels = []
+        self.current_image_layout = "single"  # Track current layout mode
+        
+        # Default single image label for backwards compatibility
         self.image_label = tk.Label(self.image_frame, bg='#1a1a1a')
         self.image_label.pack(expand=True)
+        self.image_labels.append(self.image_label)
         
         # Text output area (read-only)
         self.text_area = scrolledtext.ScrolledText(
@@ -107,7 +112,15 @@ class GameGUI:
         self.current_action = None
     
     def show_image(self, image_path):
-        """Display an image in the image area"""
+        """Display a single image in the image area (backwards compatible)"""
+        if isinstance(image_path, list):
+            # If a list is passed, use show_images instead
+            self.show_images(image_path)
+            return
+            
+        # Reset to single image layout
+        self._reset_image_layout()
+        
         try:
             # Handle text files (ASCII art)
             if image_path.endswith('.txt'):
@@ -127,6 +140,120 @@ class GameGUI:
             self.image_label.image = photo  # Keep a reference
         except Exception as e:
             self.print_text(f"Could not load image: {e}")
+    
+    def show_images(self, image_paths, layout="auto"):
+        """Display multiple images in the image area
+        
+        Args:
+            image_paths: List of image file paths
+            layout: "horizontal", "vertical", "grid", or "auto" (default)
+        """
+        if not image_paths:
+            return
+        
+        # If single image, fall back to show_image
+        if len(image_paths) == 1:
+            self.show_image(image_paths[0])
+            return
+        
+        # Clear existing layout
+        self._clear_image_area()
+        
+        # Determine layout
+        num_images = len(image_paths)
+        if layout == "auto":
+            if num_images <= 2:
+                layout = "horizontal"
+            elif num_images <= 4:
+                layout = "grid"
+            else:
+                layout = "grid"  # Handle more than 4 images in grid
+        
+        # Create layout
+        if layout == "horizontal":
+            self._create_horizontal_layout(image_paths)
+        elif layout == "vertical":
+            self._create_vertical_layout(image_paths)
+        elif layout == "grid":
+            self._create_grid_layout(image_paths)
+        
+        self.current_image_layout = layout
+    
+    def _reset_image_layout(self):
+        """Reset to single image layout"""
+        if self.current_image_layout != "single":
+            self._clear_image_area()
+            # Recreate single image label
+            self.image_label = tk.Label(self.image_frame, bg='#1a1a1a')
+            self.image_label.pack(expand=True)
+            self.image_labels = [self.image_label]
+            self.current_image_layout = "single"
+    
+    def _clear_image_area(self):
+        """Clear all image widgets from the image frame"""
+        for widget in self.image_frame.winfo_children():
+            widget.destroy()
+        self.image_labels.clear()
+    
+    def _create_horizontal_layout(self, image_paths):
+        """Create horizontal layout for multiple images"""
+        for i, image_path in enumerate(image_paths):
+            label = tk.Label(self.image_frame, bg='#1a1a1a')
+            label.pack(side=tk.LEFT, expand=True, padx=2)
+            self.image_labels.append(label)
+            self._load_image_to_label(image_path, label, (180, 200))
+    
+    def _create_vertical_layout(self, image_paths):
+        """Create vertical layout for multiple images"""
+        for i, image_path in enumerate(image_paths):
+            label = tk.Label(self.image_frame, bg='#1a1a1a')
+            label.pack(side=tk.TOP, expand=True, pady=2)
+            self.image_labels.append(label)
+            self._load_image_to_label(image_path, label, (350, 120))
+    
+    def _create_grid_layout(self, image_paths):
+        """Create grid layout for multiple images"""
+        import math
+        
+        # Calculate grid dimensions
+        num_images = len(image_paths)
+        cols = min(3, num_images)  # Max 3 columns
+        rows = math.ceil(num_images / cols)
+        
+        # Create grid
+        for i, image_path in enumerate(image_paths):
+            row = i // cols
+            col = i % cols
+            
+            label = tk.Label(self.image_frame, bg='#1a1a1a')
+            label.grid(row=row, column=col, sticky='nsew', padx=2, pady=2)
+            self.image_labels.append(label)
+            
+            # Configure grid weights for even distribution
+            self.image_frame.grid_rowconfigure(row, weight=1)
+            self.image_frame.grid_columnconfigure(col, weight=1)
+            
+            # Smaller images for grid layout
+            self._load_image_to_label(image_path, label, (120, 80))
+    
+    def _load_image_to_label(self, image_path, label, size=(200, 150)):
+        """Load an image into a specific label with given size"""
+        try:
+            # Handle text files (ASCII art)
+            if image_path.endswith('.txt'):
+                with open(image_path, 'r', encoding='utf-8') as f:
+                    ascii_art = f.read()
+                label.config(text=ascii_art, font=('Courier', 6), fg='#00ff00', bg='#1a1a1a')
+                return
+            
+            # Handle image files
+            img = Image.open(image_path)
+            img.thumbnail(size, Image.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            label.config(image=photo, text='')
+            label.image = photo  # Keep a reference
+        except Exception as e:
+            label.config(text=f"Error:\n{image_path}\n{str(e)}", fg='#ff0000', bg='#1a1a1a')
     
     def print_text(self, text, color='#00ff00'):
         """Print text to the text area"""
