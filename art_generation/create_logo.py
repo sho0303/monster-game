@@ -46,7 +46,7 @@ def create_pyquest_logo():
         font_size = 80
     
     # Draw text with shadow effect
-    text = "PYQUEST"
+    text = "MonsterGame"
     
     # Get text bounding box for centering
     bbox = draw.textbbox((0, 0), text, font=font)

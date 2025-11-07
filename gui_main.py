@@ -197,7 +197,7 @@ class GameGUI:
                 self.game_state.hero['level'] = 1
                 self.game_state.hero['xp'] = 0
                 self.print_text(f"\n✓ You chose: {hero_name}!\n")
-                sleep(1)
+                sleep(0.5)
                 self.main_menu()
         
         self.set_buttons(["Hero 1", "Hero 2", "Hero 3"], on_hero_select)
@@ -213,7 +213,7 @@ class GameGUI:
             self.game_state.hero['attack'] += 2
             self.game_state.hero['defense'] += 2
             self.print_text(f"Your hero has reached level {self.game_state.hero['level']}!")
-            sleep(1)
+            sleep(0.5)
 
     
     def main_menu(self):
