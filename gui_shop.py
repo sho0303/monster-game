@@ -166,6 +166,9 @@ class ShopGUI:
     
     def _purchase_item(self, item):
         """Handle item purchase"""
+        # Lock interface to prevent double-purchases or button spamming
+        self.gui.lock_interface()
+        
         hero = self.gui.game_state.hero
         item_cost = item['cost']
         hero_gold = hero.get('gold', 0)

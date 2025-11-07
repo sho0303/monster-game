@@ -10,6 +10,9 @@ class InventoryGUI:
     
     def use_item(self):
         """Use item"""
+        # Lock interface to prevent button spamming during item use
+        self.gui.lock_interface()
+        
         hero = self.gui.game_state.hero
         if hero.get('item') is None:
             self.gui.print_text("\n❌ You don't have any items!")

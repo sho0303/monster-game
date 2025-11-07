@@ -13,6 +13,9 @@ class CombatGUI:
         """Execute fight with GUI updates and attack animations"""
         self.gui.clear_text()
         
+        # Lock interface to prevent interruptions during combat
+        self.gui.lock_interface()
+        
         # Display hero and monster side by side for combat
         self._display_combat_images(hero, monster)
         
@@ -42,22 +45,24 @@ class CombatGUI:
         # Random initiative - determine who attacks first this round
         hero_goes_first = random.choice([True, False])
         
+        # Calculate damage for both attacks
+        hero_damage = self.calculate_damage(hero['attack'], monster['defense'])
+        monster_damage = self.calculate_damage(monster['attack'], hero['defense'])
+        
         if hero_goes_first:
-            # Hero attacks - show attack animation, then damage
-            hero_damage = self.calculate_damage(hero['attack'], monster['defense'])
+            # Hero attacks first, then monster attacks
             self._show_hero_attack_animation(hero)
             
-            # After hero animation completes, show damage and finish round
-            self.gui.root.after(1500, lambda: self._complete_hero_attack_finish_round(
-                hero_damage, monster, hero, "⚡ You attack for {damage} damage!", self.round_num))
+            # After hero animation completes, apply damage and start monster attack
+            self.gui.root.after(1500, lambda: self._complete_hero_attack_start_monster(
+                hero_damage, monster_damage, monster, hero, "⚡ You attack for {damage} damage!", self.round_num))
         else:
-            # Monster attacks - show attack animation, then damage
-            monster_damage = self.calculate_damage(monster['attack'], hero['defense'])
+            # Monster attacks first, then hero attacks
             self._show_monster_attack_animation(monster)
             
-            # After monster animation completes, show damage and finish round
-            self.gui.root.after(1500, lambda: self._complete_monster_attack_finish_round(
-                monster_damage, monster, hero, f"💀 {monster['name']} attacks for {{damage}} damage!", self.round_num))
+            # After monster animation completes, apply damage and start hero attack
+            self.gui.root.after(1500, lambda: self._complete_monster_attack_start_hero(
+                monster_damage, hero_damage, monster, hero, f"💀 {monster['name']} attacks for {{damage}} damage!", self.round_num))
 
     def _end_combat(self):
         """End combat and show results"""
@@ -73,6 +78,9 @@ class CombatGUI:
         else:
             self.gui.show_image('art/you_lost.png')
             self.gui.audio.play_sound_effect('death.mp3')
+        
+        # Unlock interface before calling callback (so next screen can set buttons)
+        self.gui.unlock_interface()
         
         self.fight_callback(result)
     
@@ -156,8 +164,30 @@ class CombatGUI:
         # Return to normal display
         self._return_to_monster_view(monster)
 
+    def _complete_hero_attack_start_monster(self, hero_damage, monster_damage, monster, hero, message_template, round_num):
+        """Complete hero attack and start monster counter-attack"""
+        # Play attack sound and show hero damage
+        self.gui.audio.play_sound_effect('punch.mp3')
+        self.gui.print_text(message_template.format(damage=hero_damage))
+        monster['hp'] = max(0, monster['hp'] - hero_damage)
+        
+        # Check if monster is still alive to counter-attack
+        if monster['hp'] <= 0:
+            self.gui.root.after(1000, lambda: self._end_combat())
+        else:
+            # Monster counter-attacks after a brief pause
+            self.gui.root.after(1000, lambda: self._start_monster_counter_attack(monster_damage, monster, hero, round_num))
+    
+    def _start_monster_counter_attack(self, monster_damage, monster, hero, round_num):
+        """Start monster counter-attack animation"""
+        self._show_monster_attack_animation(monster)
+        
+        # After monster animation completes, apply damage and finish round
+        self.gui.root.after(1500, lambda: self._complete_monster_counter_attack_finish_round(
+            monster_damage, monster, hero, f"💀 {monster['name']} counter-attacks for {{damage}} damage!", round_num))
+    
     def _complete_hero_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
-        """Complete hero attack and finish the round"""
+        """Complete hero attack and finish the round (legacy method for single attack rounds)"""
         # Play attack sound and show hero damage
         self.gui.audio.play_sound_effect('punch.mp3')
         self.gui.print_text(message_template.format(damage=hero_damage))
@@ -206,8 +236,62 @@ class CombatGUI:
             # Animation complete - ensure we end with normal monster image
             self.gui.show_images([hero_image, normal_image], layout="horizontal")
 
+    def _complete_monster_attack_start_hero(self, monster_damage, hero_damage, monster, hero, message_template, round_num):
+        """Complete monster attack and start hero counter-attack"""
+        # Play monster attack sound and show damage
+        self.gui.audio.play_sound_effect('buzzer.mp3')
+        self.gui.print_text(message_template.format(damage=monster_damage))
+        hero['hp'] = max(0, hero['hp'] - monster_damage)
+        
+        # Check if hero is still alive to counter-attack
+        if hero['hp'] <= 0:
+            self.gui.root.after(1000, lambda: self._end_combat())
+        else:
+            # Hero counter-attacks after a brief pause
+            self.gui.root.after(1000, lambda: self._start_hero_counter_attack(hero_damage, monster, hero, round_num))
+    
+    def _start_hero_counter_attack(self, hero_damage, monster, hero, round_num):
+        """Start hero counter-attack animation"""
+        self._show_hero_attack_animation(hero)
+        
+        # After hero animation completes, apply damage and finish round
+        self.gui.root.after(1500, lambda: self._complete_hero_counter_attack_finish_round(
+            hero_damage, monster, hero, "⚡ You counter-attack for {damage} damage!", round_num))
+    
+    def _complete_hero_counter_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
+        """Complete hero counter-attack and finish the round"""
+        # Play attack sound and show hero damage
+        self.gui.audio.play_sound_effect('punch.mp3')
+        self.gui.print_text(message_template.format(damage=hero_damage))
+        monster['hp'] = max(0, monster['hp'] - hero_damage)
+        
+        # Finish round and show status, then continue to next round
+        self._finish_round_status(hero, monster, round_num)
+        
+        if monster['hp'] <= 0:
+            self.gui.root.after(1000, lambda: self._end_combat())
+        else:
+            self.round_num += 1
+            self.gui.root.after(1500, lambda: self._start_combat_round())
+    
+    def _complete_monster_counter_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
+        """Complete monster counter-attack and finish the round"""
+        # Play monster attack sound and show damage
+        self.gui.audio.play_sound_effect('buzzer.mp3')
+        self.gui.print_text(message_template.format(damage=monster_damage))
+        hero['hp'] = max(0, hero['hp'] - monster_damage)
+        
+        # Finish round and show status, then continue to next round
+        self._finish_round_status(hero, monster, round_num)
+        
+        if hero['hp'] <= 0:
+            self.gui.root.after(1000, lambda: self._end_combat())
+        else:
+            self.round_num += 1
+            self.gui.root.after(1500, lambda: self._start_combat_round())
+    
     def _complete_monster_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
-        """Complete monster attack and finish the round"""
+        """Complete monster attack and finish the round (legacy method for single attack rounds)"""
         # Play monster attack sound and show damage
         self.gui.audio.play_sound_effect('buzzer.mp3')
         self.gui.print_text(message_template.format(damage=monster_damage))

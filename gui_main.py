@@ -325,7 +325,12 @@ class GameGUI:
     
     def button_clicked(self, button_num):
         """Handle button clicks"""
-        if self.current_action:
+        # Prevent clicks when interface is locked
+        if not self.keyboard_enabled or not self.current_action:
+            return
+        
+        # Only execute if the button is actually enabled
+        if self._is_button_enabled(button_num):
             self.current_action(button_num)
 
     def _handle_keypress(self, event):
@@ -474,6 +479,9 @@ class GameGUI:
 
     def set_buttons(self, labels, action_callback):
         """Set button labels and action"""
+        # Unlock interface when new buttons are being set
+        self.keyboard_enabled = True
+        
         for i, (btn, label) in enumerate(zip([self.btn1, self.btn2, self.btn3], labels)):
             if label:
                 # Add keyboard shortcut hint to button text
@@ -493,6 +501,34 @@ class GameGUI:
         
         # Update visual selection
         self._update_button_selection()
+    
+    def lock_interface(self):
+        """Lock the interface during combat/animations to prevent interruptions"""
+        self.keyboard_enabled = False
+        
+        # Disable all buttons and show locked state
+        buttons = [self.btn1, self.btn2, self.btn3]
+        for btn in buttons:
+            btn.config(state=tk.DISABLED, text="🔒 Processing...")
+        
+        # Clear current action to prevent button clicks
+        self.current_action = None
+        
+    def unlock_interface(self):
+        """Unlock the interface after combat/animations complete"""
+        self.keyboard_enabled = True
+        
+        # Note: Buttons will be re-enabled when set_buttons is called next
+        # This prevents stale button states from previous screens
+    
+    def show_processing_status(self, message="Processing..."):
+        """Show a processing status message to user during locked interface"""
+        if not self.keyboard_enabled:
+            self.print_text(f"⏳ {message}")
+    
+    def is_interface_locked(self):
+        """Check if interface is currently locked"""
+        return not self.keyboard_enabled
     
     def initialize_game(self):
         """Initialize the game"""

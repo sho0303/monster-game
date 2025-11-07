@@ -29,6 +29,9 @@ class MonsterEncounterGUI:
         
         def on_choice(choice):
             if choice == 1:
+                # Lock interface immediately when fight is chosen to prevent double-clicks
+                self.gui.lock_interface()
+                
                 def after_fight(result):
                     if result == 'won':
                         self.gui.print_text(f"\n🎉 Victory! You earned {monster['gold']} gold!")
@@ -40,6 +43,7 @@ class MonsterEncounterGUI:
                         self.gui.game_state.hero['lives_left'] -= 1
                         self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
                     
+                    # Wait before returning to main menu, interface unlocks when main_menu sets buttons
                     self.gui.root.after(3000, self.gui.main_menu)
                 
                 self.gui.combat.fight(self.gui.game_state.hero, monster, after_fight)
