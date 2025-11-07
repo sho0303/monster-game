@@ -30,14 +30,16 @@ Weapons:
     class: Ninja
     ascii_art: art/nunchucks.png
 Armour:
-  - name: Ninja Armour
+  - name: Ninja Tabi
     cost: 100
     defense: 20
     class: Ninja
+    ascii_art: art/magic_ninja_tabi.png
   - name: Magic Ninja Armour
     cost: 500
     defense: 40
     class: Ninja
+    ascii_art: art/magic_ninja_jacket.png
   - name: Magic Hat
     cost: 100
     defense: 10
