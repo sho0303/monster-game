@@ -39,7 +39,7 @@ Armour:
     cost: 500
     defense: 40
     class: Ninja
-    ascii_art: art/magic_ninja_jacket.png
+    ascii_art: art/magic_shinobi_jacket.png
   - name: Magic Hat
     cost: 100
     defense: 10
