@@ -35,7 +35,6 @@ class MonsterEncounterGUI:
                         self.gui.game_state.hero['gold'] += monster['gold']
                         self.gui.game_state.hero['xp'] += monster['xp']
                     else:
-                        sleep(20)
                         self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
                         self.gui.game_state.hero['gold'] = 0
                         self.gui.game_state.hero['lives_left'] -= 1

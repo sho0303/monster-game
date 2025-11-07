@@ -231,7 +231,7 @@ class ShopGUI:
             self.gui.print_text(f"   Use it from the main menu")
         
         # Play purchase sound effect (won't interrupt background music)
-        self.gui.audio.play_sound_effect('tada.mp3')  # Use celebration sound for purchases
+        self.gui.audio.play_sound_effect('store.mp3')  # Use celebration sound for purchases
         
         # Return to main menu after delay
         self.gui.root.after(3000, self.gui.main_menu)
