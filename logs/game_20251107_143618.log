@@ -1,0 +1,22 @@
+2025-11-07 14:36:18,916 - INFO - Logging system initialized
+2025-11-07 14:36:18,916 - INFO - === PyQuest Monster Game Startup ===
+2025-11-07 14:36:18,917 - INFO - Python version: 3.13.9 (tags/v3.13.9:8183fa5, Oct 14 2025, 14:09:13) [MSC v.1944 64 bit (AMD64)]
+2025-11-07 14:36:18,917 - INFO - Working directory: C:\Users\awalk\Documents\Source\monster-game
+2025-11-07 14:36:18,917 - INFO - Checking: Python version compatibility
+2025-11-07 14:36:18,917 - INFO - Python version check passed: 3.13
+2025-11-07 14:36:18,917 - INFO - Checking: Required dependencies
+2025-11-07 14:36:18,923 - INFO - Module 'tkinter' found
+2025-11-07 14:36:18,924 - INFO - Module 'PIL' found
+2025-11-07 14:36:18,979 - INFO - Module 'pygame' found
+2025-11-07 14:36:18,987 - INFO - Module 'yaml' found
+2025-11-07 14:36:18,987 - INFO - All dependencies found
+2025-11-07 14:36:18,987 - INFO - Checking: Game files and directories
+2025-11-07 14:36:18,988 - INFO - Working directory check passed: C:\Users\awalk\Documents\Source\monster-game
+2025-11-07 14:36:18,988 - INFO - Checking: GUI module import
+2025-11-07 14:36:19,017 - INFO - gui_main module imported successfully
+2025-11-07 14:36:19,017 - INFO - All startup checks passed - initializing game
+2025-11-07 14:36:19,017 - INFO - Creating main window...
+2025-11-07 14:36:19,057 - INFO - Initializing game GUI...
+2025-11-07 14:36:19,058 - INFO - Starting main loop...
+2025-11-07 14:36:51,359 - INFO - Game session completed normally
+2025-11-07 14:36:51,359 - INFO - === PyQuest Monster Game Shutdown ===

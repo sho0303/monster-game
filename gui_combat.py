@@ -23,18 +23,35 @@ class CombatGUI:
         while hero['hp'] > 0 and monster['hp'] > 0:
             self.gui.print_text(f"--- Round {round_num} ---")
             
-            # Hero attacks
-            damage = self.calculate_damage(hero['attack'], monster['defense'])
-            self.gui.print_text(f"You hit for {damage} damage!")
-            monster['hp'] = max(0, monster['hp'] - damage)
+            # Random initiative - determine who attacks first this round
+            hero_goes_first = random.choice([True, False])
             
-            if monster['hp'] <= 0:
-                break
-            
-            # Monster attacks
-            damage = self.calculate_damage(monster['attack'], hero['defense'])
-            self.gui.print_text(f"{monster['name']} hit for {damage} damage!")
-            hero['hp'] = max(0, hero['hp'] - damage)
+            if hero_goes_first:
+                # Hero attacks first
+                damage = self.calculate_damage(hero['attack'], monster['defense'])
+                self.gui.print_text(f"⚡ You strike first! You hit for {damage} damage!")
+                monster['hp'] = max(0, monster['hp'] - damage)
+                
+                if monster['hp'] <= 0:
+                    break
+                
+                # Monster attacks second
+                damage = self.calculate_damage(monster['attack'], hero['defense'])
+                self.gui.print_text(f"💀 {monster['name']} counters for {damage} damage!")
+                hero['hp'] = max(0, hero['hp'] - damage)
+            else:
+                # Monster attacks first
+                damage = self.calculate_damage(monster['attack'], hero['defense'])
+                self.gui.print_text(f"💀 {monster['name']} strikes first for {damage} damage!")
+                hero['hp'] = max(0, hero['hp'] - damage)
+                
+                if hero['hp'] <= 0:
+                    break
+                
+                # Hero attacks second
+                damage = self.calculate_damage(hero['attack'], monster['defense'])
+                self.gui.print_text(f"⚡ You counter-attack for {damage} damage!")
+                monster['hp'] = max(0, monster['hp'] - damage)
             
             self.gui.print_text(f"Your HP: {hero['hp']} | {monster['name']} HP: {monster['hp']}\n")
             round_num += 1

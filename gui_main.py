@@ -42,18 +42,36 @@ class GameGUI:
     
     def _create_widgets(self):
         """Create the GUI widgets"""
-        # Top frame for images
-        self.image_frame = tk.Frame(self.root, bg='#1a1a1a', height=250)
-        self.image_frame.pack(fill=tk.BOTH, pady=10)
+        # Top frame for images with enhanced background and visual styling
+        self.image_frame = tk.Frame(
+            self.root, 
+            bg='#2d2d2d',  # Medium gray background
+            height=250, 
+            relief='groove',  # More attractive 3D effect
+            bd=3,  # Slightly thicker border
+            highlightbackground='#505050',  # Subtle highlight
+            highlightthickness=1
+        )
+        self.image_frame.pack(fill=tk.BOTH, pady=10, padx=5)
         self.image_frame.pack_propagate(False)
         
         # Image labels - support for multiple images
         self.image_labels = []
         self.current_image_layout = "single"  # Track current layout mode
         
-        # Default single image label for backwards compatibility
-        self.image_label = tk.Label(self.image_frame, bg='#1a1a1a')
-        self.image_label.pack(expand=True)
+        # Default single image label with enhanced styling
+        self.image_label = tk.Label(
+            self.image_frame, 
+            bg='#404040',  # Neutral gray background
+            relief='sunken',  # Inset appearance for better depth
+            bd=2,
+            padx=15,
+            pady=15,
+            highlightbackground='#606060',
+            highlightcolor='#808080',
+            highlightthickness=1
+        )
+        self.image_label.pack(expand=True, padx=15, pady=15)
         self.image_labels.append(self.image_label)
         
         # Text output area (read-only)
@@ -127,8 +145,8 @@ class GameGUI:
                 # For text files, create a simple text display
                 with open(image_path, 'r', encoding='utf-8') as f:
                     ascii_art = f.read()
-                # Create an image from text (simple approach)
-                self.image_label.config(text=ascii_art, font=('Courier', 8), fg='#00ff00', bg='#1a1a1a')
+                # Create an image from text with enhanced background
+                self.image_label.config(text=ascii_art, font=('Courier', 8), fg='#00ff00', bg='#303030')
                 return
             
             # Handle image files
@@ -183,9 +201,19 @@ class GameGUI:
         """Reset to single image layout"""
         if self.current_image_layout != "single":
             self._clear_image_area()
-            # Recreate single image label
-            self.image_label = tk.Label(self.image_frame, bg='#1a1a1a')
-            self.image_label.pack(expand=True)
+            # Recreate single image label with enhanced styling
+            self.image_label = tk.Label(
+                self.image_frame, 
+                bg='#404040',  # Neutral gray background
+                relief='sunken',  # Inset appearance for better depth
+                bd=2,
+                padx=15,
+                pady=15,
+                highlightbackground='#606060',
+                highlightcolor='#808080',
+                highlightthickness=1
+            )
+            self.image_label.pack(expand=True, padx=15, pady=15)
             self.image_labels = [self.image_label]
             self.current_image_layout = "single"
     
@@ -198,16 +226,30 @@ class GameGUI:
     def _create_horizontal_layout(self, image_paths):
         """Create horizontal layout for multiple images"""
         for i, image_path in enumerate(image_paths):
-            label = tk.Label(self.image_frame, bg='#1a1a1a')
-            label.pack(side=tk.LEFT, expand=True, padx=2)
+            label = tk.Label(
+                self.image_frame, 
+                bg='#404040',  # Neutral gray background
+                relief='ridge',
+                bd=1,
+                padx=5,
+                pady=5
+            )
+            label.pack(side=tk.LEFT, expand=True, padx=5, pady=10)
             self.image_labels.append(label)
             self._load_image_to_label(image_path, label, (180, 200))
     
     def _create_vertical_layout(self, image_paths):
         """Create vertical layout for multiple images"""
         for i, image_path in enumerate(image_paths):
-            label = tk.Label(self.image_frame, bg='#1a1a1a')
-            label.pack(side=tk.TOP, expand=True, pady=2)
+            label = tk.Label(
+                self.image_frame, 
+                bg='#404040',  # Neutral gray background
+                relief='ridge',
+                bd=1,
+                padx=5,
+                pady=5
+            )
+            label.pack(side=tk.TOP, expand=True, padx=10, pady=5)
             self.image_labels.append(label)
             self._load_image_to_label(image_path, label, (350, 120))
     
@@ -225,8 +267,15 @@ class GameGUI:
             row = i // cols
             col = i % cols
             
-            label = tk.Label(self.image_frame, bg='#1a1a1a')
-            label.grid(row=row, column=col, sticky='nsew', padx=2, pady=2)
+            label = tk.Label(
+                self.image_frame, 
+                bg='#404040',  # Neutral gray background
+                relief='ridge',
+                bd=1,
+                padx=3,
+                pady=3
+            )
+            label.grid(row=row, column=col, sticky='nsew', padx=5, pady=5)
             self.image_labels.append(label)
             
             # Configure grid weights for even distribution
@@ -243,7 +292,7 @@ class GameGUI:
             if image_path.endswith('.txt'):
                 with open(image_path, 'r', encoding='utf-8') as f:
                     ascii_art = f.read()
-                label.config(text=ascii_art, font=('Courier', 6), fg='#00ff00', bg='#1a1a1a')
+                label.config(text=ascii_art, font=('Courier', 6), fg='#00ff00', bg='#303030')
                 return
             
             # Handle image files
