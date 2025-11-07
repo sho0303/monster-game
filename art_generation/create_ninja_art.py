@@ -138,7 +138,7 @@ def create_ninja():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/hero_ninja.png'
+    output_path = 'art/hero_ninja.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

@@ -223,7 +223,7 @@ def create_magician():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/hero_magician.png'
+    output_path = 'art/hero_magician.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

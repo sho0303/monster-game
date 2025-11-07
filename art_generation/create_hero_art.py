@@ -64,7 +64,7 @@ img = Image.fromarray(img_array, 'RGBA')
 img = img.resize((256, 256), Image.NEAREST)
 
 # Save the image
-img.save('ascii_art/hero_warrior.png')
+img.save('art/hero_warrior.png')
 print("✅ Created hero_warrior.png - Minecraft-style pixel art warrior!")
 print("   Size: 256x256 pixels")
 print("   Format: PNG with transparent background")

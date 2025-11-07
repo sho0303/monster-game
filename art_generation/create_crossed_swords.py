@@ -118,7 +118,7 @@ def create_crossed_swords():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/crossed_swords.png'
+    output_path = 'art/crossed_swords.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

@@ -168,7 +168,7 @@ def create_lightsaber():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/lightsaber.png'
+    output_path = 'art/lightsaber.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

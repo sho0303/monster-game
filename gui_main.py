@@ -160,7 +160,7 @@ class GameGUI:
     def initialize_game(self):
         """Initialize the game"""
         self.audio.play_sound('start.mp3')
-        self.show_image('ascii_art/pyquest.png')
+        self.show_image('art/pyquest.png')
         self.print_text("=" * 60)
         self.print_text("Welcome to PyQuest - Monster Game!")
         self.print_text("=" * 60)
@@ -221,7 +221,7 @@ class GameGUI:
         """Check for level up event first"""
         self.hero_level()
         self.clear_text()
-        self.show_image(f"ascii_art/{self.game_state.hero['class']}.png")
+        self.show_image(f"art/{self.game_state.hero['class']}.png")
         
         self.print_text("\n" + "=" * 60)
         self.print_text("⚔️  Hero Stats ⚔️")

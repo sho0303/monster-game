@@ -3,32 +3,32 @@ Weapons:
     attack: 40
     cost: 500
     class: Warrior
-    ascii_art: ascii_art/sword.txt
+    ascii_art: art/sword.txt
   - name: Titanium Sword
     attack: 20
     cost: 100
     class: Warrior
-    ascii_art: ascii_art/sword.txt
+    ascii_art: art/sword.txt
   - name: Phoenix Wand
     attack: 60
     cost: 500
     class: Magician
-    ascii_art: ascii_art/wand.txt
+    ascii_art: art/wand.txt
   - name: Staff of Warding
     attack: 30
     cost: 100
     class: Magician
-    ascii_art: ascii_art/staff.txt
+    ascii_art: art/staff.txt
   - name: Lightsaber
     attack: 20
     cost: 500
     class: Ninja
-    ascii_art: ascii_art/lightsaber.txt
+    ascii_art: art/lightsaber.txt
   - name: Nunchucks
     attack: 10
     cost: 100
     class: Ninja
-    ascii_art: ascii_art/nunchucks.txt
+    ascii_art: art/nunchucks.txt
 Armour:
   - name: Ninja Armour
     cost: 100
@@ -62,5 +62,5 @@ Items:
   - name: Health Potion
     type: minor
     cost: 20
-    ascii_art: ascii_art/potion.txt
+    ascii_art: art/potion.txt
     class: All

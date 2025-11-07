@@ -16,7 +16,7 @@ class MonsterEncounterGUI:
             return
         
         self.gui.clear_text()
-        self.gui.show_image('ascii_art/crossed_swords.png')
+        self.gui.show_image('art/crossed_swords.png')
         self.gui.print_text(f"\n⚠️  A {monster['name']} appeared! ⚠️\n")
         self.gui.print_text(f"Level: {monster['level']}")
         self.gui.print_text(f"HP: {monster['hp']}")

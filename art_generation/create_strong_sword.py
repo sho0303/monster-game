@@ -180,7 +180,7 @@ def create_strong_sword():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/strong_sword.png'
+    output_path = 'art/strong_sword.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

@@ -203,7 +203,7 @@ def create_warrior():
     img_scaled = img.resize((size * scale, size * scale), Image.NEAREST)
     
     # Save
-    output_path = 'ascii_art/hero_warrior_v2.png'
+    output_path = 'art/hero_warrior_v2.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {size * scale}x{size * scale} pixels")

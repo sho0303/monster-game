@@ -19,7 +19,7 @@ class ShopGUI:
             self._load_store()
         
         self.gui.clear_text()
-        self.gui.show_image('ascii_art/pymart.txt')
+        self.gui.show_image('art/pymart.txt')
         self.gui.print_text("\n🛒 Welcome to PyMart! 🛒\n")
         self.gui.print_text(f"💰 Your Gold: {self.gui.game_state.hero.get('gold', 0)}\n")
         self._select_category()
@@ -35,7 +35,7 @@ class ShopGUI:
 
     def _select_category(self):
         """Display categories and let user select"""
-        self.gui.show_image('ascii_art/monstermart.png')
+        self.gui.show_image('art/monstermart.png')
         self.gui.print_text("=" * 60)
         self.gui.print_text("Select a category:")
         self.gui.print_text("=" * 60)

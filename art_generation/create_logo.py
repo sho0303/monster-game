@@ -255,7 +255,7 @@ def create_pyquest_logo():
     img_scaled = img.resize((width * scale, height * scale), Image.NEAREST)
     
     # Save image
-    output_path = 'ascii_art/pyquest.png'
+    output_path = 'art/pyquest.png'
     img_scaled.save(output_path, 'PNG')
     print(f"✅ Created {output_path}")
     print(f"   Size: {width * scale}x{height * scale} pixels")
