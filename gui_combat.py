@@ -29,6 +29,7 @@ class CombatGUI:
             if hero_goes_first:
                 # Hero attacks first
                 damage = self.calculate_damage(hero['attack'], monster['defense'])
+                self.gui.audio.play_sound_effect('punch.mp3')  # Hero attack sound
                 self.gui.print_text(f"⚡ You strike first! You hit for {damage} damage!")
                 monster['hp'] = max(0, monster['hp'] - damage)
                 
@@ -37,11 +38,13 @@ class CombatGUI:
                 
                 # Monster attacks second
                 damage = self.calculate_damage(monster['attack'], hero['defense'])
+                self.gui.audio.play_sound_effect('buzzer.mp3')  # Monster attack sound
                 self.gui.print_text(f"💀 {monster['name']} counters for {damage} damage!")
                 hero['hp'] = max(0, hero['hp'] - damage)
             else:
                 # Monster attacks first
                 damage = self.calculate_damage(monster['attack'], hero['defense'])
+                self.gui.audio.play_sound_effect('buzzer.mp3')  # Monster attack sound
                 self.gui.print_text(f"💀 {monster['name']} strikes first for {damage} damage!")
                 hero['hp'] = max(0, hero['hp'] - damage)
                 
@@ -50,6 +53,7 @@ class CombatGUI:
                 
                 # Hero attacks second
                 damage = self.calculate_damage(hero['attack'], monster['defense'])
+                self.gui.audio.play_sound_effect('punch.mp3')  # Hero attack sound
                 self.gui.print_text(f"⚡ You counter-attack for {damage} damage!")
                 monster['hp'] = max(0, monster['hp'] - damage)
             
@@ -57,6 +61,13 @@ class CombatGUI:
             round_num += 1
         
         result = 'won' if hero['hp'] > 0 else 'lost'
+        
+        # Play victory or defeat sound
+        if result == 'won':
+            self.gui.audio.play_sound_effect('win.mp3')
+        else:
+            self.gui.audio.play_sound_effect('death.mp3')
+        
         callback(result)
     
     def calculate_damage(self, attack, defense):

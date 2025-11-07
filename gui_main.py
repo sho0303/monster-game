@@ -335,7 +335,8 @@ class GameGUI:
     
     def initialize_game(self):
         """Initialize the game"""
-        self.audio.play_sound('start.mp3')
+        # Start background music that will loop continuously
+        self.audio.play_background_music('start.mp3', loop=True, volume=0.4)
         self.show_image('art/pyquest.png')
         self.print_text("=" * 60)
         self.print_text("Welcome to Monster Game!")
@@ -383,7 +384,7 @@ class GameGUI:
         if self.game_state.hero['xp'] >= self.game_state.hero['level'] * 5:
             self.clear_text()
             self.print_text("\n🎉  Level Up! 🎉\n")
-            self.audio.play_sound('levelup.wav')
+            self.audio.play_sound_effect('levelup.wav')
             self.game_state.hero['level'] += 1
             self.game_state.hero['xp'] = 0
             self.game_state.hero['maxhp'] += 5

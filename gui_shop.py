@@ -230,8 +230,8 @@ class ShopGUI:
             self.gui.print_text(f"🧪 Added {item['name']} to inventory!")
             self.gui.print_text(f"   Use it from the main menu")
         
-        # Play purchase sound
-        self.gui.audio.play_sound('start.mp3')  # Replace with purchase sound if available
+        # Play purchase sound effect (won't interrupt background music)
+        self.gui.audio.play_sound_effect('tada.mp3')  # Use celebration sound for purchases
         
         # Return to main menu after delay
         self.gui.root.after(3000, self.gui.main_menu)
