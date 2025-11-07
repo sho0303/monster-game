@@ -2,6 +2,7 @@
 Monster encounter system for GUI
 """
 import random
+from time import sleep
 
 
 class MonsterEncounterGUI:
@@ -16,16 +17,14 @@ class MonsterEncounterGUI:
             return
         
         self.gui.clear_text()
-        # Show monster art if available, otherwise show default crossed swords
-        if 'art' in monster and monster['art']:
-            self.gui.show_image(monster['art'])
-        else:
-            self.gui.show_image('art/crossed_swords.png')
+        
+        # Display hero and monster images side by side in top frame
+        hero = self.gui.game_state.hero
+        self._display_hero_vs_monster_images(hero, monster)
         
         self.gui.print_text(f"\n⚠️  A {monster['name']} appeared! ⚠️\n")
         
         # Display hero and monster stats side by side
-        hero = self.gui.game_state.hero
         self._display_vs_stats(hero, monster)
         
         def on_choice(choice):
@@ -36,6 +35,7 @@ class MonsterEncounterGUI:
                         self.gui.game_state.hero['gold'] += monster['gold']
                         self.gui.game_state.hero['xp'] += monster['xp']
                     else:
+                        sleep(20)
                         self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
                         self.gui.game_state.hero['gold'] = 0
                         self.gui.game_state.hero['lives_left'] -= 1
@@ -50,6 +50,42 @@ class MonsterEncounterGUI:
         
         self.gui.set_buttons(["⚔️ Fight", "🏃 Run", ""], on_choice)
     
+    def _display_hero_vs_monster_images(self, hero, monster):
+        """Display hero and monster images side by side in top frame"""
+        image_paths = []
+        
+        # Get hero image path
+        hero_class = hero.get('class', 'Warrior').lower()
+        hero_image_path = f"art/{hero_class.capitalize()}.png"
+        
+        try:
+            # Check if hero image exists
+            import os
+            if os.path.exists(hero_image_path):
+                image_paths.append(hero_image_path)
+            else:
+                # Use crossed swords as fallback for hero
+                image_paths.append('art/crossed_swords.png')
+        except:
+            image_paths.append('art/crossed_swords.png')
+        
+        # Get monster image path
+        if 'art' in monster and monster['art']:
+            try:
+                if os.path.exists(monster['art']):
+                    image_paths.append(monster['art'])
+                else:
+                    # Use crossed swords as fallback for monster
+                    image_paths.append('art/crossed_swords.png')
+            except:
+                image_paths.append('art/crossed_swords.png')
+        else:
+            # Default monster image
+            image_paths.append('art/crossed_swords.png')
+        
+        # Display both images side by side in the top frame
+        self.gui.show_images(image_paths, layout="horizontal")
+
     def _display_vs_stats(self, hero, monster):
         """Display hero and monster stats side by side"""
         # Create formatted side-by-side display

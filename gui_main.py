@@ -23,8 +23,13 @@ class GameGUI:
         self.root.geometry("800x1000")
         self.root.configure(bg='#1a1a1a')
         
-        # Disable keyboard input in the window (GUI only, no keyboard shortcuts)
-        self.root.bind('<Key>', lambda e: 'break')  # Block all keyboard events
+        # Enable keyboard shortcuts
+        self.root.bind('<KeyPress>', self._handle_keypress)
+        self.root.focus_set()  # Make sure window can receive key events
+        
+        # Keyboard shortcut state
+        self.keyboard_enabled = True
+        self.current_selected_button = 1  # Track which button is selected for arrow navigation
         
         # Game state
         self.game_state = None
@@ -322,16 +327,172 @@ class GameGUI:
         """Handle button clicks"""
         if self.current_action:
             self.current_action(button_num)
-    
+
+    def _handle_keypress(self, event):
+        """Handle keyboard shortcuts"""
+        if not self.keyboard_enabled:
+            return
+        
+        key = event.keysym.lower()
+        
+        # Universal shortcuts
+        if key == 'escape':
+            self._handle_escape()
+        elif key == 'space':
+            self._handle_space()
+        elif key == 'f1':
+            self._show_help()
+            
+        # Button shortcuts (1, 2, 3)
+        elif key in ['1', '2', '3']:
+            button_num = int(key)
+            if self.current_action and self._is_button_enabled(button_num):
+                self._highlight_button(button_num)
+                self.root.after(100, lambda: self.current_action(button_num))
+                
+        # Arrow key navigation
+        elif key == 'left':
+            self._navigate_buttons(-1)
+        elif key == 'right':
+            self._navigate_buttons(1)
+        elif key == 'return':  # Enter key
+            if self.current_action and self._is_button_enabled(self.current_selected_button):
+                self._highlight_button(self.current_selected_button)
+                self.root.after(100, lambda: self.current_action(self.current_selected_button))
+                
+        # Audio controls
+        elif key == 'm':
+            self._toggle_audio()
+        elif key == 'plus' or key == 'equal':
+            self.audio.adjust_volume(0.1)
+            self.print_text(f"🔊 Volume: {int(self.audio.get_volume() * 100)}%")
+        elif key == 'minus':
+            self.audio.adjust_volume(-0.1) 
+            self.print_text(f"🔉 Volume: {int(self.audio.get_volume() * 100)}%")
+
+    def _handle_escape(self):
+        """Handle ESC key - go back or show main menu"""
+        # For now, just show main menu - can be enhanced later
+        if hasattr(self, 'main_menu'):
+            self.main_menu()
+
+    def _handle_space(self):
+        """Handle SPACE key - continue or activate first enabled button"""
+        if self.current_action:
+            # Find first enabled button
+            for i in [1, 2, 3]:
+                if self._is_button_enabled(i):
+                    self._highlight_button(i)
+                    self.root.after(100, lambda btn=i: self.current_action(btn))
+                    break
+
+    def _show_help(self):
+        """Show keyboard shortcuts help"""
+        help_text = """
+🎮 Keyboard Shortcuts:
+━━━━━━━━━━━━━━━━━━━━━━━
+⌨️  General:
+   ESC - Back/Main Menu
+   SPACE - Continue/First Option
+   F1 - Show this help
+
+🎯 Navigation:
+   1, 2, 3 - Select buttons directly
+   ← → - Navigate between buttons
+   ENTER - Activate selected button
+
+🔊 Audio:
+   M - Mute/Unmute
+   + - Volume up
+   - - Volume down
+
+💡 Tip: Look for button highlights to see
+   which option is currently selected!
+"""
+        self.print_text(help_text)
+
+    def _navigate_buttons(self, direction):
+        """Navigate between buttons with arrow keys"""
+        if not self.current_action:
+            return
+            
+        # Find current button and move selection
+        new_button = self.current_selected_button + direction
+        
+        # Wrap around and find next enabled button
+        for _ in range(3):  # Maximum 3 attempts to find enabled button
+            if new_button < 1:
+                new_button = 3
+            elif new_button > 3:
+                new_button = 1
+                
+            if self._is_button_enabled(new_button):
+                self.current_selected_button = new_button
+                self._update_button_selection()
+                break
+                
+            new_button += direction
+
+    def _is_button_enabled(self, button_num):
+        """Check if a button is enabled"""
+        buttons = [self.btn1, self.btn2, self.btn3]
+        if 1 <= button_num <= 3:
+            return buttons[button_num - 1]['state'] == tk.NORMAL
+        return False
+
+    def _highlight_button(self, button_num):
+        """Briefly highlight a button when activated"""
+        buttons = [self.btn1, self.btn2, self.btn3]
+        if 1 <= button_num <= 3:
+            button = buttons[button_num - 1]
+            original_bg = button['bg']
+            button.configure(bg='#ffaa00')  # Orange highlight
+            self.root.after(200, lambda: button.configure(bg=original_bg))
+
+    def _update_button_selection(self):
+        """Update visual indication of which button is selected"""
+        buttons = [self.btn1, self.btn2, self.btn3]
+        for i, button in enumerate(buttons, 1):
+            if i == self.current_selected_button and self._is_button_enabled(i):
+                button.configure(relief='raised', bd=3)
+            else:
+                button.configure(relief='flat', bd=1)
+
+    def _toggle_audio(self):
+        """Toggle audio on/off"""
+        if hasattr(self.audio, 'toggle_mute'):
+            self.audio.toggle_mute()
+        else:
+            # Fallback implementation
+            current_vol = self.audio.get_volume()
+            if current_vol > 0:
+                self.audio.set_volume(0)
+                self.print_text("🔇 Audio muted")
+            else:
+                self.audio.set_volume(0.5)
+                self.print_text("🔊 Audio enabled")
+
     def set_buttons(self, labels, action_callback):
         """Set button labels and action"""
         for i, (btn, label) in enumerate(zip([self.btn1, self.btn2, self.btn3], labels)):
             if label:
-                btn.config(text=label, state=tk.NORMAL)
+                # Add keyboard shortcut hint to button text
+                shortcut_label = f"[{i+1}] {label}"
+                btn.config(text=shortcut_label, state=tk.NORMAL)
             else:
                 btn.config(text="", state=tk.DISABLED)
         
         self.current_action = action_callback
+        
+        # Reset selection to first enabled button
+        self.current_selected_button = 1
+        for i in [1, 2, 3]:
+            if self._is_button_enabled(i):
+                self.current_selected_button = i
+                break
+        
+        # Update visual selection
+        self._update_button_selection()
     
     def initialize_game(self):
         """Initialize the game"""
@@ -341,6 +502,9 @@ class GameGUI:
         self.print_text("=" * 60)
         self.print_text("Welcome to Monster Game!")
         self.print_text("=" * 60)
+        self.print_text("⌨️  Keyboard shortcuts enabled! Press F1 for help")
+        self.print_text("   Use 1-3 keys, arrows, SPACE, or ESC to navigate")
+        self.print_text("")
         
         # Initialize game state
         self.game_state = initialize_game_state()

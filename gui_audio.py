@@ -172,3 +172,25 @@ class Audio:
     def get_current_music(self):
         """Get the name of currently playing background music"""
         return self.current_background_music if self.background_music_playing else None
+    
+    def get_volume(self):
+        """Get current music volume (0.0 to 1.0)"""
+        return self.music_volume
+    
+    def set_volume(self, volume):
+        """Set overall volume (affects music)"""
+        self.set_music_volume(volume)
+    
+    def adjust_volume(self, delta):
+        """Adjust volume by delta amount"""
+        new_volume = max(0.0, min(1.0, self.music_volume + delta))
+        self.set_music_volume(new_volume)
+    
+    def toggle_mute(self):
+        """Toggle mute on/off"""
+        if self.music_volume > 0:
+            self._saved_volume = self.music_volume
+            self.set_music_volume(0)
+        else:
+            restored_volume = getattr(self, '_saved_volume', 0.5)
+            self.set_music_volume(restored_volume)
