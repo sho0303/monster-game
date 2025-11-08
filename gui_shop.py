@@ -18,9 +18,12 @@ class ShopGUI:
         if self.store_data is None:
             self._load_store()
         
+        # Set the shop background
+        self.gui.set_background_image('art/shop_background.png', '#654321')
+        
         self.gui.clear_text()
-        self.gui.show_image('art/pymart.txt')
-        self.gui.print_text("\n🛒 Welcome to PyMart! 🛒\n")
+        #self.gui.show_image('art/pymart.txt')
+        self.gui.print_text("\n🛒 Welcome to MonsterMart! 🛒\n")
         
         # Display gold with colored value
         gold_amount = self.gui.game_state.hero.get('gold', 0)
@@ -39,7 +42,7 @@ class ShopGUI:
     
     def _select_category(self):
         """Display categories and let user select"""
-        self.gui.show_image('art/monstermart.png')
+        #self.gui.show_image('art/monstermart.png')
         self.gui.print_text("=" * 60)
         self.gui.print_text("Select a category:")
         self.gui.print_text("=" * 60)

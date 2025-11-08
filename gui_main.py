@@ -21,7 +21,7 @@ class GameGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("MonsterGame")
-        self.root.geometry("800x1000")
+        self.root.geometry("800x1050")
         self.root.configure(bg='#1a1a1a')
         
         # Enable keyboard shortcuts
@@ -137,6 +137,38 @@ class GameGUI:
             print(f"Warning: Could not load background image: {e}")
             # Fallback to solid color
             self.image_canvas.configure(bg='#4a7c59')
+    
+    def set_background_image(self, background_path, fallback_color='#4a7c59'):
+        """Set a custom background image for the canvas"""
+        try:
+            # Get actual canvas dimensions
+            self.image_canvas.update_idletasks()
+            canvas_width = self.image_canvas.winfo_width()
+            canvas_height = self.image_canvas.winfo_height()
+            
+            # Use reasonable defaults if canvas isn't sized yet
+            if canvas_width <= 1:
+                canvas_width = 800
+            if canvas_height <= 1:
+                canvas_height = 400
+                
+            # Load and resize the background image
+            bg_img = Image.open(background_path)
+            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
+            self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
+            
+            # Clear canvas and draw new background
+            self.image_canvas.delete("all")
+            self.image_canvas.create_image(0, 0, image=self.bg_photo, anchor='nw', tags="background")
+            
+        except Exception as e:
+            print(f"Warning: Could not load background image {background_path}: {e}")
+            # Fallback to solid color
+            self.image_canvas.configure(bg=fallback_color)
+    
+    def reset_background(self):
+        """Reset to the default grassy background"""
+        self.set_background_image('art/grassy_background.png', '#4a7c59')
     
     def _get_canvas_dimensions(self):
         """Get current canvas dimensions, with fallback values"""
@@ -885,6 +917,10 @@ class GameGUI:
         """Display main menu"""
         """Check for level up event first"""
         self.hero_level()
+        
+        # Reset to default grassy background when returning to main menu
+        self.reset_background()
+        
         self.clear_text()
         self.show_image(f"art/{self.game_state.hero['class']}.png")
         

@@ -16,6 +16,9 @@ class MonsterEncounterGUI:
         if not monster:
             return
         
+        # Set the dungeon background for monster encounters
+        self.gui.set_background_image('art/dungeon_background.png', '#2d1f1a')
+        
         self.gui.clear_text()
         
         # Display hero and monster images side by side in top frame
