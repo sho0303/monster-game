@@ -97,42 +97,36 @@ class GameGUI:
         self.button_frame = tk.Frame(self.root, bg='#1a1a1a')
         self.button_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        # Create buttons (initially hidden)
-        self.btn1 = tk.Button(
-            self.button_frame, 
-            text="Option 1",
-            command=lambda: self.button_clicked(1),
-            bg='#4a4a4a',
-            fg='#ffffff',
-            font=('Arial', 12, 'bold'),
-            width=15
-        )
-        
-        self.btn2 = tk.Button(
-            self.button_frame,
-            text="Option 2", 
-            command=lambda: self.button_clicked(2),
-            bg='#4a4a4a',
-            fg='#ffffff',
-            font=('Arial', 12, 'bold'),
-            width=15
-        )
-        
-        self.btn3 = tk.Button(
-            self.button_frame,
-            text="Option 3",
-            command=lambda: self.button_clicked(3),
-            bg='#4a4a4a',
-            fg='#ffffff',
-            font=('Arial', 12, 'bold'),
-            width=15
-        )
-        
-        self.btn1.pack(side=tk.LEFT, padx=5)
-        self.btn2.pack(side=tk.LEFT, padx=5)
-        self.btn3.pack(side=tk.LEFT, padx=5)
+        # Dynamic button list (will be created as needed)
+        self.buttons = []
         
         self.current_action = None
+    
+    def _create_buttons(self, count):
+        """Create the specified number of buttons"""
+        # Clear existing buttons
+        self._clear_buttons()
+        
+        # Create new buttons
+        for i in range(count):
+            btn = tk.Button(
+                self.button_frame,
+                text=f"Option {i+1}",
+                command=lambda idx=i+1: self.button_clicked(idx),
+                bg='#4a4a4a',
+                fg='#ffffff',
+                font=('Arial', 12, 'bold'),
+                width=15,
+                state=tk.DISABLED
+            )
+            btn.pack(side=tk.LEFT, padx=5)
+            self.buttons.append(btn)
+    
+    def _clear_buttons(self):
+        """Remove all existing buttons"""
+        for btn in self.buttons:
+            btn.destroy()
+        self.buttons = []
     
     def show_image(self, image_path):
         """Display a single image in the image area (backwards compatible)"""
@@ -558,7 +552,7 @@ class GameGUI:
         """Handle SPACE key - continue or activate first enabled button"""
         if self.current_action:
             # Find first enabled button
-            for i in [1, 2, 3]:
+            for i in range(1, len(self.buttons) + 1):
                 if self._is_button_enabled(i):
                     self._highlight_button(i)
                     self.root.after(100, lambda btn=i: self.current_action(btn))
@@ -591,17 +585,18 @@ class GameGUI:
 
     def _navigate_buttons(self, direction):
         """Navigate between buttons with arrow keys"""
-        if not self.current_action:
+        if not self.current_action or not self.buttons:
             return
             
         # Find current button and move selection
         new_button = self.current_selected_button + direction
+        button_count = len(self.buttons)
         
         # Wrap around and find next enabled button
-        for _ in range(3):  # Maximum 3 attempts to find enabled button
+        for _ in range(button_count):  # Maximum button_count attempts to find enabled button
             if new_button < 1:
-                new_button = 3
-            elif new_button > 3:
+                new_button = button_count
+            elif new_button > button_count:
                 new_button = 1
                 
             if self._is_button_enabled(new_button):
@@ -613,24 +608,36 @@ class GameGUI:
 
     def _is_button_enabled(self, button_num):
         """Check if a button is enabled"""
-        buttons = [self.btn1, self.btn2, self.btn3]
-        if 1 <= button_num <= 3:
-            return buttons[button_num - 1]['state'] == tk.NORMAL
+        if 1 <= button_num <= len(self.buttons):
+            return self.buttons[button_num - 1]['state'] == tk.NORMAL
         return False
 
     def _highlight_button(self, button_num):
         """Briefly highlight a button when activated"""
-        buttons = [self.btn1, self.btn2, self.btn3]
-        if 1 <= button_num <= 3:
-            button = buttons[button_num - 1]
-            original_bg = button['bg']
-            button.configure(bg='#ffaa00')  # Orange highlight
-            self.root.after(200, lambda: button.configure(bg=original_bg))
+        if 1 <= button_num <= len(self.buttons):
+            button = self.buttons[button_num - 1]
+            try:
+                original_bg = button['bg']
+                button.configure(bg='#ffaa00')  # Orange highlight
+                
+                # Safe reset function that checks if button still exists
+                def safe_reset():
+                    try:
+                        # Check if button still exists and hasn't been destroyed
+                        if button.winfo_exists():
+                            button.configure(bg=original_bg)
+                    except tk.TclError:
+                        # Button was destroyed, ignore the error
+                        pass
+                
+                self.root.after(200, safe_reset)
+            except tk.TclError:
+                # Button was destroyed before we could highlight it, ignore
+                pass
 
     def _update_button_selection(self):
         """Update visual indication of which button is selected"""
-        buttons = [self.btn1, self.btn2, self.btn3]
-        for i, button in enumerate(buttons, 1):
+        for i, button in enumerate(self.buttons, 1):
             if i == self.current_selected_button and self._is_button_enabled(i):
                 button.configure(relief='raised', bd=3)
             else:
@@ -655,19 +662,24 @@ class GameGUI:
         # Unlock interface when new buttons are being set
         self.keyboard_enabled = True
         
-        for i, (btn, label) in enumerate(zip([self.btn1, self.btn2, self.btn3], labels)):
-            if label:
+        # Filter out empty labels to get actual button count
+        filtered_labels = [label for label in labels if label and label.strip()]
+        
+        # Create the right number of buttons
+        self._create_buttons(len(filtered_labels))
+        
+        # Configure buttons with labels
+        for i, label in enumerate(filtered_labels):
+            if i < len(self.buttons):
                 # Add keyboard shortcut hint to button text
                 shortcut_label = f"[{i+1}] {label}"
-                btn.config(text=shortcut_label, state=tk.NORMAL)
-            else:
-                btn.config(text="", state=tk.DISABLED)
+                self.buttons[i].config(text=shortcut_label, state=tk.NORMAL)
         
         self.current_action = action_callback
         
         # Reset selection to first enabled button
         self.current_selected_button = 1
-        for i in [1, 2, 3]:
+        for i in range(1, len(self.buttons) + 1):
             if self._is_button_enabled(i):
                 self.current_selected_button = i
                 break
@@ -680,8 +692,7 @@ class GameGUI:
         self.keyboard_enabled = False
         
         # Disable all buttons and show locked state
-        buttons = [self.btn1, self.btn2, self.btn3]
-        for btn in buttons:
+        for btn in self.buttons:
             btn.config(state=tk.DISABLED, text="🔒 Processing...")
         
         # Clear current action to prevent button clicks

@@ -61,7 +61,7 @@ class MonsterEncounterGUI:
                 # Attempt to run away with 50% chance of monster attack
                 self._attempt_run_away(monster)
         
-        self.gui.set_buttons(["⚔️ Fight", "🏃 Run", ""], on_choice)
+        self.gui.set_buttons(["⚔️ Fight", "🏃 Run"], on_choice)
     
     def _attempt_run_away(self, monster):
         """Attempt to run away with 50% chance of monster attack"""
