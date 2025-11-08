@@ -110,12 +110,13 @@ class GameGUI:
         )
         self.text_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
         
-        # Button frame
+        # Button frame container
         self.button_frame = tk.Frame(self.root, bg='#1a1a1a')
         self.button_frame.pack(fill=tk.X, padx=10, pady=10)
         
         # Dynamic button list (will be created as needed)
         self.buttons = []
+        self.button_rows = []  # Track button row frames
         
         self.current_action = None
     
@@ -273,30 +274,60 @@ class GameGUI:
         self.canvas_images.clear()
     
     def _create_buttons(self, count):
-        """Create the specified number of buttons"""
+        """Create the specified number of buttons in rows of 3"""
         # Clear existing buttons
         self._clear_buttons()
         
-        # Create new buttons
-        for i in range(count):
-            btn = tk.Button(
-                self.button_frame,
-                text=f"Option {i+1}",
-                command=lambda idx=i+1: self.button_clicked(idx),
-                bg='#4a4a4a',
-                fg='#ffffff',
-                font=('Arial', 12, 'bold'),
-                width=15,
-                state=tk.DISABLED
-            )
-            btn.pack(side=tk.LEFT, padx=5)
-            self.buttons.append(btn)
+        # Calculate number of rows needed (3 buttons per row)
+        buttons_per_row = 3
+        num_rows = (count + buttons_per_row - 1) // buttons_per_row
+        
+        # Create button rows
+        for row in range(num_rows):
+            # Create frame for this row
+            row_frame = tk.Frame(self.button_frame, bg='#1a1a1a')
+            row_frame.pack(pady=2, fill=tk.X)
+            self.button_rows.append(row_frame)
+            
+            # Calculate buttons for this row
+            start_btn = row * buttons_per_row
+            end_btn = min(start_btn + buttons_per_row, count)
+            buttons_in_row = end_btn - start_btn
+            
+            # Create buttons for this row
+            for i in range(start_btn, end_btn):
+                btn = tk.Button(
+                    row_frame,
+                    text=f"Option {i+1}",
+                    command=lambda idx=i+1: self.button_clicked(idx),
+                    bg='#4a4a4a',
+                    fg='#ffffff',
+                    font=('Arial', 11, 'bold'),
+                    width=22,  # Wider buttons since we have fewer per row
+                    height=2,  # Slightly taller for better appearance
+                    state=tk.DISABLED
+                )
+                
+                # Center buttons in row - calculate padding
+                if buttons_in_row < buttons_per_row:
+                    # For partial rows, add extra spacing to center buttons
+                    side_padding = 10
+                else:
+                    side_padding = 5
+                
+                btn.pack(side=tk.LEFT, padx=side_padding, expand=True, fill=tk.X)
+                self.buttons.append(btn)
     
     def _clear_buttons(self):
-        """Remove all existing buttons"""
+        """Remove all existing buttons and row frames"""
         for btn in self.buttons:
             btn.destroy()
         self.buttons = []
+        
+        # Clear button row frames
+        for row_frame in self.button_rows:
+            row_frame.destroy()
+        self.button_rows = []
     
     def show_image(self, image_path):
         """Display a single image using canvas for proper background compositing"""
@@ -666,11 +697,15 @@ class GameGUI:
                 self._highlight_button(button_num)
                 self.root.after(100, lambda: self.current_action(button_num))
                 
-        # Arrow key navigation
+        # Arrow key navigation (grid-based)
         elif key == 'left':
-            self._navigate_buttons(-1)
+            self._navigate_buttons_grid('left')
         elif key == 'right':
-            self._navigate_buttons(1)
+            self._navigate_buttons_grid('right')
+        elif key == 'up':
+            self._navigate_buttons_grid('up')
+        elif key == 'down':
+            self._navigate_buttons_grid('down')
         elif key == 'return':  # Enter key
             if self.current_action and self._is_button_enabled(self.current_selected_button):
                 self._highlight_button(self.current_selected_button)
@@ -718,7 +753,7 @@ class GameGUI:
 
 🎯 Navigation:
    1-9, 0 - Select buttons directly (0 = button 10)
-   ← → - Navigate between buttons
+   ← → ↑ ↓ - Navigate button grid (3 buttons per row)
    ENTER - Activate selected button
 
 🔊 Audio:
@@ -817,27 +852,81 @@ class GameGUI:
         self.root.after(1000, show_teleport_result)
 
     def _navigate_buttons(self, direction):
-        """Navigate between buttons with arrow keys"""
+        """Legacy navigation - now uses grid navigation"""
+        if direction == -1:
+            self._navigate_buttons_grid('left')
+        elif direction == 1:
+            self._navigate_buttons_grid('right')
+    
+    def _navigate_buttons_grid(self, direction):
+        """Navigate between buttons in grid layout with arrow keys"""
         if not self.current_action or not self.buttons:
             return
-            
-        # Find current button and move selection
-        new_button = self.current_selected_button + direction
-        button_count = len(self.buttons)
         
-        # Wrap around and find next enabled button
-        for _ in range(button_count):  # Maximum button_count attempts to find enabled button
-            if new_button < 1:
-                new_button = button_count
-            elif new_button > button_count:
-                new_button = 1
+        button_count = len(self.buttons)
+        buttons_per_row = 3
+        
+        # Get current position (0-based for calculations)
+        current_index = self.current_selected_button - 1
+        current_row = current_index // buttons_per_row
+        current_col = current_index % buttons_per_row
+        
+        # Calculate new position based on direction
+        new_row = current_row
+        new_col = current_col
+        
+        if direction == 'left':
+            new_col -= 1
+            if new_col < 0:
+                # Wrap to end of previous row
+                new_row -= 1
+                if new_row < 0:
+                    # Wrap to last row
+                    new_row = (button_count - 1) // buttons_per_row
+                new_col = min(buttons_per_row - 1, (button_count - 1) % buttons_per_row if new_row == (button_count - 1) // buttons_per_row else buttons_per_row - 1)
                 
+        elif direction == 'right':
+            new_col += 1
+            max_col_in_row = min(buttons_per_row - 1, (button_count - 1) % buttons_per_row if current_row == (button_count - 1) // buttons_per_row else buttons_per_row - 1)
+            if new_col > max_col_in_row:
+                # Wrap to start of next row
+                new_row += 1
+                new_col = 0
+                if new_row * buttons_per_row >= button_count:
+                    # Wrap to first row
+                    new_row = 0
+                    
+        elif direction == 'up':
+            new_row -= 1
+            if new_row < 0:
+                # Wrap to last row, same column if possible
+                new_row = (button_count - 1) // buttons_per_row
+                # Adjust column if last row doesn't have enough buttons
+                max_col_in_last_row = (button_count - 1) % buttons_per_row
+                if new_col > max_col_in_last_row:
+                    new_col = max_col_in_last_row
+                    
+        elif direction == 'down':
+            new_row += 1
+            max_row = (button_count - 1) // buttons_per_row
+            if new_row > max_row:
+                # Wrap to first row
+                new_row = 0
+            else:
+                # Check if new position exists (for partial last row)
+                max_col_in_row = (button_count - 1) % buttons_per_row if new_row == max_row else buttons_per_row - 1
+                if new_col > max_col_in_row:
+                    new_col = max_col_in_row
+        
+        # Convert back to 1-based button number
+        new_button_index = new_row * buttons_per_row + new_col
+        if 0 <= new_button_index < button_count:
+            new_button = new_button_index + 1
+            
+            # Check if button is enabled and update selection
             if self._is_button_enabled(new_button):
                 self.current_selected_button = new_button
                 self._update_button_selection()
-                break
-                
-            new_button += direction
 
     def _is_button_enabled(self, button_num):
         """Check if a button is enabled"""
