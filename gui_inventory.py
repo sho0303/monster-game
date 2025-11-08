@@ -20,6 +20,8 @@ class InventoryGUI:
             return
         
         if hero['item']['name'] == 'Health Potion':
+            # Play gulp sound when drinking the potion
+            self.gui.audio.play_sound_effect('gulp.mp3')
             hero['hp'] = hero['maxhp']
             self.gui.print_text(f"\n✓ Used {hero['item']['name']}! HP restored to {hero['hp']}!")
             hero['item'] = None

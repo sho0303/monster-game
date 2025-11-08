@@ -207,12 +207,116 @@ class MonsterEncounterGUI:
             # Default monster image
             image_paths.append('art/crossed_swords.png')
         
-        # Display both images side by side in the top frame
-        self.gui.show_images(image_paths, layout="horizontal")
-        
-        # Store current images for combat animations
+        # Store images for animated entrance
         self.current_hero_image = image_paths[0]
         self.current_monster_image = image_paths[1] if len(image_paths) > 1 else 'art/crossed_swords.png'
+        
+        # Start animated entrance instead of static display
+        self._animate_character_entrances()
+    
+    def _animate_character_entrances(self):
+        """Animate hero and monster walking in from opposite sides"""
+        # Clear the canvas first
+        self.gui._clear_foreground_images()
+        
+        # Get canvas dimensions for positioning
+        canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+        
+        # Calculate final positions (same as horizontal layout in show_images)
+        img_size = min(canvas_width // 3, canvas_height // 2, 120)
+        spacing_x = canvas_width // 3
+        start_y = (canvas_height - img_size) // 2
+        
+        # Final positions for hero (left) and monster (right)
+        hero_final_x = spacing_x - img_size // 2
+        monster_final_x = 2 * spacing_x - img_size // 2
+        final_y = start_y
+        
+        # Starting positions (off-screen)
+        hero_start_x = -img_size  # Off-screen left
+        monster_start_x = canvas_width  # Off-screen right
+        
+        # Animation parameters
+        self.animation_step = 0
+        self.animation_steps = 15  # Number of animation frames (reduced for faster entrance)
+        self.hero_current_x = hero_start_x
+        self.monster_current_x = monster_start_x
+        
+        # Calculate movement per step
+        self.hero_step_x = (hero_final_x - hero_start_x) / self.animation_steps
+        self.monster_step_x = (monster_final_x - monster_start_x) / self.animation_steps
+        
+        # Store final positions and image size for animation
+        self.hero_final_x = hero_final_x
+        self.monster_final_x = monster_final_x
+        self.final_y = final_y
+        self.img_size = img_size
+        
+        # Start the animation
+        self._update_entrance_animation()
+    
+    def _update_entrance_animation(self):
+        """Update one frame of the entrance animation"""
+        # Clear previous frame
+        self.gui._clear_foreground_images()
+        
+        # Calculate animation progress (0.0 to 1.0)
+        progress = self.animation_step / self.animation_steps
+        
+        # Apply easing for smoother animation (ease-out effect)
+        eased_progress = 1 - (1 - progress) ** 2
+        
+        # Calculate current positions using eased progress
+        hero_start_x = -self.img_size
+        monster_start_x = self.gui._get_canvas_dimensions()[0]
+        
+        self.hero_current_x = hero_start_x + (self.hero_final_x - hero_start_x) * eased_progress
+        self.monster_current_x = monster_start_x + (self.monster_final_x - monster_start_x) * eased_progress
+        
+        # Add hero image at current position
+        hero_id = self.gui._add_canvas_image(
+            self.current_hero_image, 
+            int(self.hero_current_x), 
+            self.final_y, 
+            self.img_size, 
+            self.img_size
+        )
+        
+        # Add monster image at current position
+        monster_id = self.gui._add_canvas_image(
+            self.current_monster_image, 
+            int(self.monster_current_x), 
+            self.final_y, 
+            self.img_size, 
+            self.img_size
+        )
+        
+        # Continue animation or finish
+        self.animation_step += 1
+        if self.animation_step < self.animation_steps:
+            # Schedule next frame
+            self.gui.root.after(40, self._update_entrance_animation)  # 40ms per frame for smoother animation
+        else:
+            # Animation complete - ensure final positions are exact
+            self.gui._clear_foreground_images()
+            self.gui._add_canvas_image(
+                self.current_hero_image, 
+                self.hero_final_x, 
+                self.final_y, 
+                self.img_size, 
+                self.img_size
+            )
+            self.gui._add_canvas_image(
+                self.current_monster_image, 
+                self.monster_final_x, 
+                self.final_y, 
+                self.img_size, 
+                self.img_size
+            )
+            
+            # Optional: Play a subtle encounter sound when animation completes
+            # (You can uncomment this if you want sound feedback)
+            # self.gui.audio.play_sound_effect('encounter.mp3')
 
     def _display_vs_stats(self, hero, monster):
         """Display hero and monster stats side by side"""
