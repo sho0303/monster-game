@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import scrolledtext
 from PIL import Image, ImageTk
 from time import sleep
+import logging
 
 from game_state import initialize_game_state
 from gui_audio import Audio
@@ -25,9 +26,6 @@ class GameGUI:
         self.root.geometry("800x1050")
         self.root.configure(bg='#1a1a1a')
         
-        # Set minimum window size to ensure usability
-        self.root.minsize(600, 700)  # Minimum size for reasonable gameplay
-        
         # Additional window management for foreground display
         try:
             # Ensure window appears in front and gets focus
@@ -40,12 +38,6 @@ class GameGUI:
             self.root.after(200, lambda: self.root.attributes('-topmost', False))
         except Exception as e:
             print(f"Warning: Could not configure window display: {e}")
-        
-        # Bind window resize event
-        self.root.bind('<Configure>', self._on_window_resize)
-        
-        # Track last window size to avoid unnecessary updates
-        self._last_window_size = (800, 1050)
         
         # Enable keyboard shortcuts
         self.root.bind('<KeyPress>', self._handle_keypress)
@@ -74,54 +66,9 @@ class GameGUI:
         # Start game initialization
         self.root.after(100, self.initialize_game)
     
-    def _on_window_resize(self, event):
-        """Handle window resize events"""
-        # Only handle resize events for the main window (root)
-        if event.widget != self.root:
-            return
-            
-        # Get current window size
-        current_size = (self.root.winfo_width(), self.root.winfo_height())
-        
-        # Only update if size actually changed (avoids unnecessary updates)
-        if current_size != self._last_window_size:
-            self._last_window_size = current_size
-            
-            # Schedule layout update after a brief delay to avoid excessive updates
-            # during continuous resizing
-            if hasattr(self, '_resize_timer'):
-                self.root.after_cancel(self._resize_timer)
-            self._resize_timer = self.root.after(150, self._update_layout_for_resize)
-    
-    def _update_layout_for_resize(self):
-        """Update layout elements after window resize"""
-        try:
-            # Update canvas background to match new size
-            if hasattr(self, 'image_canvas'):
-                self._update_canvas_background()
-                
-            # If we have a current image being displayed, refresh its position
-            if hasattr(self, '_current_displayed_image') and self._current_displayed_image:
-                self._refresh_displayed_image()
-                
-        except Exception as e:
-            print(f"Warning: Error updating layout after resize: {e}")
-    
-    def _refresh_displayed_image(self):
-        """Refresh the currently displayed image to center it properly after resize"""
-        try:
-            if hasattr(self, '_current_displayed_image') and self._current_displayed_image:
-                # Re-show the current image to reposition it
-                if isinstance(self._current_displayed_image, list):
-                    self.show_images(self._current_displayed_image)
-                else:
-                    self.show_image(self._current_displayed_image)
-        except Exception as e:
-            print(f"Warning: Error refreshing displayed image: {e}")
-    
     def _create_widgets(self):
         """Create the GUI widgets"""
-        # Top frame container for the canvas - allow natural sizing
+        # Top frame container for the canvas - fixed size container
         self.image_frame = tk.Frame(
             self.root, 
             relief='flat',
@@ -130,18 +77,19 @@ class GameGUI:
         )
         
         # Create canvas for proper image compositing without transparency issues
+        # Fixed size canvas that won't resize with window
         self.image_canvas = tk.Canvas(
             self.image_frame,
             highlightthickness=0,
             relief='flat',
             bd=0,
-            width=400,  # Reduced initial size, will expand automatically
-            height=300  # Reduced initial size, will expand automatically
+            width=800,  # Fixed width
+            height=400  # Fixed height
         )
-        self.image_frame.pack(fill=tk.BOTH, pady=10, padx=5, expand=True)
+        self.image_frame.pack(pady=10, padx=5)  # Removed fill=tk.BOTH to prevent expansion
         
-        # Pack the canvas to fill the frame completely and expand with window
-        self.image_canvas.pack(fill=tk.BOTH, expand=True)
+        # Pack the canvas with fixed size (no expand or fill)
+        self.image_canvas.pack()
         
         # Set background image for the canvas
         self._set_frame_background()
@@ -149,12 +97,12 @@ class GameGUI:
         # Track current image layout mode
         self.current_image_layout = "single"
         
-        # Text output area (read-only) - responsive sizing
+        # Text output area (read-only)
         self.text_area = scrolledtext.ScrolledText(
             self.root, 
             wrap=tk.WORD,
-            width=60,   # Reduced width, will expand with window
-            height=12,  # Reduced height, will expand with window
+            width=80,
+            height=15,
             bg='#2a2a2a',
             fg='#00ff00',
             font=('Courier', 10),
@@ -182,68 +130,34 @@ class GameGUI:
         self.canvas_images = []  # Keep references to prevent GC
     
     def _update_canvas_background(self):
-        """Update the canvas background after the canvas is properly sized"""
+        """Update the canvas background using fixed canvas size"""
         try:
-            # Get actual canvas dimensions using our improved method
-            canvas_width, canvas_height = self._get_canvas_dimensions()
+            # Use fixed canvas dimensions (800x400)
+            canvas_width = 800
+            canvas_height = 400
+                
+            # Load the grassy background image
+            bg_img = Image.open('art/grassy_background.png')
             
-            # Determine which background image to use based on current biome
-            current_biome = getattr(self, 'current_biome', 'grassland')
-            biome_configs = {
-                'grassland': {
-                    'background': 'art/grassy_background.png',
-                    'fallback_color': '#4a7c59'
-                },
-                'desert': {
-                    'background': 'art/desert_background.png', 
-                    'fallback_color': '#daa520'
-                },
-                'dungeon': {
-                    'background': 'art/dungeon_background.png',
-                    'fallback_color': '#2d1f1a'
-                }
-            }
-            
-            # Get config for current biome, default to grassland
-            config = biome_configs.get(current_biome, biome_configs['grassland'])
-            
-            # Load and resize background image
-            bg_img = Image.open(config['background'])
-            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.LANCZOS)
+            # Resize to fixed canvas dimensions
+            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
             self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
             
             # Clear canvas and draw background
-            self.image_canvas.delete("background")  # Only clear background, keep foreground
+            self.image_canvas.delete("all")
             self.image_canvas.create_image(0, 0, image=self.bg_photo, anchor='nw', tags="background")
-            
-            # Ensure background is behind foreground elements
-            self.image_canvas.tag_lower("background")
             
         except Exception as e:
             print(f"Warning: Could not load background image: {e}")
-            # Fallback to solid color based on current biome
-            current_biome = getattr(self, 'current_biome', 'grassland')
-            fallback_colors = {
-                'grassland': '#4a7c59',
-                'desert': '#daa520', 
-                'dungeon': '#2d1f1a'
-            }
-            fallback_color = fallback_colors.get(current_biome, '#4a7c59')
-            self.image_canvas.configure(bg=fallback_color)
+            # Fallback to solid color
+            self.image_canvas.configure(bg='#4a7c59')
     
     def set_background_image(self, background_path, fallback_color='#4a7c59'):
         """Set a custom background image for the canvas"""
         try:
-            # Get actual canvas dimensions
-            self.image_canvas.update_idletasks()
-            canvas_width = self.image_canvas.winfo_width()
-            canvas_height = self.image_canvas.winfo_height()
-            
-            # Use reasonable defaults if canvas isn't sized yet
-            if canvas_width <= 1:
-                canvas_width = 800
-            if canvas_height <= 1:
-                canvas_height = 400
+            # Use fixed canvas dimensions (800x400)
+            canvas_width = 800
+            canvas_height = 400
                 
             # Load and resize the background image
             bg_img = Image.open(background_path)
@@ -281,6 +195,10 @@ class GameGUI:
             'dungeon': {
                 'background': 'art/dungeon_background.png',
                 'fallback_color': '#2d1f1a'
+            },
+            'ocean': {
+                'background': 'art/ocean_background.png',
+                'fallback_color': '#0077be'
             }
         }
         
@@ -298,22 +216,9 @@ class GameGUI:
         self.set_background_image('art/shop_background.png', '#654321')
     
     def _get_canvas_dimensions(self):
-        """Get current canvas dimensions, with fallback values"""
-        self.image_canvas.update_idletasks()
-        width = self.image_canvas.winfo_width()
-        height = self.image_canvas.winfo_height()
-        
-        # Fallback to reasonable defaults based on window size if not sized yet
-        if width <= 1 or height <= 1:
-            # Use window size as basis for fallback
-            window_width = self.root.winfo_width()
-            window_height = self.root.winfo_height()
-            
-            # Estimate canvas size based on window proportions
-            width = max(400, window_width - 40)  # Account for padding
-            height = max(300, int(window_height * 0.4))  # About 40% of window height
-            
-        return width, height
+        """Get fixed canvas dimensions"""
+        # Return fixed canvas dimensions (no dynamic sizing)
+        return 800, 400
     
     def _add_canvas_image(self, image_path, x, y, width=None, height=None, tags="foreground"):
         """Add an image to the canvas at the specified position
@@ -350,10 +255,6 @@ class GameGUI:
         """Clear all foreground images from canvas"""
         self.image_canvas.delete("foreground")
         self.canvas_images.clear()
-        
-        # Clear tracked image when clearing display
-        if hasattr(self, '_current_displayed_image'):
-            self._current_displayed_image = None
     
     def _create_buttons(self, count):
         """Create the specified number of buttons in rows of 3"""
@@ -417,9 +318,6 @@ class GameGUI:
             # If a list is passed, use show_images instead
             self.show_images(image_path)
             return
-        
-        # Track current image for resize handling
-        self._current_displayed_image = image_path
             
         # Clear existing foreground images
         self._clear_foreground_images()
@@ -461,9 +359,6 @@ class GameGUI:
         """
         if not image_paths:
             return
-        
-        # Track current images for resize handling
-        self._current_displayed_image = image_paths
         
         # If single image, fall back to show_image
         if len(image_paths) == 1:
@@ -812,10 +707,6 @@ class GameGUI:
         # Biome switching (for testing)
         elif key == 'b':
             self._cycle_biomes()
-            
-        # Window management
-        elif key == 'f11':
-            self._toggle_fullscreen()
 
     def _handle_escape(self):
         """Handle ESC key - go back or show main menu"""
@@ -854,15 +745,10 @@ class GameGUI:
    - - Volume down
 
 🏜️ Testing:
-   B - Cycle biomes (Grassland → Desert → Dungeon)
+   B - Cycle biomes (Grassland → Desert → Dungeon → Ocean)
 
-�️ Window:
-   F11 - Toggle fullscreen mode
-   
-�💡 Tips: 
-   • Resize window by dragging corners/edges
-   • Use F11 for fullscreen gaming experience
-   • Look for button highlights to see selected option
+💡 Tip: Look for button highlights to see
+   which option is currently selected!
 """
         self.print_text(help_text)
         
@@ -872,7 +758,7 @@ class GameGUI:
         if not hasattr(self, 'current_biome') or self.current_biome is None:
             self.current_biome = 'grassland'
             
-        biomes = ['grassland', 'desert', 'dungeon']
+        biomes = ['grassland', 'desert', 'dungeon', 'ocean']
         current_index = biomes.index(self.current_biome) if self.current_biome in biomes else 0
         next_index = (current_index + 1) % len(biomes)
         next_biome = biomes[next_index]
@@ -884,7 +770,8 @@ class GameGUI:
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
-            'dungeon': '🏰'
+            'dungeon': '🏰',
+            'ocean': '🌊'
         }
         emoji = biome_emojis.get(next_biome, '🌍')
         self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
@@ -897,12 +784,15 @@ class GameGUI:
         """Teleport to a random biome different from the current one"""
         import random
         
+        # Lock interface to prevent interruptions during teleportation
+        self.lock_interface()
+        
         # Ensure current_biome is initialized
         if not hasattr(self, 'current_biome') or self.current_biome is None:
             self.current_biome = 'grassland'
         
         # Available biomes
-        available_biomes = ['grassland', 'desert', 'dungeon']
+        available_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
         
         # Remove current biome from options
         other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
@@ -917,13 +807,15 @@ class GameGUI:
         biome_descriptions = {
             'grassland': '🌱 Rolling green meadows stretch before you...',
             'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
-            'dungeon': '🏰 Cold stone walls echo with mysterious sounds...'
+            'dungeon': '🏰 Cold stone walls echo with mysterious sounds...',
+            'ocean': '🌊 Crystal blue waters and coral reefs surround you...'
         }
         
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
-            'dungeon': '🏰'
+            'dungeon': '🏰',
+            'ocean': '🌊'
         }
         
         emoji = biome_emojis.get(new_biome, '🌍')
@@ -947,28 +839,6 @@ class GameGUI:
         
         # Show result after teleportation delay
         self.root.after(1000, show_teleport_result)
-
-    def _toggle_fullscreen(self):
-        """Toggle between fullscreen and windowed mode"""
-        try:
-            # Get current fullscreen state
-            is_fullscreen = self.root.attributes('-fullscreen')
-            
-            # Toggle fullscreen
-            self.root.attributes('-fullscreen', not is_fullscreen)
-            
-            # Show status message
-            if not is_fullscreen:
-                self.print_text("🖥️ Entered fullscreen mode (F11 to exit)")
-            else:
-                self.print_text("🗔 Exited fullscreen mode")
-                
-            # Force layout update after fullscreen toggle
-            self.root.after(100, self._update_layout_for_resize)
-            
-        except Exception as e:
-            print(f"Warning: Could not toggle fullscreen: {e}")
-            self.print_text("⚠️ Fullscreen toggle not supported on this system")
 
     def _navigate_buttons(self, direction):
         """Legacy navigation - now uses grid navigation"""
@@ -1347,12 +1217,14 @@ class GameGUI:
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
-            'dungeon': '🏰'
+            'dungeon': '🏰',
+            'ocean': '🌊'
         }
         biome_colors = {
             'grassland': '#4a7c59',
             'desert': '#daa520', 
-            'dungeon': '#8b4513'
+            'dungeon': '#8b4513',
+            'ocean': '#0077be'
         }
         
         current_biome = getattr(self, 'current_biome', 'grassland')

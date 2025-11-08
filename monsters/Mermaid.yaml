@@ -1,0 +1,11 @@
+Enchanted Mermaid:
+  name: Enchanted Mermaid
+  hp: 12
+  maxhp: 12
+  attack: 2
+  defense: 1
+  gold: 15
+  level: 2
+  xp: 2
+  art: art/mermaid_monster.png
+  biome: ocean

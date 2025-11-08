@@ -40,12 +40,14 @@ class MonsterEncounterGUI:
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
-            'dungeon': '🏰'
+            'dungeon': '🏰',
+            'ocean': '🌊'
         }
         biome_encounters = {
             'grassland': 'emerges from the tall grass',
             'desert': 'rises from the sand dunes', 
-            'dungeon': 'lurks in the shadows'
+            'dungeon': 'lurks in the shadows',
+            'ocean': 'surfaces from the depths'
         }
         
         emoji = biome_emojis.get(current_biome, '🌍')
@@ -475,7 +477,7 @@ class MonsterEncounterGUI:
             # Show each active quest with progress indicators
             for i, quest in enumerate(active_quests, 1):
                 # Get biome emoji for quest context
-                biome_emojis = {'grassland': '🌱', 'desert': '🏜️', 'dungeon': '🏰'}
+                biome_emojis = {'grassland': '🌱', 'desert': '🏜️', 'dungeon': '🏰', 'ocean': '🌊'}
                 
                 # Determine biome from quest description
                 quest_biome = 'grassland'  # default
@@ -483,6 +485,8 @@ class MonsterEncounterGUI:
                     quest_biome = 'desert'
                 elif 'dark dungeons' in quest.description.lower():
                     quest_biome = 'dungeon'
+                elif 'ocean depths' in quest.description.lower():
+                    quest_biome = 'ocean'
                 elif 'grasslands' in quest.description.lower():
                     quest_biome = 'grassland'
                 

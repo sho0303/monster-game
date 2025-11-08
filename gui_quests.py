@@ -119,7 +119,8 @@ class QuestManager:
         biome_descriptions = {
             'grassland': f"Hunt a {monster_name} in the grasslands",
             'desert': f"Defeat a {monster_name} in the desert sands", 
-            'dungeon': f"Slay a {monster_name} in the dark dungeons"
+            'dungeon': f"Slay a {monster_name} in the dark dungeons",
+            'ocean': f"Battle a {monster_name} in the ocean depths"
         }
         
         quest_description = biome_descriptions.get(current_biome, f"Kill a {monster_name}")

@@ -20,7 +20,7 @@ def test_biome_quest_generation():
     print("=" * 50)
     
     # Test each biome
-    for biome in ['grassland', 'desert', 'dungeon']:
+    for biome in ['grassland', 'desert', 'dungeon', 'ocean']:
         print(f"\n📍 Testing {biome.title()} Biome:")
         
         # Filter monsters by biome (same logic as quest system)
