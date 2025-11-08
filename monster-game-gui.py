@@ -169,6 +169,20 @@ def initialize_game():
         logging.info("Creating main window...")
         root = tk.Tk()
         
+        # Bring window to foreground on Windows
+        try:
+            # Force window to appear on top initially
+            root.wm_attributes("-topmost", 1)
+            root.focus_force()
+            root.lift()
+            
+            # Remove topmost after window is shown (so it doesn't stay always on top)
+            root.after(100, lambda: root.wm_attributes("-topmost", 0))
+            
+            logging.info("Window configured to appear in foreground")
+        except Exception as e:
+            logging.warning(f"Could not configure window foreground behavior: {e}")
+        
         logging.info("Initializing game GUI...")
         game = GameGUI(root)
         

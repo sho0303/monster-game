@@ -8,3 +8,4 @@ MadDog:
   level: 1
   xp: 1
   art: art/maddog_monster.png
+  biome: dungeon

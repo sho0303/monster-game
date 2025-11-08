@@ -8,3 +8,4 @@ Dragon:
   level: 5
   xp: 5
   art: art/hydra_monster.png
+  biome: dungeon

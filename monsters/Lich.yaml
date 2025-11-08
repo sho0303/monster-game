@@ -8,3 +8,4 @@ Undead:
   level: 7
   xp: 7
   art: art/lich_monster.png
+  biome: dungeon

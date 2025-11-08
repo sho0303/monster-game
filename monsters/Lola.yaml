@@ -8,3 +8,4 @@ Dog:
   level: 2
   xp: 2
   art: art/lola_monster.png
+  biome: dungeon

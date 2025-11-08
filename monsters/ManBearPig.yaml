@@ -8,3 +8,4 @@ ManBearPig:
   level: 3
   xp: 3
   art: art/manbearpig_monster.png
+  biome: dungeon

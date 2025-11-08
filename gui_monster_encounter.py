@@ -10,14 +10,21 @@ class MonsterEncounterGUI:
     def __init__(self, gui):
         self.gui = gui
     
+    def set_background(self, biome_name):
+        """Set background for monster encounters (called when biome changes)"""
+        # If we're currently in a monster encounter, update the background
+        # This method is called from the biome cycling system
+        if hasattr(self.gui, 'current_action') and self.gui.current_action:
+            self.gui.set_biome_background(biome_name)
+    
     def start(self):
         """Start monster encounter"""
         monster = self._select_random_monster()
         if not monster:
             return
         
-        # Set the dungeon biome background for monster encounters  
-        self.gui.set_biome_background('dungeon')
+        # Keep the current biome background for immersive encounters
+        # (Don't change the background - use whatever biome the player is in)
         
         self.gui.clear_text()
         
@@ -25,7 +32,28 @@ class MonsterEncounterGUI:
         hero = self.gui.game_state.hero
         self._display_hero_vs_monster_images(hero, monster)
         
-        self.gui.print_text(f"\n⚠️  A {monster['name']} appeared! ⚠️\n")
+        # Show biome-specific encounter message
+        current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        biome_emojis = {
+            'grassland': '🌱',
+            'desert': '🏜️', 
+            'dungeon': '🏰'
+        }
+        biome_encounters = {
+            'grassland': 'emerges from the tall grass',
+            'desert': 'rises from the sand dunes', 
+            'dungeon': 'lurks in the shadows'
+        }
+        
+        emoji = biome_emojis.get(current_biome, '🌍')
+        encounter_desc = biome_encounters.get(current_biome, 'appears before you')
+        
+        encounter_parts = [
+            (f"\n{emoji} A ", "#ffffff"),
+            (monster['name'], "#ffaa00"),
+            (f" {encounter_desc}! {emoji}\n", "#ffffff")
+        ]
+        self.gui._print_colored_parts(encounter_parts)
         
         # Display hero and monster stats side by side
         self._display_vs_stats(hero, monster)
@@ -369,7 +397,27 @@ class MonsterEncounterGUI:
         self.gui.print_text("=" * 60 + "\n")
 
     def _select_random_monster(self):
-        """Select random monster"""
+        """Select random monster based on current biome from YAML biome field"""
+        current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        
+        # Filter monsters by biome from their YAML biome field
+        attempts = 0
+        while attempts < 100:
+            # First try to get monsters from current biome using biome field
+            biome_specific_monsters = [
+                (key, value) for key, value in self.gui.game_state.monsters.items()
+                if value.get('biome', 'grassland') == current_biome
+            ]
+            
+            if biome_specific_monsters:
+                key, value = random.choice(biome_specific_monsters)
+                hero_level = self.gui.game_state.hero['level']
+                if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1:
+                    return value.copy()
+            
+            attempts += 1
+        
+        # Fallback: if no appropriate monsters found in biome, use any monster
         attempts = 0
         while attempts < 100:
             key, value = random.choice(list(self.gui.game_state.monsters.items()))

@@ -24,6 +24,19 @@ class GameGUI:
         self.root.geometry("800x1050")
         self.root.configure(bg='#1a1a1a')
         
+        # Additional window management for foreground display
+        try:
+            # Ensure window appears in front and gets focus
+            self.root.deiconify()  # Make sure window is not minimized
+            self.root.lift()       # Bring to front
+            self.root.attributes('-topmost', True)  # Temporarily on top
+            self.root.focus_force()  # Force focus
+            
+            # Remove topmost after initial display
+            self.root.after(200, lambda: self.root.attributes('-topmost', False))
+        except Exception as e:
+            print(f"Warning: Could not configure window display: {e}")
+        
         # Enable keyboard shortcuts
         self.root.bind('<KeyPress>', self._handle_keypress)
         self.root.focus_set()  # Make sure window can receive key events
