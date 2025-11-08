@@ -173,6 +173,89 @@ def create_monster_art(monster_name):
             for x in range(23, 26):
                 canvas[y][x] = SKIN  # Right arm
     
+    elif monster_lower == 'demon':
+        # Infernal demon - horns, red eyes, claws, hellfire aura
+        DARK_SKIN = [101, 67, 33, 255]
+        HORN = [64, 64, 64, 255]
+        FLAME_RED = [255, 69, 0, 255]
+        FLAME_ORANGE = [255, 140, 0, 255]
+        FLAME_YELLOW = [255, 215, 0, 255]
+        
+        # Head (dark skin)
+        for y in range(8, 16):
+            for x in range(12, 20):
+                if (x-16)**2 + (y-12)**2 <= 16:  # Circular head
+                    canvas[y][x] = DARK_SKIN
+        
+        # Horns (curved upward)
+        canvas[6][13] = HORN
+        canvas[5][13] = HORN
+        canvas[4][12] = HORN
+        canvas[6][18] = HORN
+        canvas[5][18] = HORN
+        canvas[4][19] = HORN
+        
+        # Eyes (glowing red)
+        canvas[10][14] = RED
+        canvas[10][17] = RED
+        canvas[11][14] = FLAME_RED
+        canvas[11][17] = FLAME_RED
+        
+        # Evil grin with fangs
+        canvas[13][14] = BLACK
+        canvas[13][15] = BLACK
+        canvas[13][16] = BLACK
+        canvas[13][17] = BLACK
+        canvas[14][14] = WHITE  # Fangs
+        canvas[14][17] = WHITE
+        
+        # Muscular body
+        for y in range(16, 26):
+            for x in range(10, 22):
+                canvas[y][x] = DARK_SKIN
+        
+        # Arms
+        for y in range(18, 24):
+            canvas[y][8] = DARK_SKIN   # Left arm
+            canvas[y][9] = DARK_SKIN
+            canvas[y][22] = DARK_SKIN  # Right arm
+            canvas[y][23] = DARK_SKIN
+        
+        # Clawed hands
+        canvas[22][6] = GRAY
+        canvas[23][6] = GRAY
+        canvas[22][7] = GRAY
+        canvas[22][24] = GRAY
+        canvas[23][24] = GRAY
+        canvas[22][25] = GRAY
+        
+        # Legs
+        for y in range(26, 30):
+            for x in range(12, 16):
+                canvas[y][x] = DARK_SKIN  # Left leg
+            for x in range(16, 20):
+                canvas[y][x] = DARK_SKIN  # Right leg
+        
+        # Hooves
+        for x in range(12, 16):
+            canvas[30][x] = BLACK
+        for x in range(16, 20):
+            canvas[30][x] = BLACK
+        
+        # Tail
+        canvas[20][24] = DARK_SKIN
+        canvas[19][25] = DARK_SKIN
+        canvas[18][26] = DARK_SKIN
+        canvas[17][27] = DARK_SKIN
+        
+        # Flame aura
+        canvas[12][10] = FLAME_YELLOW
+        canvas[15][9] = FLAME_ORANGE
+        canvas[18][8] = FLAME_RED
+        canvas[12][21] = FLAME_YELLOW
+        canvas[15][22] = FLAME_ORANGE
+        canvas[18][23] = FLAME_RED
+    
     elif monster_lower == 'flytrap':
         # Venus flytrap monster - plant with teeth
         STEM = [34, 139, 34, 255]
@@ -888,7 +971,7 @@ def create_monster_art(monster_name):
 def create_all_monsters():
     """Create pixel art for all monsters in the monsters directory"""
     monsters = [
-        'Bunny', 'Caveman', 'Cyclops', 'Flytrap', 'Hydra', 'Lich', 'Lola', 
+        'Bunny', 'Caveman', 'Cyclops', 'Demon', 'Flytrap', 'Hydra', 'Lich', 'Lola', 
         'Maddog', 'ManBearPig', 'Manticore', 'Ninja', 'Slime', 'Snake', 
         'Spider', 'Spider2', 'Tiger', 'Vampire', 'Wyvern'
     ]

@@ -187,6 +187,87 @@ def create_monster_attack_art(monster_name):
         for i in range(3):
             canvas[15+i][18-i] = MOTION_BLUR
     
+    elif monster_lower == 'demon':
+        # Demon in hellfire attack pose - claws extended, flames everywhere
+        DARK_SKIN = [101, 67, 33, 255]
+        HORN = [64, 64, 64, 255]
+        FIRE_BLAST = [255, 100, 0, 200]     # Semi-transparent fire
+        ENERGY_GLOW = [255, 0, 0, 180]      # Red energy
+        HELLFIRE = [255, 69, 0, 220]        # Intense hellfire
+        
+        # Head (leaning forward in attack)
+        for y in range(6, 14):
+            for x in range(10, 18):
+                if (x-14)**2 + (y-10)**2 <= 16:
+                    canvas[y][x] = DARK_SKIN
+        
+        # Horns (more prominent)
+        canvas[4][11] = HORN
+        canvas[3][11] = HORN
+        canvas[2][10] = HORN
+        canvas[4][16] = HORN
+        canvas[3][16] = HORN
+        canvas[2][17] = HORN
+        
+        # Eyes (blazing with fury)
+        canvas[8][12] = ATTACK_RED
+        canvas[8][15] = ATTACK_RED
+        canvas[9][12] = ATTACK_YELLOW
+        canvas[9][15] = ATTACK_YELLOW
+        
+        # Snarling mouth with fangs
+        canvas[11][12] = BLACK
+        canvas[11][13] = BLACK
+        canvas[11][14] = BLACK
+        canvas[11][15] = BLACK
+        canvas[12][12] = WHITE  # Large fangs
+        canvas[12][15] = WHITE
+        
+        # Body (crouched in attack)
+        for y in range(14, 22):
+            for x in range(8, 20):
+                canvas[y][x] = DARK_SKIN
+        
+        # Arms extended forward (attacking)
+        for y in range(16, 20):
+            for x in range(4, 8):
+                canvas[y][x] = DARK_SKIN  # Left arm
+            for x in range(20, 24):
+                canvas[y][x] = DARK_SKIN  # Right arm
+        
+        # Massive claws (enlarged for attack)
+        canvas[18][2] = GRAY
+        canvas[19][2] = GRAY
+        canvas[18][3] = GRAY
+        canvas[18][28] = GRAY
+        canvas[19][28] = GRAY
+        canvas[18][29] = GRAY
+        
+        # HELLFIRE ATTACK EFFECTS!
+        # Fire breath from mouth
+        for x in range(16, 24):
+            canvas[11][x] = ATTACK_YELLOW
+            canvas[12][x] = ATTACK_ORANGE
+            canvas[13][x] = ATTACK_RED
+        
+        # Intense flame aura
+        canvas[10][6] = ATTACK_YELLOW
+        canvas[12][5] = ATTACK_ORANGE
+        canvas[14][4] = FIRE_BLAST
+        canvas[10][21] = ATTACK_YELLOW  
+        canvas[12][22] = ATTACK_ORANGE
+        canvas[14][23] = FIRE_BLAST
+        
+        # Energy from claws
+        canvas[17][1] = ENERGY_GLOW
+        canvas[18][0] = HELLFIRE
+        canvas[17][30] = ENERGY_GLOW
+        canvas[18][31] = HELLFIRE
+        
+        # Ground fire effects
+        canvas[30][12] = ATTACK_RED
+        canvas[30][16] = ATTACK_RED
+    
     elif monster_lower == 'flytrap':
         # Venus flytrap snapping shut aggressively
         PLANT_GREEN = [34, 139, 34, 255]
@@ -913,7 +994,7 @@ def create_monster_attack_art(monster_name):
 def create_all_monster_attacks():
     """Create attack animations for all monsters"""
     monsters = [
-        'Bunny', 'Caveman', 'Cyclops', 'Flytrap', 'Hydra', 'Lich', 'Lola', 
+        'Bunny', 'Caveman', 'Cyclops', 'Demon', 'Flytrap', 'Hydra', 'Lich', 'Lola', 
         'Maddog', 'ManBearPig', 'Manticore', 'Ninja', 'Slime', 'Snake', 
         'Spider', 'Spider2', 'Tiger', 'Vampire', 'Wyvern'
     ]

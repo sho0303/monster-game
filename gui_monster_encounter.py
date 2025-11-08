@@ -19,9 +19,12 @@ class MonsterEncounterGUI:
     
     def start(self):
         """Start monster encounter"""
-        monster = self._select_random_monster()
-        if not monster:
+        monster_result = self._select_random_monster()
+        if not monster_result:
             return
+        
+        # Unpack monster type and data
+        monster_type, monster = monster_result
         
         # Keep the current biome background for immersive encounters
         # (Don't change the background - use whatever biome the player is in)
@@ -55,6 +58,9 @@ class MonsterEncounterGUI:
         ]
         self.gui._print_colored_parts(encounter_parts)
         
+        # Show current quest summary before the fight
+        self._display_quest_summary(monster_type)
+        
         # Display hero and monster stats side by side
         self._display_vs_stats(hero, monster)
         
@@ -75,9 +81,9 @@ class MonsterEncounterGUI:
                         self.gui.game_state.hero['gold'] += monster['gold']
                         self.gui.game_state.hero['xp'] += monster.get('xp', 1)  # Default 1 XP if not specified
                         
-                        # Check for quest completion
+                        # Check for quest completion using monster type (not display name)
                         completed_quests = self.gui.quest_manager.check_quest_completion(
-                            self.gui.game_state.hero, monster['name']
+                            self.gui.game_state.hero, monster_type
                         )
                         
                         if completed_quests:
@@ -396,6 +402,71 @@ class MonsterEncounterGUI:
         self.gui.print_text(f"\n🏆 Victory Rewards: {monster.get('gold', 0)} gold, {monster.get('xp', 0)} XP")
         self.gui.print_text("=" * 60 + "\n")
 
+    def _display_quest_summary(self, current_monster_type=None):
+        """Display current active quests at the start of encounter"""
+        active_quests = self.gui.quest_manager.get_active_quests(self.gui.game_state.hero)
+        
+        if active_quests:
+            # Show quest summary header
+            quest_header_parts = [
+                ("\n📜 ", "#ffffff"),
+                ("Active Quests", "#ffaa00"),
+                (" (", "#ffffff"),
+                (f"{len(active_quests)}/3", "#88ff88"),
+                ("):", "#ffffff")
+            ]
+            self.gui._print_colored_parts(quest_header_parts)
+            
+            # Show each active quest with progress indicators
+            for i, quest in enumerate(active_quests, 1):
+                # Get biome emoji for quest context
+                biome_emojis = {'grassland': '🌱', 'desert': '🏜️', 'dungeon': '🏰'}
+                
+                # Determine biome from quest description
+                quest_biome = 'grassland'  # default
+                if 'desert sands' in quest.description.lower():
+                    quest_biome = 'desert'
+                elif 'dark dungeons' in quest.description.lower():
+                    quest_biome = 'dungeon'
+                elif 'grasslands' in quest.description.lower():
+                    quest_biome = 'grassland'
+                
+                biome_emoji = biome_emojis.get(quest_biome, '🎯')
+                
+                # Check if this quest matches the current monster
+                is_matching_quest = (current_monster_type and 
+                                   quest.quest_type == 'kill_monster' and 
+                                   quest.target == current_monster_type)
+                
+                if is_matching_quest:
+                    # Highlight matching quest
+                    quest_parts = [
+                        (f"  ⭐ ", "#ffaa00"),
+                        (f"{biome_emoji} ", "#ffffff"),
+                        (quest.description, "#00ff00"),
+                        (" → ", "#ffaa00"),
+                        (f"{quest.reward_xp} XP", "#ffdd00"),
+                        (" ⭐ THIS FIGHT!", "#ffaa00")
+                    ]
+                else:
+                    # Normal quest display
+                    quest_parts = [
+                        (f"  • ", "#888888"),
+                        (f"{biome_emoji} ", "#ffffff"),
+                        (quest.description, "#cccccc"),
+                        (" → ", "#888888"),
+                        (f"{quest.reward_xp} XP", "#ffdd00")
+                    ]
+                self.gui._print_colored_parts(quest_parts)
+        else:
+            # No active quests message
+            no_quest_parts = [
+                ("\n📜 ", "#ffffff"),
+                ("No active quests", "#888888"),
+                (" - Visit Quests menu for objectives!", "#888888")
+            ]
+            self.gui._print_colored_parts(no_quest_parts)
+
     def _select_random_monster(self):
         """Select random monster based on current biome from YAML biome field"""
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
@@ -413,7 +484,8 @@ class MonsterEncounterGUI:
                 key, value = random.choice(biome_specific_monsters)
                 hero_level = self.gui.game_state.hero['level']
                 if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1:
-                    return value.copy()
+                    monster_data = value.copy()
+                    return (key, monster_data)  # Return both monster type and data
             
             attempts += 1
         
@@ -423,6 +495,7 @@ class MonsterEncounterGUI:
             key, value = random.choice(list(self.gui.game_state.monsters.items()))
             hero_level = self.gui.game_state.hero['level']
             if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1:
-                return value.copy()
+                monster_data = value.copy()
+                return (key, monster_data)  # Return both monster type and data
             attempts += 1
         return None

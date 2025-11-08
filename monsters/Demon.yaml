@@ -1,0 +1,11 @@
+Demon:
+  name: Infernal Demon
+  hp: 85
+  maxhp: 85
+  attack: 22
+  defense: 15
+  gold: 80
+  level: 8
+  xp: 8
+  art: art/demon_monster.png
+  biome: dungeon

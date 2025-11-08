@@ -1197,7 +1197,27 @@ class GameGUI:
                 if choice == 1:
                     # Generate new kill monster quest
                     new_quest = self.quest_manager.generate_kill_monster_quest()
-                    if new_quest:
+                    if isinstance(new_quest, str):
+                        # Handle error cases
+                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
+                            current_biome = getattr(self, 'current_biome', 'grassland')
+                            error_parts = [
+                                ("❌ No quests available! ", "#ff6666"),
+                                (f"All monsters in {current_biome} already have active quests.", "#ffffff")
+                            ]
+                            self._print_colored_parts(error_parts)
+                            self.print_text("💡 Complete existing quests or explore other biomes!")
+                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
+                            error_parts = [
+                                ("❌ No quests available! ", "#ff6666"),
+                                ("You have active quests for all available monsters.", "#ffffff")
+                            ]
+                            self._print_colored_parts(error_parts)
+                            self.print_text("💡 Complete some existing quests first!")
+                        else:
+                            self.print_text("❌ Could not generate quest (unknown error)")
+                    elif new_quest:
+                        # Successfully generated quest
                         self.quest_manager.add_quest(hero, new_quest)
                         
                         # Show the new quest
@@ -1233,7 +1253,25 @@ class GameGUI:
                 if choice == 1 and len(active_quests) < 3:  # Limit to 3 quests
                     # Generate additional quest
                     new_quest = self.quest_manager.generate_kill_monster_quest()
-                    if new_quest:
+                    if isinstance(new_quest, str):
+                        # Handle error cases
+                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
+                            current_biome = getattr(self, 'current_biome', 'grassland')
+                            error_parts = [
+                                ("❌ No new quests! ", "#ff6666"),
+                                (f"All {current_biome} monsters already have quests.", "#ffffff")
+                            ]
+                            self._print_colored_parts(error_parts)
+                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
+                            error_parts = [
+                                ("❌ No new quests! ", "#ff6666"),
+                                ("All monsters already have active quests.", "#ffffff")
+                            ]
+                            self._print_colored_parts(error_parts)
+                        else:
+                            self.print_text("❌ Could not generate quest")
+                        self.root.after(2000, self.main_menu)
+                    elif new_quest:
                         self.quest_manager.add_quest(hero, new_quest)
                         self.print_text("\n🆕 New quest added!")
                         self.root.after(1500, self.show_quests)  # Refresh quest view

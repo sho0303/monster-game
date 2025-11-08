@@ -47,25 +47,73 @@ class QuestManager:
             hero['quests'] = []
     
     def generate_kill_monster_quest(self):
-        """Generate a random kill monster quest"""
+        """Generate a random kill monster quest from current biome (avoiding duplicates)"""
         # Get all available monsters
         monsters = self.gui.game_state.monsters
         if not monsters:
             return None
+        
+        # Get current biome from GUI
+        current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        
+        # Get existing quest targets to avoid duplicates
+        existing_quest_targets = set()
+        if hasattr(self.gui.game_state, 'hero') and self.gui.game_state.hero:
+            active_quests = self.get_active_quests(self.gui.game_state.hero)
+            existing_quest_targets = {quest.target for quest in active_quests if quest.quest_type == 'kill_monster'}
+        
+        # Filter monsters by current biome AND exclude those with existing quests
+        available_biome_monsters = [
+            (key, value) for key, value in monsters.items()
+            if (value.get('biome', 'grassland') == current_biome and 
+                key not in existing_quest_targets)
+        ]
+        
+        if not available_biome_monsters:
+            # Check if there are any monsters in this biome (even with quests)
+            biome_monsters = [
+                (key, value) for key, value in monsters.items()
+                if value.get('biome', 'grassland') == current_biome
+            ]
             
-        # Pick a random monster
-        monster_name = random.choice(list(monsters.keys()))
-        monster_data = monsters[monster_name]
+            if biome_monsters:
+                # All monsters in this biome already have quests
+                return "NO_QUESTS_AVAILABLE_BIOME"
+            else:
+                # No monsters in this biome at all - fallback to other biomes
+                available_all_monsters = [
+                    (key, value) for key, value in monsters.items()
+                    if key not in existing_quest_targets
+                ]
+                
+                if not available_all_monsters:
+                    # All monsters everywhere have quests
+                    return "NO_QUESTS_AVAILABLE_ALL"
+                else:
+                    # Pick from any available monster
+                    monster_name, monster_data = random.choice(available_all_monsters)
+        else:
+            # Pick a random monster from available biome monsters
+            monster_name, monster_data = random.choice(available_biome_monsters)
         
         # Get the monster's XP value (with fallback to 1 if not specified)
         monster_xp = monster_data.get('xp', 1)
+        
+        # Create biome-aware quest description
+        biome_descriptions = {
+            'grassland': f"Hunt a {monster_name} in the grasslands",
+            'desert': f"Defeat a {monster_name} in the desert sands", 
+            'dungeon': f"Slay a {monster_name} in the dark dungeons"
+        }
+        
+        quest_description = biome_descriptions.get(current_biome, f"Kill a {monster_name}")
         
         # Create quest with monster's XP as reward
         quest = Quest(
             quest_type='kill_monster',
             target=monster_name,
             reward_xp=monster_xp,
-            description=f"Kill a {monster_name}"
+            description=quest_description
         )
         
         return quest
