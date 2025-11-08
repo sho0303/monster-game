@@ -66,79 +66,134 @@ class MonsterEncounterGUI:
         
         def on_choice(choice):
             if choice == 1:
-                # Lock interface immediately when fight is chosen to prevent double-clicks
-                self.gui.lock_interface()
-                
-                def after_fight(result):
-                    if result == 'won':
-                        # Victory message with colored gold reward
-                        victory_parts = [
-                            ("\n🎉 Victory! You earned ", "#00ff00"),
-                            (str(monster['gold']), "#ffdd00"),
-                            (" gold!", "#00ff00")
-                        ]
-                        self.gui._print_colored_parts(victory_parts)
-                        self.gui.game_state.hero['gold'] += monster['gold']
-                        self.gui.game_state.hero['xp'] += monster.get('xp', 1)  # Default 1 XP if not specified
-                        
-                        # Check for quest completion using monster type (not display name)
-                        completed_quests = self.gui.quest_manager.check_quest_completion(
-                            self.gui.game_state.hero, monster_type
-                        )
-                        
-                        if completed_quests:
-                            for quest in completed_quests:
-                                # Show XP before quest completion
-                                xp_before = self.gui.game_state.hero['xp'] - quest.reward_xp
-                                xp_after = self.gui.game_state.hero['xp']
-                                current_level = self.gui.game_state.hero['level']
-                                xp_needed_to_level = current_level * 5
-                                
-                                quest_parts = [
-                                    ("\n🏆 Quest Completed: ", "#00ff00"),
-                                    (quest.description, "#ffffff"),
-                                    (f" (+{quest.reward_xp} XP)", "#ffdd00")
-                                ]
-                                self.gui._print_colored_parts(quest_parts)
-                                
-                                # Show detailed XP information
-                                if xp_after >= xp_needed_to_level:
-                                    level_up_parts = [
-                                        ("   💫 Ready to level up! ", "#ffaa00"),
-                                        (f"XP: {xp_before} → {xp_after} ", "#8844ff"),
-                                        (f"(Need {xp_needed_to_level} for Level {current_level + 1})", "#ffffff")
-                                    ]
-                                    self.gui._print_colored_parts(level_up_parts)
-                                else:
-                                    xp_progress_parts = [
-                                        ("   📊 XP Progress: ", "#ffffff"),
-                                        (f"{xp_before} → {xp_after}", "#8844ff"),
-                                        (f"/{xp_needed_to_level} ", "#ffffff"),
-                                        (f"({xp_needed_to_level - xp_after} XP to Level {current_level + 1})", "#888888")
-                                    ]
-                                    self.gui._print_colored_parts(xp_progress_parts)
-                            
-                            # Clean up completed quests
-                            self.gui.quest_manager.clear_completed_quests(self.gui.game_state.hero)
-                    else:
-                        self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
-                        self.gui.game_state.hero['gold'] = 0
-                        self.gui.game_state.hero['lives_left'] -= 1
-                        self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
-                    
-                    # Check if game is over (0 lives left)
-                    if self.gui.check_game_over():
-                        return
-                    
-                    # Wait before returning to main menu, interface unlocks when main_menu sets buttons
-                    self.gui.root.after(3000, self.gui.main_menu)
-                
-                self.gui.combat.fight(self.gui.game_state.hero, monster, after_fight)
+                self._handle_fight_choice(monster, monster_type)
             else:
-                # Attempt to run away with 50% chance of monster attack
-                self._attempt_run_away(monster)
+                self._handle_run_choice(monster)
         
         self.gui.set_buttons(["⚔️ Fight", "🏃 Run"], on_choice)
+    
+    def _handle_fight_choice(self, monster, monster_type):
+        """Handle when player chooses to fight the monster"""
+        # Lock interface immediately when fight is chosen to prevent double-clicks
+        self.gui.lock_interface()
+        
+        # Create callback for after the fight is complete
+        after_fight_callback = self._create_after_fight_callback(monster, monster_type)
+        
+        # Start the combat
+        self.gui.combat.fight(self.gui.game_state.hero, monster, after_fight_callback)
+    
+    def _handle_run_choice(self, monster):
+        """Handle when player chooses to run away"""
+        self._attempt_run_away(monster)
+    
+    def _create_after_fight_callback(self, monster, monster_type):
+        """Create callback function for handling post-fight results"""
+        def after_fight(result):
+            if result == 'won':
+                self._handle_victory(monster, monster_type)
+            else:
+                self._handle_defeat()
+            
+            # Check if game is over (0 lives left)
+            if self.gui.check_game_over():
+                return
+            
+            # Wait before returning to main menu, interface unlocks when main_menu sets buttons
+            self.gui.root.after(3000, self.gui.main_menu)
+        
+        return after_fight
+    
+    def _handle_victory(self, monster, monster_type):
+        """Handle victory rewards and quest completion"""
+        hero = self.gui.game_state.hero
+        
+        # Award gold and XP
+        self._award_victory_rewards(monster)
+        
+        # Check and handle quest completion
+        self._process_quest_completion(monster_type)
+    
+    def _handle_defeat(self):
+        """Handle defeat consequences"""
+        hero = self.gui.game_state.hero
+        self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
+        hero['gold'] = 0
+        hero['lives_left'] -= 1
+        hero['hp'] = hero['maxhp']
+    
+    def _award_victory_rewards(self, monster):
+        """Award gold and XP for defeating monster"""
+        hero = self.gui.game_state.hero
+        
+        # Victory message with colored gold reward
+        victory_parts = [
+            ("\n🎉 Victory! You earned ", "#00ff00"),
+            (str(monster['gold']), "#ffdd00"),
+            (" gold!", "#00ff00")
+        ]
+        self.gui._print_colored_parts(victory_parts)
+        
+        # Award rewards
+        hero['gold'] += monster['gold']
+        hero['xp'] += monster.get('xp', 1)  # Default 1 XP if not specified
+    
+    def _process_quest_completion(self, monster_type):
+        """Process quest completion and display results"""
+        hero = self.gui.game_state.hero
+        
+        # Check for quest completion using monster type (not display name)
+        completed_quests = self.gui.quest_manager.check_quest_completion(hero, monster_type)
+        
+        if completed_quests:
+            for quest in completed_quests:
+                self._display_quest_completion(quest)
+            
+            # Clean up completed quests
+            self.gui.quest_manager.clear_completed_quests(hero)
+    
+    def _display_quest_completion(self, quest):
+        """Display quest completion message and XP progress"""
+        hero = self.gui.game_state.hero
+        
+        # Calculate XP progression
+        xp_before = hero['xp'] - quest.reward_xp
+        xp_after = hero['xp']
+        current_level = hero['level']
+        xp_needed_to_level = current_level * 5
+        
+        # Show quest completion message
+        quest_parts = [
+            ("\n🏆 Quest Completed: ", "#00ff00"),
+            (quest.description, "#ffffff"),
+            (f" (+{quest.reward_xp} XP)", "#ffdd00")
+        ]
+        self.gui._print_colored_parts(quest_parts)
+        
+        # Show XP progression details
+        if xp_after >= xp_needed_to_level:
+            self._display_level_up_message(xp_before, xp_after, xp_needed_to_level, current_level)
+        else:
+            self._display_xp_progress(xp_before, xp_after, xp_needed_to_level, current_level)
+    
+    def _display_level_up_message(self, xp_before, xp_after, xp_needed_to_level, current_level):
+        """Display level up ready message"""
+        level_up_parts = [
+            ("   💫 Ready to level up! ", "#ffaa00"),
+            (f"XP: {xp_before} → {xp_after} ", "#8844ff"),
+            (f"(Need {xp_needed_to_level} for Level {current_level + 1})", "#ffffff")
+        ]
+        self.gui._print_colored_parts(level_up_parts)
+    
+    def _display_xp_progress(self, xp_before, xp_after, xp_needed_to_level, current_level):
+        """Display XP progress towards next level"""
+        xp_progress_parts = [
+            ("   📊 XP Progress: ", "#ffffff"),
+            (f"{xp_before} → {xp_after}", "#8844ff"),
+            (f"/{xp_needed_to_level} ", "#ffffff"),
+            (f"({xp_needed_to_level - xp_after} XP to Level {current_level + 1})", "#888888")
+        ]
+        self.gui._print_colored_parts(xp_progress_parts)
     
     def _attempt_run_away(self, monster):
         """Attempt to run away with 50% chance of monster attack"""
