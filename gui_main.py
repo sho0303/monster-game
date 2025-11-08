@@ -49,37 +49,34 @@ class GameGUI:
     
     def _create_widgets(self):
         """Create the GUI widgets"""
-        # Top frame for images with enhanced background and visual styling
+        # Top frame container for the canvas - allow natural sizing
         self.image_frame = tk.Frame(
             self.root, 
-            bg='#2d2d2d',  # Medium gray background
-            height=250, 
-            relief='groove',  # More attractive 3D effect
-            bd=3,  # Slightly thicker border
-            highlightbackground='#505050',  # Subtle highlight
-            highlightthickness=1
+            relief='flat',
+            bd=0,
+            highlightthickness=0
+        )
+        
+        # Create canvas for proper image compositing without transparency issues
+        self.image_canvas = tk.Canvas(
+            self.image_frame,
+            highlightthickness=0,
+            relief='flat',
+            bd=0,
+            width=800,  # Minimum width to accommodate larger images
+            height=400  # Minimum height for natural image sizes
         )
         self.image_frame.pack(fill=tk.BOTH, pady=10, padx=5)
-        self.image_frame.pack_propagate(False)
+        # Allow the frame to resize based on content
         
-        # Image labels - support for multiple images
-        self.image_labels = []
-        self.current_image_layout = "single"  # Track current layout mode
+        # Pack the canvas to fill the frame completely
+        self.image_canvas.pack(fill=tk.BOTH, expand=True)
         
-        # Default single image label with enhanced styling
-        self.image_label = tk.Label(
-            self.image_frame, 
-            bg='#404040',  # Neutral gray background
-            relief='sunken',  # Inset appearance for better depth
-            bd=2,
-            padx=15,
-            pady=15,
-            highlightbackground='#606060',
-            highlightcolor='#808080',
-            highlightthickness=1
-        )
-        self.image_label.pack(expand=True, padx=15, pady=15)
-        self.image_labels.append(self.image_label)
+        # Set background image for the canvas
+        self._set_frame_background()
+        
+        # Track current image layout mode
+        self.current_image_layout = "single"
         
         # Text output area (read-only)
         self.text_area = scrolledtext.ScrolledText(
@@ -103,6 +100,93 @@ class GameGUI:
         self.buttons = []
         
         self.current_action = None
+    
+    def _set_frame_background(self):
+        """Set the background image using canvas for proper compositing"""
+        # Schedule background setup after the canvas is properly sized
+        self.root.after(100, self._update_canvas_background)
+        
+        # Initialize foreground image storage
+        self.canvas_images = []  # Keep references to prevent GC
+    
+    def _update_canvas_background(self):
+        """Update the canvas background after the canvas is properly sized"""
+        try:
+            # Get actual canvas dimensions
+            self.image_canvas.update_idletasks()  # Ensure canvas is rendered
+            canvas_width = self.image_canvas.winfo_width()
+            canvas_height = self.image_canvas.winfo_height()
+            
+            # If canvas isn't sized yet, try again later
+            if canvas_width <= 1 or canvas_height <= 1:
+                self.root.after(100, self._update_canvas_background)
+                return
+                
+            # Load the grassy background image
+            bg_img = Image.open('art/grassy_background.png')
+            
+            # Resize to actual canvas dimensions
+            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
+            self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
+            
+            # Clear canvas and draw background
+            self.image_canvas.delete("all")
+            self.image_canvas.create_image(0, 0, image=self.bg_photo, anchor='nw', tags="background")
+            
+        except Exception as e:
+            print(f"Warning: Could not load background image: {e}")
+            # Fallback to solid color
+            self.image_canvas.configure(bg='#4a7c59')
+    
+    def _get_canvas_dimensions(self):
+        """Get current canvas dimensions, with fallback values"""
+        self.image_canvas.update_idletasks()
+        width = self.image_canvas.winfo_width()
+        height = self.image_canvas.winfo_height()
+        
+        # Fallback to reasonable defaults if not sized yet
+        if width <= 1:
+            width = 800
+        if height <= 1:
+            height = 400  # Larger default to accommodate natural image sizes
+            
+        return width, height
+    
+    def _add_canvas_image(self, image_path, x, y, width=None, height=None, tags="foreground"):
+        """Add an image to the canvas at the specified position
+        
+        Args:
+            image_path: Path to the image file
+            x, y: Position on canvas
+            width, height: Target size (if None, uses natural image size)
+            tags: Canvas tags for the image
+        """
+        try:
+            # Load image
+            img = Image.open(image_path)
+            
+            # Resize only if dimensions are specified
+            if width is not None and height is not None:
+                img = img.resize((width, height), Image.Resampling.NEAREST)
+            
+            photo = ImageTk.PhotoImage(img)
+            
+            # Add to canvas
+            canvas_id = self.image_canvas.create_image(x, y, image=photo, anchor='nw', tags=tags)
+            
+            # Keep reference to prevent garbage collection
+            self.canvas_images.append(photo)
+            
+            return canvas_id
+            
+        except Exception as e:
+            print(f"Failed to add canvas image {image_path}: {e}")
+            return None
+    
+    def _clear_foreground_images(self):
+        """Clear all foreground images from canvas"""
+        self.image_canvas.delete("foreground")
+        self.canvas_images.clear()
     
     def _create_buttons(self, count):
         """Create the specified number of buttons"""
@@ -131,37 +215,45 @@ class GameGUI:
         self.buttons = []
     
     def show_image(self, image_path):
-        """Display a single image in the image area (backwards compatible)"""
+        """Display a single image using canvas for proper background compositing"""
         if isinstance(image_path, list):
             # If a list is passed, use show_images instead
             self.show_images(image_path)
             return
             
-        # Reset to single image layout
-        self._reset_image_layout()
+        # Clear existing foreground images
+        self._clear_foreground_images()
         
         try:
-            # Handle text files (ASCII art)
+            # Get current canvas dimensions
+            canvas_width, canvas_height = self._get_canvas_dimensions()
+            
+            # Handle text files (ASCII art) - convert to image or display as text
             if image_path.endswith('.txt'):
-                # For text files, create a simple text display
                 with open(image_path, 'r', encoding='utf-8') as f:
                     ascii_art = f.read()
-                # Create an image from text with enhanced background
-                self.image_label.config(text=ascii_art, font=('Courier', 8), fg='#00ff00', bg='#303030')
+                # Create text on canvas (centered)
+                self.image_canvas.create_text(canvas_width//2, canvas_height//2, text=ascii_art, 
+                                            fill='#00ff00', font=('Courier', 8), 
+                                            anchor='center', tags='foreground')
                 return
             
-            # Handle image files
-            img = Image.open(image_path)
-            # Resize to fit the frame while maintaining aspect ratio
-            img.thumbnail((400, 250), Image.LANCZOS)
-            photo = ImageTk.PhotoImage(img)
-            self.image_label.config(image=photo, text='')
-            self.image_label.image = photo  # Keep a reference
+            # Handle image files - center the image on the canvas at natural size
+            # First, get the original image dimensions
+            with Image.open(image_path) as img:
+                img_width, img_height = img.size
+            
+            # Calculate center position based on actual canvas size
+            center_x = (canvas_width - img_width) // 2
+            center_y = (canvas_height - img_height) // 2
+            # Use natural size (don't pass width/height to avoid resizing)
+            self._add_canvas_image(image_path, center_x, center_y)
+            
         except Exception as e:
             self.print_text(f"Could not load image: {e}")
     
     def show_images(self, image_paths, layout="auto"):
-        """Display multiple images in the image area
+        """Display multiple images using canvas for proper background compositing
         
         Args:
             image_paths: List of image file paths
@@ -175,135 +267,93 @@ class GameGUI:
             self.show_image(image_paths[0])
             return
         
-        # Clear existing layout
-        self._clear_image_area()
+        # Clear existing images
+        self._clear_foreground_images()
         
-        # Determine layout
+        # Get current canvas dimensions for dynamic positioning
+        canvas_width, canvas_height = self._get_canvas_dimensions()
+        
+        # Determine layout and positions based on number of images and canvas size
         num_images = len(image_paths)
-        if layout == "auto":
-            if num_images <= 2:
-                layout = "horizontal"
-            elif num_images <= 4:
-                layout = "grid"
-            else:
-                layout = "grid"  # Handle more than 4 images in grid
         
-        # Create layout
-        if layout == "horizontal":
-            self._create_horizontal_layout(image_paths)
-        elif layout == "vertical":
-            self._create_vertical_layout(image_paths)
-        elif layout == "grid":
-            self._create_grid_layout(image_paths)
+        if num_images == 2:
+            # Side by side
+            img_size = min(canvas_width // 3, canvas_height // 2, 120)
+            spacing_x = canvas_width // 3
+            start_y = (canvas_height - img_size) // 2
+            positions = [(spacing_x - img_size//2, start_y), (2*spacing_x - img_size//2, start_y)]
+            size = (img_size, img_size)
+        elif num_images == 3:
+            # Triangle layout
+            img_size = min(canvas_width // 4, canvas_height // 3, 100)
+            center_x = canvas_width // 2
+            positions = [(center_x - img_size//2, 20), 
+                        (center_x//2 - img_size//2, canvas_height - img_size - 20), 
+                        (3*center_x//2 - img_size//2, canvas_height - img_size - 20)]
+            size = (img_size, img_size)
+        elif num_images == 4:
+            # 2x2 grid
+            img_size = min(canvas_width // 3, canvas_height // 3, 100)
+            spacing_x = canvas_width // 3
+            spacing_y = canvas_height // 2
+            positions = [(spacing_x//2, spacing_y//2 - img_size//2), 
+                        (3*spacing_x//2, spacing_y//2 - img_size//2),
+                        (spacing_x//2, 3*spacing_y//2 - img_size//2), 
+                        (3*spacing_x//2, 3*spacing_y//2 - img_size//2)]
+            size = (img_size, img_size)
+        else:
+            # Grid layout for more images
+            cols = 3 if num_images <= 6 else 4
+            rows = (num_images + cols - 1) // cols
+            img_size = min(canvas_width // (cols + 1), canvas_height // (rows + 1), 80)
+            
+            positions = []
+            spacing_x = canvas_width // (cols + 1)
+            spacing_y = canvas_height // (rows + 1)
+            
+            for i in range(num_images):
+                row = i // cols
+                col = i % cols
+                x = (col + 1) * spacing_x - img_size // 2
+                y = (row + 1) * spacing_y - img_size // 2
+                positions.append((x, y))
+            size = (img_size, img_size)
+        
+        # Place images on canvas
+        for i, image_path in enumerate(image_paths[:len(positions)]):
+            x, y = positions[i]
+            self._add_canvas_image(image_path, x, y, size[0], size[1])
         
         self.current_image_layout = layout
     
     def _reset_image_layout(self):
-        """Reset to single image layout"""
-        if self.current_image_layout != "single":
-            self._clear_image_area()
-            # Recreate single image label with enhanced styling
-            self.image_label = tk.Label(
-                self.image_frame, 
-                bg='#404040',  # Neutral gray background
-                relief='sunken',  # Inset appearance for better depth
-                bd=2,
-                padx=15,
-                pady=15,
-                highlightbackground='#606060',
-                highlightcolor='#808080',
-                highlightthickness=1
-            )
-            self.image_label.pack(expand=True, padx=15, pady=15)
-            self.image_labels = [self.image_label]
-            self.current_image_layout = "single"
+        """Reset to single image layout using canvas"""
+        self._clear_foreground_images()
+        self.current_image_layout = "single"
     
     def _clear_image_area(self):
-        """Clear all image widgets from the image frame"""
-        for widget in self.image_frame.winfo_children():
-            widget.destroy()
-        self.image_labels.clear()
+        """Clear all foreground images from canvas, preserving background"""
+        self._clear_foreground_images()
+        
+        # Re-set the background if needed
+        if hasattr(self, 'bg_label'):
+            self.bg_label.lower()
     
     def _create_horizontal_layout(self, image_paths):
-        """Create horizontal layout for multiple images"""
-        for i, image_path in enumerate(image_paths):
-            label = tk.Label(
-                self.image_frame, 
-                bg='#404040',  # Neutral gray background
-                relief='ridge',
-                bd=1,
-                padx=5,
-                pady=5
-            )
-            label.pack(side=tk.LEFT, expand=True, padx=5, pady=10)
-            self.image_labels.append(label)
-            self._load_image_to_label(image_path, label, (180, 200))
+        """Legacy method - now handled by show_images canvas approach"""
+        pass
     
     def _create_vertical_layout(self, image_paths):
-        """Create vertical layout for multiple images"""
-        for i, image_path in enumerate(image_paths):
-            label = tk.Label(
-                self.image_frame, 
-                bg='#404040',  # Neutral gray background
-                relief='ridge',
-                bd=1,
-                padx=5,
-                pady=5
-            )
-            label.pack(side=tk.TOP, expand=True, padx=10, pady=5)
-            self.image_labels.append(label)
-            self._load_image_to_label(image_path, label, (350, 120))
+        """Legacy method - now handled by show_images canvas approach"""
+        pass
     
     def _create_grid_layout(self, image_paths):
-        """Create grid layout for multiple images"""
-        import math
-        
-        # Calculate grid dimensions
-        num_images = len(image_paths)
-        cols = min(3, num_images)  # Max 3 columns
-        rows = math.ceil(num_images / cols)
-        
-        # Create grid
-        for i, image_path in enumerate(image_paths):
-            row = i // cols
-            col = i % cols
-            
-            label = tk.Label(
-                self.image_frame, 
-                bg='#404040',  # Neutral gray background
-                relief='ridge',
-                bd=1,
-                padx=3,
-                pady=3
-            )
-            label.grid(row=row, column=col, sticky='nsew', padx=5, pady=5)
-            self.image_labels.append(label)
-            
-            # Configure grid weights for even distribution
-            self.image_frame.grid_rowconfigure(row, weight=1)
-            self.image_frame.grid_columnconfigure(col, weight=1)
-            
-            # Smaller images for grid layout
-            self._load_image_to_label(image_path, label, (120, 80))
+        """Legacy method - now handled by show_images canvas approach"""
+        pass
     
     def _load_image_to_label(self, image_path, label, size=(200, 150)):
-        """Load an image into a specific label with given size"""
-        try:
-            # Handle text files (ASCII art)
-            if image_path.endswith('.txt'):
-                with open(image_path, 'r', encoding='utf-8') as f:
-                    ascii_art = f.read()
-                label.config(text=ascii_art, font=('Courier', 6), fg='#00ff00', bg='#303030')
-                return
-            
-            # Handle image files
-            img = Image.open(image_path)
-            img.thumbnail(size, Image.LANCZOS)
-            photo = ImageTk.PhotoImage(img)
-            label.config(image=photo, text='')
-            label.image = photo  # Keep a reference
-        except Exception as e:
-            label.config(text=f"Error:\n{image_path}\n{str(e)}", fg='#ff0000', bg='#1a1a1a')
+        """Legacy method - now using canvas for image display"""
+        pass
     
     def print_text(self, text, color='#00ff00'):
         """Print text to the text area with color support"""
