@@ -55,20 +55,18 @@ class ShopGUI:
             self.gui.print_text("Tip: Use the '🏠 Main Menu' button to exit shop")
             
             def on_category_select(choice):
-                if choice == 3 and len(categories) < 3:
-                    # If there are less than 3 categories, button 3 is back button
-                    self.gui.main_menu()
-                elif 1 <= choice <= len(categories):
+                if choice <= len(categories):
                     self.current_category = categories[choice - 1]
                     self._show_items()
+                elif choice == len(categories) + 1:
+                    # Main menu button is always the last button
+                    self.gui.main_menu()
             
-            # Set buttons for categories
+            # Set buttons for categories - add all categories plus main menu button
             button_labels = []
-            for i in range(3):
-                if i < len(categories):
-                    button_labels.append(categories[i])
-                else:
-                    button_labels.append("🏠 Main Menu" if i == 2 else "")
+            for category in categories:
+                button_labels.append(category)
+            button_labels.append("🏠 Main Menu")
             
             self.gui.set_buttons(button_labels, on_category_select)
         else:
@@ -126,45 +124,23 @@ class ShopGUI:
         self.gui.print_text("\n" + "=" * 60)
         self.gui.print_text("Select an item to purchase")
         
-        def on_item_select(choice):
-            if choice == 3:
-                # Go back to main menu
-                self.gui.main_menu()
-            elif 1 <= choice <= len(available_items):
-                # Show item image before purchase
+        # Set buttons for item interaction
+        def on_item_action(choice):
+            if choice <= len(available_items):
+                # Buy selected item and show its image
                 selected_item = available_items[choice - 1]
                 if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
                     self.gui.show_image(selected_item['ascii_art'])
                 self._purchase_item(selected_item)
-        
-        # Set buttons for item interaction
-        def on_item_action(choice):
-            if choice == 1 and len(available_items) > 0:
-                # Buy first item and show its image
-                selected_item = available_items[0]
-                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
-                    self.gui.show_image(selected_item['ascii_art'])
-                self._purchase_item(selected_item)
-            elif choice == 2 and len(available_items) > 1:
-                # Buy second item and show its image  
-                selected_item = available_items[1]
-                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
-                    self.gui.show_image(selected_item['ascii_art'])
-                self._purchase_item(selected_item)
-            elif choice == 3:
-                # Go back to main menu
+            elif choice == len(available_items) + 1:
+                # Go back to main menu (always the last button)
                 self.gui.main_menu()
         
-        # Set button labels
+        # Set button labels - show all available items plus main menu button
         button_labels = []
-        for i in range(3):
-            if i < len(available_items) and i < 2:  # First 2 buttons for items
-                item = available_items[i]
-                button_labels.append(f"Buy {item['name']}")
-            elif i == 2:
-                button_labels.append("🏠 Main Menu")
-            else:
-                button_labels.append("")
+        for item in available_items:
+            button_labels.append(f"Buy {item['name']}")
+        button_labels.append("🏠 Main Menu")
         
         self.gui.set_buttons(button_labels, on_item_action)
     

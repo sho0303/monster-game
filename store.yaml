@@ -62,7 +62,14 @@ Armour:
     ascii_art: art/gold_plate_mail.png
 Items:
   - name: Health Potion
+    description: Restores HP to full.
     type: minor
     cost: 20
     ascii_art: art/health_potion.png
+    class: All
+  - name: Miser Coin Purse
+    description: Reduces gold loss on death by 50 percent.
+    type: minor
+    cost: 200
+    ascii_art: art/magic_pouch.png
     class: All

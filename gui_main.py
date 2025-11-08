@@ -12,6 +12,7 @@ from gui_combat import CombatGUI
 from gui_shop import ShopGUI
 from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
+from gui_quests import QuestManager
 
 
 class GameGUI:
@@ -19,7 +20,7 @@ class GameGUI:
     
     def __init__(self, root):
         self.root = root
-        self.root.title("PyQuest - Monster Game")
+        self.root.title("MonsterGame")
         self.root.geometry("800x1000")
         self.root.configure(bg='#1a1a1a')
         
@@ -38,6 +39,7 @@ class GameGUI:
         self.shop = None
         self.inventory = None
         self.monster_encounter = None
+        self.quest_manager = None
         
         # Create main layout
         self._create_widgets()
@@ -515,10 +517,18 @@ class GameGUI:
         elif key == 'f1':
             self._show_help()
             
-        # Button shortcuts (1, 2, 3)
-        elif key in ['1', '2', '3']:
-            button_num = int(key)
-            if self.current_action and self._is_button_enabled(button_num):
+        # Button shortcuts (1, 2, 3, 4, 5, 6, 7, 8, 9, 0) - support up to 10 buttons
+        elif key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
+            if key == '0':
+                button_num = 10  # 0 key represents button 10
+            else:
+                button_num = int(key)
+            
+            # Check if we have enough buttons and if this button is enabled
+            if (self.current_action and 
+                hasattr(self, 'buttons') and 
+                len(self.buttons) >= button_num and 
+                self._is_button_enabled(button_num)):
                 self._highlight_button(button_num)
                 self.root.after(100, lambda: self.current_action(button_num))
                 
@@ -569,7 +579,7 @@ class GameGUI:
    F1 - Show this help
 
 🎯 Navigation:
-   1, 2, 3 - Select buttons directly
+   1-9, 0 - Select buttons directly (0 = button 10)
    ← → - Navigate between buttons
    ENTER - Activate selected button
 
@@ -734,6 +744,7 @@ class GameGUI:
         self.shop = ShopGUI(self)
         self.inventory = InventoryGUI(self)
         self.monster_encounter = MonsterEncounterGUI(self)
+        self.quest_manager = QuestManager(self)
         
         # Start hero selection
         self.select_hero()
@@ -757,6 +768,10 @@ class GameGUI:
                 self.game_state.hero['gold'] = 50
                 self.game_state.hero['level'] = 1
                 self.game_state.hero['xp'] = 0
+                
+                # Initialize quest system for hero
+                self.quest_manager.initialize_hero_quests(self.game_state.hero)
+                
                 self.print_text(f"\n✓ You chose: {hero_name}!\n")
                 sleep(0.5)
                 self.main_menu()
@@ -766,17 +781,54 @@ class GameGUI:
     def hero_level(self):
         """Handle hero leveling up"""
         if self.game_state.hero['xp'] >= self.game_state.hero['level'] * 5:
+            # Store XP before leveling for display
+            excess_xp = self.game_state.hero['xp']
+            xp_used = self.game_state.hero['level'] * 5
+            remaining_xp = excess_xp - xp_used
+            
             self.clear_text()
             self.print_text("\n🎉  Level Up! 🎉\n")
             self.audio.play_sound_effect('levelup.wav')
+            
+            # Show XP consumption
+            xp_parts = [
+                ("Used ", "#ffffff"),
+                (f"{xp_used} XP", "#8844ff"),
+                (" to level up from ", "#ffffff"),
+                (f"Level {self.game_state.hero['level']}", "#00aaff"),
+                (" to ", "#ffffff"),
+                (f"Level {self.game_state.hero['level'] + 1}", "#00aaff"),
+                ("!", "#ffffff")
+            ]
+            self._print_colored_parts(xp_parts)
+            
+            if remaining_xp > 0:
+                remaining_parts = [
+                    ("Excess XP carried over: ", "#ffffff"),
+                    (f"{remaining_xp} XP", "#8844ff")
+                ]
+                self._print_colored_parts(remaining_parts)
+            
             self.game_state.hero['level'] += 1
-            self.game_state.hero['xp'] = 0
+            self.game_state.hero['xp'] = remaining_xp  # Carry over any excess XP
             self.game_state.hero['maxhp'] += 5
             self.game_state.hero['hp'] = self.game_state.hero['maxhp']
             self.game_state.hero['attack'] += 2
             self.game_state.hero['defense'] += 2
-            self.print_text(f"Your hero has reached level {self.game_state.hero['level']}!")
-            sleep(2)
+            self.print_text(f"\n⭐ Your hero has reached level {self.game_state.hero['level']}! ⭐")
+            
+            # Show stat improvements
+            stat_parts = [
+                ("📈 Stats improved: ", "#ffffff"),
+                ("HP +5", "#ff4444"),
+                (", ", "#ffffff"),
+                ("Attack +2", "#ff6600"),
+                (", ", "#ffffff"),
+                ("Defense +2", "#0088ff")
+            ]
+            self._print_colored_parts(stat_parts)
+            
+            sleep(3)  # Give more time to read the level up message
 
     
     def main_menu(self):
@@ -791,7 +843,10 @@ class GameGUI:
         self.print_text("=" * 60)
         
         for key, value in self.game_state.hero.items():
-            if key == 'xp':
+            # Skip displaying quests in hero stats - they have their own section
+            if key == 'quests':
+                continue
+            elif key == 'xp':
                 # Special handling for XP with colored values
                 xp_text = f"  {key}: "
                 xp_current = str(value)
@@ -837,6 +892,26 @@ class GameGUI:
                 self.print_text(f"  {key}: {value}")
         
         self.print_text("=" * 60)
+        
+        # Display active quests
+        active_quests = self.quest_manager.get_active_quests(self.game_state.hero)
+        if active_quests:
+            self.print_text("\n📜 Active Quests:")
+            for i, quest in enumerate(active_quests[:3], 1):  # Show max 3 quests
+                quest_parts = [
+                    (f"  {i}. ", "#ffffff"),
+                    (quest.description, "#ffaa00"),
+                    (f" ({quest.reward_xp} XP)", "#8844ff")
+                ]
+                self._print_colored_parts(quest_parts)
+        else:
+            quest_parts = [
+                ("📜 No active quests - visit ", "#ffffff"),
+                ("Quests", "#ffaa00"),
+                (" to get started!", "#ffffff")
+            ]
+            self._print_colored_parts(quest_parts)
+            
         self.print_text("\nWhat would you like to do?")
         
         def on_menu_select(choice):
@@ -846,8 +921,84 @@ class GameGUI:
                 self.monster_encounter.start()
             elif choice == 3:
                 self.inventory.use_item()
+            elif choice == 4:
+                self.show_quests()
         
-        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item"], on_menu_select)
+        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests"], on_menu_select)
+
+    def show_quests(self):
+        """Display quest interface"""
+        self.clear_text()
+        
+        hero = self.game_state.hero
+        self.quest_manager.initialize_hero_quests(hero)
+        
+        self.print_text("📜 QUESTS 📜\n")
+        
+        active_quests = self.quest_manager.get_active_quests(hero)
+        
+        if not active_quests:
+            self.print_text("No active quests.\n")
+            
+            # Offer to generate a new quest
+            self.print_text("Would you like to take on a new quest?")
+            
+            def on_quest_choice(choice):
+                if choice == 1:
+                    # Generate new kill monster quest
+                    new_quest = self.quest_manager.generate_kill_monster_quest()
+                    if new_quest:
+                        self.quest_manager.add_quest(hero, new_quest)
+                        
+                        # Show the new quest
+                        quest_parts = [
+                            ("🆕 New Quest: ", "#00ff00"),
+                            (new_quest.description, "#ffffff"),
+                            (f" (Reward: {new_quest.reward_xp} XP)", "#ffdd00")
+                        ]
+                        self._print_colored_parts(quest_parts)
+                        
+                        self.print_text("\nQuest added to your journal!")
+                    else:
+                        self.print_text("❌ Could not generate quest (no monsters available)")
+                
+                # Return to main menu after a delay
+                self.root.after(2000, self.main_menu)
+            
+            self.set_buttons(["✅ Accept New Quest", "🔙 Back"], on_quest_choice)
+            
+        else:
+            # Show active quests
+            for i, quest in enumerate(active_quests, 1):
+                quest_parts = [
+                    (f"{i}. ", "#ffffff"),
+                    (quest.description, "#00ff00"),
+                    (f" (Reward: {quest.reward_xp} XP)", "#ffdd00")
+                ]
+                self._print_colored_parts(quest_parts)
+            
+            self.print_text(f"\nYou have {len(active_quests)} active quest(s).")
+            
+            def on_quest_menu_choice(choice):
+                if choice == 1 and len(active_quests) < 3:  # Limit to 3 quests
+                    # Generate additional quest
+                    new_quest = self.quest_manager.generate_kill_monster_quest()
+                    if new_quest:
+                        self.quest_manager.add_quest(hero, new_quest)
+                        self.print_text("\n🆕 New quest added!")
+                        self.root.after(1500, self.show_quests)  # Refresh quest view
+                    else:
+                        self.print_text("❌ Could not generate quest")
+                        self.root.after(1500, self.main_menu)
+                else:
+                    self.main_menu()
+            
+            buttons = []
+            if len(active_quests) < 3:
+                buttons.append("➕ Take Another Quest")
+            buttons.append("🔙 Back")
+            
+            self.set_buttons(buttons, on_quest_menu_choice)
 
     def game_over(self):
         """Handle game over when hero has 0 lives left"""
@@ -862,7 +1013,7 @@ class GameGUI:
         self.print_text("💀  GAME OVER  💀")
         self.print_text("=" * 60)
         self.print_text("\nYou are out of lives! The adventure ends here...")
-        self.print_text("Thank you for playing PyQuest!")
+        self.print_text("Thank you for playing MonsterGame!")
         self.print_text("=" * 60)
         
         # Play game over sound

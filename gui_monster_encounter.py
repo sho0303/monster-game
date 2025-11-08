@@ -42,7 +42,47 @@ class MonsterEncounterGUI:
                         ]
                         self.gui._print_colored_parts(victory_parts)
                         self.gui.game_state.hero['gold'] += monster['gold']
-                        self.gui.game_state.hero['xp'] += monster['xp']
+                        self.gui.game_state.hero['xp'] += monster.get('xp', 1)  # Default 1 XP if not specified
+                        
+                        # Check for quest completion
+                        completed_quests = self.gui.quest_manager.check_quest_completion(
+                            self.gui.game_state.hero, monster['name']
+                        )
+                        
+                        if completed_quests:
+                            for quest in completed_quests:
+                                # Show XP before quest completion
+                                xp_before = self.gui.game_state.hero['xp'] - quest.reward_xp
+                                xp_after = self.gui.game_state.hero['xp']
+                                current_level = self.gui.game_state.hero['level']
+                                xp_needed_to_level = current_level * 5
+                                
+                                quest_parts = [
+                                    ("\n🏆 Quest Completed: ", "#00ff00"),
+                                    (quest.description, "#ffffff"),
+                                    (f" (+{quest.reward_xp} XP)", "#ffdd00")
+                                ]
+                                self.gui._print_colored_parts(quest_parts)
+                                
+                                # Show detailed XP information
+                                if xp_after >= xp_needed_to_level:
+                                    level_up_parts = [
+                                        ("   💫 Ready to level up! ", "#ffaa00"),
+                                        (f"XP: {xp_before} → {xp_after} ", "#8844ff"),
+                                        (f"(Need {xp_needed_to_level} for Level {current_level + 1})", "#ffffff")
+                                    ]
+                                    self.gui._print_colored_parts(level_up_parts)
+                                else:
+                                    xp_progress_parts = [
+                                        ("   📊 XP Progress: ", "#ffffff"),
+                                        (f"{xp_before} → {xp_after}", "#8844ff"),
+                                        (f"/{xp_needed_to_level} ", "#ffffff"),
+                                        (f"({xp_needed_to_level - xp_after} XP to Level {current_level + 1})", "#888888")
+                                    ]
+                                    self.gui._print_colored_parts(xp_progress_parts)
+                            
+                            # Clean up completed quests
+                            self.gui.quest_manager.clear_completed_quests(self.gui.game_state.hero)
                     else:
                         self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
                         self.gui.game_state.hero['gold'] = 0
