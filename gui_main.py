@@ -1207,6 +1207,8 @@ class GameGUI:
                             ]
                             self._print_colored_parts(error_parts)
                             self.print_text("💡 Complete existing quests or explore other biomes!")
+                            # Stay in quest menu to see existing quests
+                            self.root.after(2500, self.show_quests)
                         elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
                             error_parts = [
                                 ("❌ No quests available! ", "#ff6666"),
@@ -1214,8 +1216,12 @@ class GameGUI:
                             ]
                             self._print_colored_parts(error_parts)
                             self.print_text("💡 Complete some existing quests first!")
+                            # Stay in quest menu to see existing quests
+                            self.root.after(2500, self.show_quests)
                         else:
                             self.print_text("❌ Could not generate quest (unknown error)")
+                            # Return to main menu for unknown errors
+                            self.root.after(2000, self.main_menu)
                     elif new_quest:
                         # Successfully generated quest
                         self.quest_manager.add_quest(hero, new_quest)
@@ -1229,11 +1235,15 @@ class GameGUI:
                         self._print_colored_parts(quest_parts)
                         
                         self.print_text("\nQuest added to your journal!")
+                        # Stay in quest menu after adding quest
+                        self.root.after(1500, self.show_quests)
                     else:
                         self.print_text("❌ Could not generate quest (no monsters available)")
-                
-                # Return to main menu after a delay
-                self.root.after(2000, self.main_menu)
+                        # Return to main menu only on error
+                        self.root.after(2000, self.main_menu)
+                elif choice == 2:
+                    # Back button pressed
+                    self.main_menu()
             
             self.set_buttons(["✅ Accept New Quest", "🔙 Back"], on_quest_choice)
             
