@@ -678,7 +678,7 @@ class GameGUI:
                 len(self.buttons) >= button_num and 
                 self._is_button_enabled(button_num)):
                 self._highlight_button(button_num)
-                self.root.after(100, lambda: self.current_action(button_num))
+                self.root.after(100, lambda: self.current_action(button_num) if self.current_action else None)
                 
         # Arrow key navigation (grid-based)
         elif key == 'left':
@@ -692,7 +692,7 @@ class GameGUI:
         elif key == 'return':  # Enter key
             if self.current_action and self._is_button_enabled(self.current_selected_button):
                 self._highlight_button(self.current_selected_button)
-                self.root.after(100, lambda: self.current_action(self.current_selected_button))
+                self.root.after(100, lambda: self.current_action(self.current_selected_button) if self.current_action else None)
                 
         # Audio controls
         elif key == 'm':
@@ -721,7 +721,7 @@ class GameGUI:
             for i in range(1, len(self.buttons) + 1):
                 if self._is_button_enabled(i):
                     self._highlight_button(i)
-                    self.root.after(100, lambda btn=i: self.current_action(btn))
+                    self.root.after(100, lambda btn=i: self.current_action(btn) if self.current_action else None)
                     break
 
     def _show_help(self):

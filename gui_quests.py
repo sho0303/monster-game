@@ -45,22 +45,21 @@ class QuestManager:
         self.gui = gui
         
     def initialize_hero_quests(self, hero):
-        """Initialize quest list in hero object if not present, and convert loaded quest dicts to Quest objects"""
+        """Initialize quest list in hero object if not present"""
         if 'quests' not in hero:
             hero['quests'] = []
         
-        # Convert any dictionary quests back to Quest objects (for loaded games)
-        converted_quests = []
+        # Ensure all quests are stored as dictionaries for consistency
+        normalized_quests = []
         for quest_item in hero['quests']:
             if isinstance(quest_item, dict):
-                # Convert dictionary to Quest object
-                quest_obj = Quest.from_dict(quest_item)
-                converted_quests.append(quest_obj)
-            elif hasattr(quest_item, 'quest_type'):
-                # Already a Quest object
-                converted_quests.append(quest_item)
+                # Already a dictionary - keep as is
+                normalized_quests.append(quest_item)
+            elif hasattr(quest_item, 'to_dict'):
+                # Quest object - convert to dictionary
+                normalized_quests.append(quest_item.to_dict())
         
-        hero['quests'] = converted_quests
+        hero['quests'] = normalized_quests
     
     def generate_kill_monster_quest(self):
         """Generate a random kill monster quest from current biome (avoiding duplicates)"""
@@ -143,7 +142,9 @@ class QuestManager:
     def get_active_quests(self, hero):
         """Get all active (non-completed) quests for hero"""
         self.initialize_hero_quests(hero)
-        return [Quest.from_dict(q) for q in hero['quests'] if not q.get('completed', False)]
+        # Filter dictionaries first, then convert to Quest objects
+        active_quest_dicts = [q for q in hero['quests'] if not q.get('completed', False)]
+        return [Quest.from_dict(q) for q in active_quest_dicts]
     
     def complete_quest(self, hero, quest):
         """Mark quest as completed and give rewards"""
