@@ -798,7 +798,7 @@ class GameGUI:
         # Clear screen for dramatic effect
         self.clear_text()
         self.print_text("✨ TELEPORTING... ✨")
-        self.audio.play_sound_effect('tada.mp3')  # Use magical sound for teleportation
+        self.audio.play_sound_effect('teleport.mp3')  # Play teleport sound effect
         
         # Show teleport result after brief delay
         def show_teleport_result():
