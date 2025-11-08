@@ -16,8 +16,8 @@ class MonsterEncounterGUI:
         if not monster:
             return
         
-        # Set the dungeon background for monster encounters
-        self.gui.set_background_image('art/dungeon_background.png', '#2d1f1a')
+        # Set the dungeon biome background for monster encounters  
+        self.gui.set_biome_background('dungeon')
         
         self.gui.clear_text()
         

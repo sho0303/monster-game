@@ -32,6 +32,9 @@ class GameGUI:
         self.keyboard_enabled = True
         self.current_selected_button = 1  # Track which button is selected for arrow navigation
         
+        # Biome system
+        self.current_biome = 'grassland'  # Initialize default biome
+        
         # Game state
         self.game_state = None
         self.audio = Audio()
@@ -167,8 +170,42 @@ class GameGUI:
             self.image_canvas.configure(bg=fallback_color)
     
     def reset_background(self):
-        """Reset to the default grassy background"""
-        self.set_background_image('art/grassy_background.png', '#4a7c59')
+        """Reset to the default biome background"""
+        self.set_biome_background(self.current_biome)
+    
+    def set_biome_background(self, biome_name='grassland'):
+        """Set background based on biome type"""
+        # Initialize current biome if not set
+        if not hasattr(self, 'current_biome'):
+            self.current_biome = 'grassland'
+        
+        biome_configs = {
+            'grassland': {
+                'background': 'art/grassy_background.png',
+                'fallback_color': '#4a7c59'
+            },
+            'desert': {
+                'background': 'art/desert_background.png', 
+                'fallback_color': '#daa520'
+            },
+            'dungeon': {
+                'background': 'art/dungeon_background.png',
+                'fallback_color': '#2d1f1a'
+            }
+        }
+        
+        if biome_name in biome_configs:
+            self.current_biome = biome_name
+            config = biome_configs[biome_name]
+            self.set_background_image(config['background'], config['fallback_color'])
+        else:
+            # Default to grassland
+            self.current_biome = 'grassland'
+            self.set_background_image('art/grassy_background.png', '#4a7c59')
+    
+    def set_shop_background(self):
+        """Set the shop-specific background (not part of biome system)"""
+        self.set_background_image('art/shop_background.png', '#654321')
     
     def _get_canvas_dimensions(self):
         """Get current canvas dimensions, with fallback values"""
@@ -633,6 +670,10 @@ class GameGUI:
         elif key == 'minus':
             self.audio.adjust_volume(-0.1) 
             self.print_text(f"🔉 Volume: {int(self.audio.get_volume() * 100)}%")
+            
+        # Biome switching (for testing)
+        elif key == 'b':
+            self._cycle_biomes()
 
     def _handle_escape(self):
         """Handle ESC key - go back or show main menu"""
@@ -670,10 +711,95 @@ class GameGUI:
    + - Volume up
    - - Volume down
 
+🏜️ Testing:
+   B - Cycle biomes (Grassland → Desert → Dungeon)
+
 💡 Tip: Look for button highlights to see
    which option is currently selected!
 """
         self.print_text(help_text)
+        
+    def _cycle_biomes(self):
+        """Cycle through available biomes for testing"""
+        # Ensure current_biome is initialized
+        if not hasattr(self, 'current_biome') or self.current_biome is None:
+            self.current_biome = 'grassland'
+            
+        biomes = ['grassland', 'desert', 'dungeon']
+        current_index = biomes.index(self.current_biome) if self.current_biome in biomes else 0
+        next_index = (current_index + 1) % len(biomes)
+        next_biome = biomes[next_index]
+        
+        # Set the new biome
+        self.set_biome_background(next_biome)
+        
+        # Show feedback message
+        biome_emojis = {
+            'grassland': '🌱',
+            'desert': '🏜️', 
+            'dungeon': '🏰'
+        }
+        emoji = biome_emojis.get(next_biome, '🌍')
+        self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
+        
+        # Also update any active encounter screens
+        if hasattr(self, 'monster_encounter') and self.monster_encounter:
+            self.monster_encounter.set_background(next_biome)
+    
+    def teleport_to_random_biome(self):
+        """Teleport to a random biome different from the current one"""
+        import random
+        
+        # Ensure current_biome is initialized
+        if not hasattr(self, 'current_biome') or self.current_biome is None:
+            self.current_biome = 'grassland'
+        
+        # Available biomes
+        available_biomes = ['grassland', 'desert', 'dungeon']
+        
+        # Remove current biome from options
+        other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
+        
+        # Select random biome from remaining options
+        new_biome = random.choice(other_biomes)
+        
+        # Set the new biome
+        self.set_biome_background(new_biome)
+        
+        # Show teleport message with dramatic effect
+        biome_descriptions = {
+            'grassland': '🌱 Rolling green meadows stretch before you...',
+            'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
+            'dungeon': '🏰 Cold stone walls echo with mysterious sounds...'
+        }
+        
+        biome_emojis = {
+            'grassland': '🌱',
+            'desert': '🏜️', 
+            'dungeon': '🏰'
+        }
+        
+        emoji = biome_emojis.get(new_biome, '🌍')
+        description = biome_descriptions.get(new_biome, 'You find yourself in a strange new place...')
+        
+        # Clear screen for dramatic effect
+        self.clear_text()
+        self.print_text("✨ TELEPORTING... ✨")
+        self.audio.play_sound_effect('tada.mp3')  # Use magical sound for teleportation
+        
+        # Show teleport result after brief delay
+        def show_teleport_result():
+            self.print_text(f"\n{emoji} ═══════════════════════════════════════════════ {emoji}")
+            self.print_text("🌀 TELEPORTATION COMPLETE 🌀")
+            self.print_text(f"{emoji} ═══════════════════════════════════════════════ {emoji}")
+            self.print_text(f"\n{description}")
+            self.print_text(f"\n📍 Current location: {new_biome.title()}")
+            
+            # Return to main menu after showing result
+            self.root.after(3000, self.main_menu)
+        
+        # Show result after teleportation delay
+        self.root.after(1000, show_teleport_result)
 
     def _navigate_buttons(self, direction):
         """Navigate between buttons with arrow keys"""
@@ -979,6 +1105,29 @@ class GameGUI:
         
         self.print_text("=" * 60)
         
+        # Display current biome location
+        biome_emojis = {
+            'grassland': '🌱',
+            'desert': '🏜️', 
+            'dungeon': '🏰'
+        }
+        biome_colors = {
+            'grassland': '#4a7c59',
+            'desert': '#daa520', 
+            'dungeon': '#8b4513'
+        }
+        
+        current_biome = getattr(self, 'current_biome', 'grassland')
+        biome_emoji = biome_emojis.get(current_biome, '🌍')
+        biome_color = biome_colors.get(current_biome, '#00ff00')
+        
+        location_parts = [
+            ("📍 Current Location: ", "#ffffff"),
+            (f"{biome_emoji} {current_biome.title()}", biome_color)
+        ]
+        self._print_colored_parts(location_parts)
+        self.print_text("")
+        
         # Display active quests
         active_quests = self.quest_manager.get_active_quests(self.game_state.hero)
         if active_quests:
@@ -1009,8 +1158,10 @@ class GameGUI:
                 self.inventory.use_item()
             elif choice == 4:
                 self.show_quests()
+            elif choice == 5:
+                self.teleport_to_random_biome()
         
-        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests"], on_menu_select)
+        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport"], on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""

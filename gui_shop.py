@@ -18,8 +18,8 @@ class ShopGUI:
         if self.store_data is None:
             self._load_store()
         
-        # Set the shop background
-        self.gui.set_background_image('art/shop_background.png', '#654321')
+        # Set the shop-specific background
+        self.gui.set_shop_background()
         
         self.gui.clear_text()
         #self.gui.show_image('art/pymart.txt')
