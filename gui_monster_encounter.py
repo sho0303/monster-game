@@ -1,8 +1,8 @@
 """
 Monster encounter system for GUI
 """
+import os
 import random
-from time import sleep
 
 
 class MonsterEncounterGUI:
@@ -34,7 +34,13 @@ class MonsterEncounterGUI:
                 
                 def after_fight(result):
                     if result == 'won':
-                        self.gui.print_text(f"\n🎉 Victory! You earned {monster['gold']} gold!")
+                        # Victory message with colored gold reward
+                        victory_parts = [
+                            ("\n🎉 Victory! You earned ", "#00ff00"),
+                            (str(monster['gold']), "#ffdd00"),
+                            (" gold!", "#00ff00")
+                        ]
+                        self.gui._print_colored_parts(victory_parts)
                         self.gui.game_state.hero['gold'] += monster['gold']
                         self.gui.game_state.hero['xp'] += monster['xp']
                     else:
@@ -42,6 +48,10 @@ class MonsterEncounterGUI:
                         self.gui.game_state.hero['gold'] = 0
                         self.gui.game_state.hero['lives_left'] -= 1
                         self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
+                    
+                    # Check if game is over (0 lives left)
+                    if self.gui.check_game_over():
+                        return
                     
                     # Wait before returning to main menu, interface unlocks when main_menu sets buttons
                     self.gui.root.after(3000, self.gui.main_menu)
@@ -89,8 +99,23 @@ class MonsterEncounterGUI:
         
         # Play attack sound and show damage
         self.gui.audio.play_sound_effect('buzzer.mp3')
-        self.gui.print_text(f"💔 {monster['name']} hits you for {damage} damage as you escape!")
-        self.gui.print_text(f"Your HP: {hero['hp']}")
+        
+        # Display damage message with colored values
+        damage_parts = [
+            ("💔 ", "#00ff00"),
+            (monster['name'], "#ffaa00"),
+            (" hits you for ", "#00ff00"),
+            (str(damage), "#ff8800"),
+            (" damage as you escape!", "#00ff00")
+        ]
+        self.gui._print_colored_parts(damage_parts)
+        
+        # Display HP with colored value
+        hp_parts = [
+            ("Your HP: ", "#00ff00"),
+            (str(hero['hp']), "#ff4444")
+        ]
+        self.gui._print_colored_parts(hp_parts)
         
         # Check if hero died while running away
         if hero['hp'] <= 0:
@@ -98,6 +123,10 @@ class MonsterEncounterGUI:
             self.gui.game_state.hero['gold'] = 0
             self.gui.game_state.hero['lives_left'] -= 1
             self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
+            
+            # Check if game is over (0 lives left)
+            if self.gui.check_game_over():
+                return
         else:
             self.gui.print_text("\n🏃 You managed to escape, but not unscathed!")
         
@@ -113,7 +142,6 @@ class MonsterEncounterGUI:
         
         try:
             # Check if hero image exists
-            import os
             if os.path.exists(hero_image_path):
                 image_paths.append(hero_image_path)
             else:

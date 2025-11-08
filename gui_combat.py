@@ -158,7 +158,10 @@ class CombatGUI:
         """Complete hero attack after animation - show damage text and sound"""
         # Play attack sound and show damage
         self.gui.audio.play_sound_effect('punch.mp3')
-        self.gui.print_text(message_template.format(damage=damage))
+        
+        # Display attack damage with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - damage)
         
         # Return to normal display
@@ -168,7 +171,10 @@ class CombatGUI:
         """Complete hero attack and start monster counter-attack"""
         # Play attack sound and show hero damage
         self.gui.audio.play_sound_effect('punch.mp3')
-        self.gui.print_text(message_template.format(damage=hero_damage))
+        
+        # Display damage message with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Check if monster is still alive to counter-attack
@@ -190,7 +196,10 @@ class CombatGUI:
         """Complete hero attack and finish the round (legacy method for single attack rounds)"""
         # Play attack sound and show hero damage
         self.gui.audio.play_sound_effect('punch.mp3')
-        self.gui.print_text(message_template.format(damage=hero_damage))
+        
+        # Display hero attack damage with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Finish round and show status, then continue to next round
@@ -240,7 +249,10 @@ class CombatGUI:
         """Complete monster attack and start hero counter-attack"""
         # Play monster attack sound and show damage
         self.gui.audio.play_sound_effect('buzzer.mp3')
-        self.gui.print_text(message_template.format(damage=monster_damage))
+        
+        # Display damage message with enhanced visual impact  
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Check if hero is still alive to counter-attack
@@ -262,7 +274,10 @@ class CombatGUI:
         """Complete hero counter-attack and finish the round"""
         # Play attack sound and show hero damage
         self.gui.audio.play_sound_effect('punch.mp3')
-        self.gui.print_text(message_template.format(damage=hero_damage))
+        
+        # Display counter-attack damage with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Finish round and show status, then continue to next round
@@ -278,7 +293,10 @@ class CombatGUI:
         """Complete monster counter-attack and finish the round"""
         # Play monster attack sound and show damage
         self.gui.audio.play_sound_effect('buzzer.mp3')
-        self.gui.print_text(message_template.format(damage=monster_damage))
+        
+        # Display monster counter-attack damage with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Finish round and show status, then continue to next round
@@ -294,7 +312,10 @@ class CombatGUI:
         """Complete monster attack and finish the round (legacy method for single attack rounds)"""
         # Play monster attack sound and show damage
         self.gui.audio.play_sound_effect('buzzer.mp3')
-        self.gui.print_text(message_template.format(damage=monster_damage))
+        
+        # Display monster attack damage with enhanced visual impact
+        base_message = message_template.replace("{damage}", "")
+        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Finish round and show status, then continue to next round
@@ -308,7 +329,17 @@ class CombatGUI:
 
     def _finish_round_status(self, hero, monster, round_num):
         """Show round status and return to normal display"""
-        self.gui.print_text(f"Your HP: {hero['hp']} | {monster['name']} HP: {monster['hp']}\n")
+        # Display HP status with colored values
+        status_parts = [
+            ("Your HP: ", "#00ff00"),
+            (str(hero['hp']), "#ff4444"),
+            (" | ", "#00ff00"),
+            (monster['name'], "#ffaa00"),
+            (" HP: ", "#00ff00"),
+            (str(monster['hp']), "#ff4444"),
+            ("\n", "#00ff00")
+        ]
+        self.gui._print_colored_parts(status_parts)
         self._return_to_monster_view(monster)
 
     def _return_to_monster_view(self, monster):

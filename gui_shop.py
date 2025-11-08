@@ -21,7 +21,11 @@ class ShopGUI:
         self.gui.clear_text()
         self.gui.show_image('art/pymart.txt')
         self.gui.print_text("\n🛒 Welcome to PyMart! 🛒\n")
-        self.gui.print_text(f"💰 Your Gold: {self.gui.game_state.hero.get('gold', 0)}\n")
+        
+        # Display gold with colored value
+        gold_amount = self.gui.game_state.hero.get('gold', 0)
+        self.gui.print_colored_value("💰 Your Gold: ", gold_amount, 'gold')
+        self.gui.print_text("")  # Empty line
         self._select_category()
     
     def _load_store(self):
@@ -191,8 +195,17 @@ class ShopGUI:
             self.gui.show_image(item['ascii_art'])
         
         self.gui.clear_text()
-        self.gui.print_text(f"\n✅ Purchased: {item['name']}!")
-        self.gui.print_text(f"💰 Gold remaining: {hero['gold']}")
+        
+        # Purchase success message with colored item name
+        purchase_parts = [
+            ("\n✅ Purchased: ", "#00ff00"),
+            (item['name'], "#ffaa00"),
+            ("!", "#00ff00")
+        ]
+        self.gui._print_colored_parts(purchase_parts)
+        
+        # Gold remaining with colored amount
+        self.gui.print_colored_value("💰 Gold remaining: ", hero['gold'], 'gold')
         
         # Apply item effects based on category
         if self.current_category == 'Weapons':

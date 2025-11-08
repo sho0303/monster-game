@@ -310,11 +310,184 @@ class GameGUI:
             label.config(text=f"Error:\n{image_path}\n{str(e)}", fg='#ff0000', bg='#1a1a1a')
     
     def print_text(self, text, color='#00ff00'):
-        """Print text to the text area"""
+        """Print text to the text area with color support"""
         self.text_area.config(state=tk.NORMAL)  # Temporarily enable for writing
-        self.text_area.insert(tk.END, text + '\n')
+        
+        # Process text for variable coloring
+        colored_text = self._process_text_colors(text)
+        
+        # Insert text with appropriate colors
+        for text_part, text_color in colored_text:
+            # Create or get color tag
+            tag_name = f"color_{text_color.replace('#', '')}"
+            self.text_area.tag_config(tag_name, foreground=text_color)
+            
+            # Insert text with color tag
+            start_index = self.text_area.index(tk.END + "-1c")
+            self.text_area.insert(tk.END, text_part)
+            end_index = self.text_area.index(tk.END + "-1c")
+            self.text_area.tag_add(tag_name, start_index, end_index)
+        
+        # Add newline with default color
+        self.text_area.insert(tk.END, '\n')
         self.text_area.see(tk.END)
         self.text_area.config(state=tk.DISABLED)  # Disable again
+        self.root.update()
+    
+    def _process_text_colors(self, text):
+        """Process text and return list of (text, color) tuples"""
+        import re
+        
+        # Define color mapping for different types of variables
+        color_patterns = {
+            # Health and HP related
+            r'\b(\d+)\s*HP\b': '#ff4444',  # Red for HP values
+            r'\bhp:\s*(\d+)': '#ff4444',   # Red for HP stats
+            r'\b(\d+)/(\d+)\s*HP\b': '#ff4444',  # Red for HP fractions
+            
+            # Damage numbers
+            r'\b(\d+)\s*damage\b': '#ff8800',  # Orange for damage
+            r'\bfor\s+(\d+)\s+damage': '#ff8800',  # Orange for damage
+            
+            # Gold and currency
+            r'💰\s*(\d+)': '#ffdd00',  # Gold for money
+            r'\b(\d+)\s*gold\b': '#ffdd00',  # Gold for money
+            
+            # Experience and levels
+            r'\bLevel\s*(\d+)': '#00aaff',  # Blue for levels
+            r'\blevel:\s*(\d+)': '#00aaff',  # Blue for levels
+            r'\b(\d+)\s*XP\b': '#8844ff',  # Purple for XP
+            r'\bxp:\s*(\d+)': '#8844ff',   # Purple for XP
+            
+            # Attack and Defense stats
+            r'\bAttack:\s*(\d+)': '#ff6600',  # Red-orange for attack
+            r'\battack:\s*(\d+)': '#ff6600',  # Red-orange for attack
+            r'\bDefense:\s*(\d+)': '#0088ff', # Blue for defense
+            r'\bdefense:\s*(\d+)': '#0088ff', # Blue for defense
+            
+            # Names and important identifiers
+            r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b': '#ffaa00',  # Orange for character names
+            r'⚔️\s*([^!]+)!': '#ffaa00',  # Orange for monster names in encounters
+        }
+        
+        result = []
+        last_end = 0
+        
+        # Find all matches and sort by position
+        all_matches = []
+        for pattern, color in color_patterns.items():
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                all_matches.append((match.start(), match.end(), match.group(), color))
+        
+        # Sort matches by start position
+        all_matches.sort()
+        
+        # Remove overlapping matches (keep first one)
+        filtered_matches = []
+        for start, end, group, color in all_matches:
+            # Check if this match overlaps with any previous match
+            overlap = False
+            for prev_start, prev_end, _, _ in filtered_matches:
+                if start < prev_end and end > prev_start:  # Overlapping
+                    overlap = True
+                    break
+            if not overlap:
+                filtered_matches.append((start, end, group, color))
+        
+        # Build result with colored segments
+        for start, end, group, color in filtered_matches:
+            # Add text before match with default color
+            if start > last_end:
+                result.append((text[last_end:start], '#00ff00'))
+            
+            # Add matched text with special color
+            result.append((text[start:end], color))
+            last_end = end
+        
+        # Add remaining text with default color
+        if last_end < len(text):
+            result.append((text[last_end:], '#00ff00'))
+        
+        # If no matches found, return entire text with default color
+        if not result:
+            result.append((text, '#00ff00'))
+        
+        return result
+    
+    def print_combat_damage(self, message, damage_amount, attacker_name):
+        """Print combat damage with extra visual emphasis"""
+        # Use bright, vibrant colors for combat damage
+        damage_color = '#ff0000'  # Bright red for maximum visibility
+        
+        # Create emphasized damage text with surrounding symbols
+        damage_text = f"💥 {damage_amount} DAMAGE! 💥"
+        
+        # Split the message to insert the emphasized damage
+        if "damage!" in message.lower():
+            base_message = message.replace("damage!", "").replace("DAMAGE!", "")
+        else:
+            base_message = message
+        
+        # Create the colored parts with extra emphasis
+        parts = [
+            (base_message, "#00ff00"),  # Default green for text
+            (damage_text, damage_color)   # Bright red for damage with emphasis
+        ]
+        
+        self._print_colored_parts(parts)
+    
+    def print_colored_value(self, text, value, value_type='default', custom_color=None):
+        """Print text with a colored value embedded"""
+        color_map = {
+            'hp': '#ff4444',      # Red for health
+            'damage': '#ff8800',  # Orange for damage  
+            'gold': '#ffdd00',    # Gold for money
+            'xp': '#8844ff',      # Purple for experience
+            'level': '#00aaff',   # Blue for levels
+            'attack': '#ff6600',  # Red-orange for attack
+            'defense': '#0088ff', # Blue for defense
+            'name': '#ffaa00',    # Orange for names
+            'default': '#00ff00'  # Default green
+        }
+        
+        # Use custom color if provided, otherwise use color map
+        color = custom_color if custom_color else color_map.get(value_type, color_map['default'])
+        
+        # Create colored segments
+        parts = []
+        if '{value}' in text:
+            # Split around the placeholder
+            before, after = text.split('{value}', 1)
+            parts.append((before, '#00ff00'))  # Default color for text
+            parts.append((str(value), color))   # Special color for value
+            parts.append((after, '#00ff00'))   # Default color for remaining text
+        else:
+            # No placeholder, just print normally
+            parts.append((text + str(value), '#00ff00'))
+        
+        # Print using the enhanced method
+        self._print_colored_parts(parts)
+    
+    def _print_colored_parts(self, parts):
+        """Internal method to print pre-processed colored parts"""
+        self.text_area.config(state=tk.NORMAL)
+        
+        for text_part, text_color in parts:
+            if text_part:  # Only process non-empty strings
+                # Create or get color tag
+                tag_name = f"color_{text_color.replace('#', '')}"
+                self.text_area.tag_config(tag_name, foreground=text_color)
+                
+                # Insert text with color tag
+                start_index = self.text_area.index(tk.END + "-1c")
+                self.text_area.insert(tk.END, text_part)
+                end_index = self.text_area.index(tk.END + "-1c")
+                self.text_area.tag_add(tag_name, start_index, end_index)
+        
+        # Add newline
+        self.text_area.insert(tk.END, '\n')
+        self.text_area.see(tk.END)
+        self.text_area.config(state=tk.DISABLED)
         self.root.update()
     
     def clear_text(self):
@@ -607,9 +780,47 @@ class GameGUI:
         
         for key, value in self.game_state.hero.items():
             if key == 'xp':
-                self.print_text(f"  {key}: {value}/{self.game_state.hero['level']*5}")
+                # Special handling for XP with colored values
+                xp_text = f"  {key}: "
+                xp_current = str(value)
+                xp_max = str(self.game_state.hero['level']*5)
+                
+                self.text_area.config(state=tk.NORMAL)
+                self.text_area.insert(tk.END, xp_text, 'default_color')
+                self.text_area.tag_config('default_color', foreground='#00ff00')
+                
+                self.text_area.insert(tk.END, xp_current, 'xp_color')
+                self.text_area.tag_config('xp_color', foreground='#8844ff')
+                
+                self.text_area.insert(tk.END, "/", 'default_color')
+                
+                self.text_area.insert(tk.END, xp_max, 'xp_color')
+                
+                self.text_area.insert(tk.END, '\n')
+                self.text_area.see(tk.END)
+                self.text_area.config(state=tk.DISABLED)
+                
             elif key == 'item' and value is not None:
-                self.print_text(f"  {key}: {value['name']}")
+                self.print_colored_value(f"  {key}: ", value['name'], 'name')
+            elif key in ['hp', 'maxhp']:
+                self.print_colored_value(f"  {key}: ", value, 'hp')
+            elif key == 'attack':
+                self.print_colored_value(f"  {key}: ", value, 'attack')
+            elif key == 'defense':
+                self.print_colored_value(f"  {key}: ", value, 'defense')
+            elif key == 'level':
+                self.print_colored_value(f"  {key}: ", value, 'level')
+            elif key == 'gold':
+                self.print_colored_value(f"  {key}: ", value, 'gold')
+            elif key == 'lives_left':
+                # Special color coding for lives - red when low
+                if value <= 1:
+                    lives_color = '#ff4444'  # Red for critical
+                elif value <= 2:
+                    lives_color = '#ffaa00'  # Orange for warning  
+                else:
+                    lives_color = '#00ff00'  # Green for safe
+                self.print_colored_value(f"  {key}: ", value, 'custom', lives_color)
             else:
                 self.print_text(f"  {key}: {value}")
         
@@ -625,3 +836,37 @@ class GameGUI:
                 self.inventory.use_item()
         
         self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item"], on_menu_select)
+
+    def game_over(self):
+        """Handle game over when hero has 0 lives left"""
+        self.clear_text()
+        self.lock_interface()
+        
+        # Show game over image
+        self.show_image('art/you_lost.png')
+        
+        # Display game over message
+        self.print_text("\n" + "=" * 60)
+        self.print_text("💀  GAME OVER  💀")
+        self.print_text("=" * 60)
+        self.print_text("\nYou are out of lives! The adventure ends here...")
+        self.print_text("Thank you for playing PyQuest!")
+        self.print_text("=" * 60)
+        
+        # Play game over sound
+        self.audio.play_sound_effect('death.mp3')
+        
+        # Close the game after 5 seconds
+        self.root.after(5000, self._close_game)
+    
+    def _close_game(self):
+        """Close the game application"""
+        self.root.quit()
+        self.root.destroy()
+    
+    def check_game_over(self):
+        """Check if hero has 0 lives left and trigger game over if needed"""
+        if self.game_state.hero['lives_left'] <= 0:
+            self.game_over()
+            return True
+        return False
