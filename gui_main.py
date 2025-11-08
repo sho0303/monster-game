@@ -772,6 +772,7 @@ class GameGUI:
             self.game_state.hero['level'] += 1
             self.game_state.hero['xp'] = 0
             self.game_state.hero['maxhp'] += 5
+            self.game_state.hero['hp'] = self.game_state.hero['maxhp']
             self.game_state.hero['attack'] += 2
             self.game_state.hero['defense'] += 2
             self.print_text(f"Your hero has reached level {self.game_state.hero['level']}!")
