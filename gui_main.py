@@ -13,6 +13,7 @@ from gui_shop import ShopGUI
 from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
+from gui_save_load import SaveLoadManager
 
 
 class GameGUI:
@@ -56,6 +57,7 @@ class GameGUI:
         self.inventory = None
         self.monster_encounter = None
         self.quest_manager = None
+        self.save_load_manager = None
         
         # Create main layout
         self._create_widgets()
@@ -966,6 +968,7 @@ class GameGUI:
         self.inventory = InventoryGUI(self)
         self.monster_encounter = MonsterEncounterGUI(self)
         self.quest_manager = QuestManager(self)
+        self.save_load_manager = SaveLoadManager(self)
         
         # Start hero selection
         self.select_hero()
@@ -980,24 +983,38 @@ class GameGUI:
             for key, value in hero_data.items():
                 self.print_text(f"   {key}: {value}")
         
-        def on_hero_select(choice):
-            hero_name = self.game_state.choices.get(str(choice))
-            if hero_name:
-                self.game_state.hero = self.game_state.heros[hero_name].copy()
-                self.game_state.hero['name'] = hero_name
-                self.game_state.hero['lives_left'] = 3
-                self.game_state.hero['gold'] = 50
-                self.game_state.hero['level'] = 1
-                self.game_state.hero['xp'] = 0
-                
-                # Initialize quest system for hero
-                self.quest_manager.initialize_hero_quests(self.game_state.hero)
-                
-                self.print_text(f"\n✓ You chose: {hero_name}!\n")
-                sleep(0.5)
-                self.main_menu()
+        # Check for existing saves to show load option
+        available_saves = self.save_load_manager.get_available_saves()
+        if available_saves:
+            load_info_parts = [
+                (f"\n📁 Found {len(available_saves)} saved game(s) - ", "#888888"),
+                ("use Load option to continue existing adventure!", "#ffaa00")
+            ]
+            self._print_colored_parts(load_info_parts)
         
-        self.set_buttons(["Hero 1", "Hero 2", "Hero 3"], on_hero_select)
+        def on_hero_select(choice):
+            if choice <= 3:
+                # Create new hero
+                hero_name = self.game_state.choices.get(str(choice))
+                if hero_name:
+                    self.game_state.hero = self.game_state.heros[hero_name].copy()
+                    self.game_state.hero['name'] = hero_name
+                    self.game_state.hero['lives_left'] = 3
+                    self.game_state.hero['gold'] = 50
+                    self.game_state.hero['level'] = 1
+                    self.game_state.hero['xp'] = 0
+                    
+                    # Initialize quest system for hero
+                    self.quest_manager.initialize_hero_quests(self.game_state.hero)
+                    
+                    self.print_text(f"\n✓ You chose: {hero_name}!\n")
+                    sleep(0.5)
+                    self.main_menu()
+            elif choice == 4:
+                # Load saved game
+                self.save_load_manager.show_load_interface()
+        
+        self.set_buttons(["Hero 1", "Hero 2", "Hero 3", "📁 Load Saved Game"], on_hero_select)
     
     def hero_level(self):
         """Handle hero leveling up"""
@@ -1173,8 +1190,10 @@ class GameGUI:
                 self.show_quests()
             elif choice == 5:
                 self.teleport_to_random_biome()
+            elif choice == 6:
+                self.save_load_manager.show_save_interface()
         
-        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport"], on_menu_select)
+        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""

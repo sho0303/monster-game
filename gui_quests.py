@@ -12,6 +12,7 @@ class Quest:
         self.reward_xp = reward_xp
         self.description = description
         self.completed = False
+        self.status = 'active'  # 'active', 'completed'
 
     def to_dict(self):
         """Convert quest to dictionary for storage in hero object"""
@@ -20,7 +21,8 @@ class Quest:
             'target': self.target,
             'reward_xp': self.reward_xp,
             'description': self.description,
-            'completed': self.completed
+            'completed': self.completed,
+            'status': self.status
         }
 
     @classmethod
@@ -33,6 +35,7 @@ class Quest:
             quest_dict['description']
         )
         quest.completed = quest_dict.get('completed', False)
+        quest.status = quest_dict.get('status', 'active')
         return quest
 
 
@@ -42,9 +45,22 @@ class QuestManager:
         self.gui = gui
         
     def initialize_hero_quests(self, hero):
-        """Initialize quest list in hero object if not present"""
+        """Initialize quest list in hero object if not present, and convert loaded quest dicts to Quest objects"""
         if 'quests' not in hero:
             hero['quests'] = []
+        
+        # Convert any dictionary quests back to Quest objects (for loaded games)
+        converted_quests = []
+        for quest_item in hero['quests']:
+            if isinstance(quest_item, dict):
+                # Convert dictionary to Quest object
+                quest_obj = Quest.from_dict(quest_item)
+                converted_quests.append(quest_obj)
+            elif hasattr(quest_item, 'quest_type'):
+                # Already a Quest object
+                converted_quests.append(quest_item)
+        
+        hero['quests'] = converted_quests
     
     def generate_kill_monster_quest(self):
         """Generate a random kill monster quest from current biome (avoiding duplicates)"""
