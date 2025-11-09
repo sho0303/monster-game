@@ -78,6 +78,15 @@ class MonsterEncounterGUI:
         
         self.gui.set_buttons(["⚔️ Fight", "🏃 Run"], on_choice)
     
+    def _get_monster_attack_sound(self, monster):
+        """Get the appropriate attack sound for the monster"""
+        # Check if monster has custom attack_sound defined
+        if 'attack_sound' in monster and monster['attack_sound']:
+            return monster['attack_sound']
+        else:
+            # Use default monster attack sound
+            return 'buzzer.mp3'
+    
     def _show_no_monsters_message(self):
         """Show message when no level-appropriate monsters are available in current biome"""
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
@@ -324,6 +333,7 @@ class MonsterEncounterGUI:
             # Show monster attack animation
             self.gui.combat.current_hero_image = self.current_hero_image
             self.gui.combat.current_monster_image = self.current_monster_image
+            self.gui.combat.current_monster_data = monster  # Ensure monster data is available for sound
             self.gui.combat._show_monster_attack_animation(monster)
             
             # After animation, show damage and complete run away
@@ -339,8 +349,7 @@ class MonsterEncounterGUI:
         # Apply damage
         hero['hp'] = max(0, hero['hp'] - damage)
         
-        # Play attack sound and show damage
-        self.gui.audio.play_sound_effect('buzzer.mp3')
+        # Show damage (sound already played at start of animation)
         
         # Display damage message with colored values
         damage_parts = [

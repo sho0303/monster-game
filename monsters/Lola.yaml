@@ -8,4 +8,5 @@ Dog:
   level: 2
   xp: 2
   art: art/lola_monster.png
+  attack_sound: dog-bark.mp3
   biome: dungeon

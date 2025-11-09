@@ -9,4 +9,5 @@ Dragon:
   xp: 10
   finalboss: True
   art: art/dragon_endboss.png
+  attack_sound: dragon-growl.mp3
   biome: dungeon

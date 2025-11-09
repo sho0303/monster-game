@@ -119,6 +119,15 @@ class CombatGUI:
         # Use custom display logic for Dragon boss sizing
         self._display_combat_images_with_sizing()
     
+    def _get_monster_attack_sound(self, monster):
+        """Get the appropriate attack sound for the monster"""
+        # Check if monster has custom attack_sound defined
+        if 'attack_sound' in monster and monster['attack_sound']:
+            return monster['attack_sound']
+        else:
+            # Use default monster attack sound
+            return 'buzzer.mp3'
+    
     def _display_combat_images_with_sizing(self):
         """Display hero and monster images with special Dragon boss sizing"""
         # Clear existing foreground images
@@ -172,6 +181,9 @@ class CombatGUI:
 
     def _show_hero_attack_animation(self, hero):
         """Show hero attack animation - toggle between normal and attack 3 times"""
+        # Play hero attack sound at the start of animation
+        self.gui.audio.play_sound_effect('punch.mp3')
+        
         hero_class = hero.get('class', 'Warrior').lower()
         attack_image_path = f"art/{hero_class}_attack.png"
         
@@ -224,9 +236,8 @@ class CombatGUI:
             self._display_combat_images_with_sizing()
 
     def _complete_hero_attack(self, damage, monster, message_template):
-        """Complete hero attack after animation - show damage text and sound"""
-        # Play attack sound and show damage
-        self.gui.audio.play_sound_effect('punch.mp3')
+        """Complete hero attack after animation - show damage text"""
+        # Show hero damage (sound already played at start of animation)
         
         # Display attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
@@ -238,8 +249,7 @@ class CombatGUI:
 
     def _complete_hero_attack_start_monster(self, hero_damage, monster_damage, monster, hero, message_template, round_num):
         """Complete hero attack and start monster counter-attack"""
-        # Play attack sound and show hero damage
-        self.gui.audio.play_sound_effect('punch.mp3')
+        # Show hero damage (sound already played at start of animation)
         
         # Display damage message with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
@@ -263,8 +273,7 @@ class CombatGUI:
     
     def _complete_hero_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
         """Complete hero attack and finish the round (legacy method for single attack rounds)"""
-        # Play attack sound and show hero damage
-        self.gui.audio.play_sound_effect('punch.mp3')
+        # Show hero damage (sound already played at start of animation)
         
         # Display hero attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
@@ -282,6 +291,10 @@ class CombatGUI:
     
     def _show_monster_attack_animation(self, monster):
         """Show monster attack animation - toggle between normal and attack 3 times"""
+        # Play monster attack sound at the start of animation
+        attack_sound = self._get_monster_attack_sound(monster)
+        self.gui.audio.play_sound_effect(attack_sound)
+        
         # Special handling for Dragon boss attack image
         monster_data = getattr(self, 'current_monster_data', {})
         if (monster_data.get('finalboss', False) and 
@@ -341,8 +354,7 @@ class CombatGUI:
 
     def _complete_monster_attack_start_hero(self, monster_damage, hero_damage, monster, hero, message_template, round_num):
         """Complete monster attack and start hero counter-attack"""
-        # Play monster attack sound and show damage
-        self.gui.audio.play_sound_effect('buzzer.mp3')
+        # Show damage (sound already played at start of animation)
         
         # Display damage message with enhanced visual impact  
         base_message = message_template.replace("{damage}", "")
@@ -366,8 +378,7 @@ class CombatGUI:
     
     def _complete_hero_counter_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
         """Complete hero counter-attack and finish the round"""
-        # Play attack sound and show hero damage
-        self.gui.audio.play_sound_effect('punch.mp3')
+        # Show hero damage (sound already played at start of animation)
         
         # Display counter-attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
@@ -385,8 +396,7 @@ class CombatGUI:
     
     def _complete_monster_counter_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster counter-attack and finish the round"""
-        # Play monster attack sound and show damage
-        self.gui.audio.play_sound_effect('buzzer.mp3')
+        # Show damage (sound already played at start of animation)
         
         # Display monster counter-attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
@@ -404,8 +414,7 @@ class CombatGUI:
     
     def _complete_monster_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster attack and finish the round (legacy method for single attack rounds)"""
-        # Play monster attack sound and show damage
-        self.gui.audio.play_sound_effect('buzzer.mp3')
+        # Show damage (sound already played at start of animation)
         
         # Display monster attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
