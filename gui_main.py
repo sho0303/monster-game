@@ -95,10 +95,33 @@ class GameGUI:
         # Set background image for the canvas
         self._set_frame_background()
         
-        # Initialize Image Manager
+        # Text output area (read-only)
+        self.text_area = scrolledtext.ScrolledText(
+            self.root, 
+            wrap=tk.WORD,
+            width=80,
+            height=15,
+            bg='#2a2a2a',
+            fg='#00ff00',
+            font=('Courier', 10),
+            state=tk.DISABLED,  # Make read-only
+            cursor='arrow'  # Change cursor to indicate non-editable
+        )
+        self.text_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
+        
+        # Button frame container
+        self.button_frame = tk.Frame(self.root, bg='#1a1a1a')
+        self.button_frame.pack(fill=tk.X, padx=10, pady=10)
+        
+        # Dynamic button list (will be created as needed)
+        self.buttons = []
+        self.button_rows = []  # Track button row frames
+        
+        self.current_action = None
+        
+        # Initialize managers after all UI components are created
         self.image_manager = ImageManager(self.image_canvas, self.print_text)
         
-        # Initialize Background Manager
         self.background_manager = BackgroundManager(
             image_canvas=self.image_canvas,
             audio_manager=self.audio,
@@ -127,30 +150,6 @@ class GameGUI:
     def last_biome(self, value):
         """Set last biome in BackgroundManager"""
         self.background_manager.last_biome = value
-        
-        # Text output area (read-only)
-        self.text_area = scrolledtext.ScrolledText(
-            self.root, 
-            wrap=tk.WORD,
-            width=80,
-            height=15,
-            bg='#2a2a2a',
-            fg='#00ff00',
-            font=('Courier', 10),
-            state=tk.DISABLED,  # Make read-only
-            cursor='arrow'  # Change cursor to indicate non-editable
-        )
-        self.text_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
-        
-        # Button frame container
-        self.button_frame = tk.Frame(self.root, bg='#1a1a1a')
-        self.button_frame.pack(fill=tk.X, padx=10, pady=10)
-        
-        # Dynamic button list (will be created as needed)
-        self.buttons = []
-        self.button_rows = []  # Track button row frames
-        
-        self.current_action = None
     
     def _set_frame_background(self):
         """Set the background image using canvas for proper compositing"""
