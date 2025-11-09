@@ -15,6 +15,7 @@ from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
 from gui_save_load import SaveLoadManager
+from gui_town import TownGUI
 
 
 class GameGUI:
@@ -59,6 +60,7 @@ class GameGUI:
         self.monster_encounter = None
         self.quest_manager = None
         self.save_load_manager = None
+        self.town = None
         
         # Create main layout
         self._create_widgets()
@@ -199,6 +201,10 @@ class GameGUI:
             'ocean': {
                 'background': 'art/ocean_background.png',
                 'fallback_color': '#0077be'
+            },
+            'town': {
+                'background': 'art/town_background.png',
+                'fallback_color': '#2B4C3D'
             }
         }
         
@@ -214,6 +220,10 @@ class GameGUI:
     def set_shop_background(self):
         """Set the shop-specific background (not part of biome system)"""
         self.set_background_image('art/shop_background.png', '#654321')
+    
+    def set_town_background(self):
+        """Set the town-specific background"""
+        self.set_background_image('art/town_background.png', '#2B4C3D')
     
     def _get_canvas_dimensions(self):
         """Get fixed canvas dimensions"""
@@ -745,7 +755,7 @@ class GameGUI:
    - - Volume down
 
 🏜️ Testing:
-   B - Cycle biomes (Grassland → Desert → Dungeon → Ocean)
+   B - Cycle biomes (Grassland → Desert → Dungeon → Ocean → Town)
 
 💡 Tip: Look for button highlights to see
    which option is currently selected!
@@ -758,7 +768,7 @@ class GameGUI:
         if not hasattr(self, 'current_biome') or self.current_biome is None:
             self.current_biome = 'grassland'
             
-        biomes = ['grassland', 'desert', 'dungeon', 'ocean']
+        biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
         current_index = biomes.index(self.current_biome) if self.current_biome in biomes else 0
         next_index = (current_index + 1) % len(biomes)
         next_biome = biomes[next_index]
@@ -771,7 +781,8 @@ class GameGUI:
             'grassland': '🌱',
             'desert': '🏜️', 
             'dungeon': '🏰',
-            'ocean': '🌊'
+            'ocean': '🌊',
+            'town': '🏘️'
         }
         emoji = biome_emojis.get(next_biome, '🌍')
         self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
@@ -791,7 +802,7 @@ class GameGUI:
         if not hasattr(self, 'current_biome') or self.current_biome is None:
             self.current_biome = 'grassland'
         
-        # Available biomes
+        # Available biomes for combat (excludes town as it's a safe zone)
         available_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
         
         # Remove current biome from options
@@ -1047,6 +1058,7 @@ class GameGUI:
         self.monster_encounter = MonsterEncounterGUI(self)
         self.quest_manager = QuestManager(self)
         self.save_load_manager = SaveLoadManager(self)
+        self.town = TownGUI(self)
         
         # Start hero selection
         self.select_hero()
@@ -1239,13 +1251,15 @@ class GameGUI:
             'grassland': '🌱',
             'desert': '🏜️', 
             'dungeon': '🏰',
-            'ocean': '🌊'
+            'ocean': '🌊',
+            'town': '🏘️'
         }
         biome_colors = {
             'grassland': '#4a7c59',
             'desert': '#daa520', 
             'dungeon': '#8b4513',
-            'ocean': '#0077be'
+            'ocean': '#0077be',
+            'town': '#2B4C3D'
         }
         
         current_biome = getattr(self, 'current_biome', 'grassland')
@@ -1282,7 +1296,7 @@ class GameGUI:
         
         def on_menu_select(choice):
             if choice == 1:
-                self.shop.open()
+                self.town.enter_town()
             elif choice == 2:
                 self.monster_encounter.start()
             elif choice == 3:
@@ -1294,7 +1308,7 @@ class GameGUI:
             elif choice == 6:
                 self.save_load_manager.show_save_interface()
         
-        self.set_buttons(["🛒 Shop", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
+        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""
