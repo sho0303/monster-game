@@ -80,21 +80,13 @@ class TownGUI:
         self.gui.root.after(3000, self.enter_town)
     
     def _visit_blacksmith(self):
-        """Visit the blacksmith (placeholder for future functionality)"""
+        """Visit the blacksmith"""
         self.gui.clear_text()
-        self.gui.lock_interface()
+        self.gui.print_text("⚒️ Entering the blacksmith...")
+        self.gui.print_text("You hear the ring of hammer on anvil.")
         
-        self.gui.print_text("⚒️  IRONFORGE BLACKSMITH  ⚒️")
-        self.gui.print_text("=" * 60)
-        self.gui.print_text("\nYou approach the blacksmith's forge.")
-        self.gui.print_text("The sound of hammer on anvil rings out,")
-        self.gui.print_text("and sparks fly from red-hot metal.")
-        self.gui.print_text("The blacksmith looks up from his work.")
-        self.gui.print_text("\n🚧 The blacksmith is under construction!")
-        self.gui.print_text("Come back soon for weapon upgrades and repairs.")
-        
-        # Return to town after 3 seconds
-        self.gui.root.after(3000, self.enter_town)
+        # Use blacksmith system
+        self.gui.blacksmith.open()
     
     def _visit_fountain(self):
         """Visit the town fountain"""

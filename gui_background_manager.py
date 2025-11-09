@@ -152,6 +152,10 @@ class BackgroundManager:
         """Set the shop-specific background (not part of biome system)"""
         self.set_background_image('art/shop_background.png', '#654321')
     
+    def set_blacksmith_background(self):
+        """Set the blacksmith-specific background (not part of biome system)"""
+        self.set_background_image('art/blacksmith_background.png', '#404050')
+    
     def set_town_background(self):
         """Set the town-specific background"""
         self.set_background_image('art/town_background.png', '#2B4C3D')

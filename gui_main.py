@@ -11,6 +11,7 @@ from game_state import initialize_game_state
 from gui_audio import Audio
 from gui_combat import CombatGUI
 from gui_shop import ShopGUI
+from gui_blacksmith import BlacksmithGUI
 from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
@@ -55,6 +56,7 @@ class GameGUI:
         self.audio = Audio()
         self.combat = None
         self.shop = None
+        self.blacksmith = None
         self.inventory = None
         self.monster_encounter = None
         self.quest_manager = None
@@ -175,6 +177,10 @@ class GameGUI:
     def set_shop_background(self):
         """Set the shop-specific background (not part of biome system)"""
         self.background_manager.set_shop_background()
+    
+    def set_blacksmith_background(self):
+        """Set the blacksmith-specific background (not part of biome system)"""
+        self.background_manager.set_blacksmith_background()
     
     def set_town_background(self):
         """Set the town-specific background"""
@@ -803,6 +809,7 @@ class GameGUI:
         # Initialize game systems with GUI
         self.combat = CombatGUI(self)
         self.shop = ShopGUI(self)
+        self.blacksmith = BlacksmithGUI(self)
         self.inventory = InventoryGUI(self)
         self.monster_encounter = MonsterEncounterGUI(self)
         self.quest_manager = QuestManager(self)
