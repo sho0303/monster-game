@@ -8,4 +8,5 @@ Kraken:
   level: 9
   xp: 9
   art: art/kraken_monster.png
+  attack_sound: kraken-attack.mp3
   biome: ocean

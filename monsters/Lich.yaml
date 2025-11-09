@@ -8,4 +8,5 @@ Undead:
   level: 7
   xp: 7
   art: art/lich_monster.png
+  attack_sound: lich-attack.mp3
   biome: dungeon

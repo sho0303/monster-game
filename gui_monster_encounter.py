@@ -668,10 +668,10 @@ class MonsterEncounterGUI:
         ]
         
         # Try to find level-appropriate monsters in current biome first
-        # More inclusive level range for high-level monsters and final bosses
+        # Reasonable level range: maximum 1 level above, minimum 2 levels below (but never below 1)
         level_appropriate_monsters = [
             (key, value) for key, value in biome_specific_monsters
-            if value['level'] <= hero_level + 3 and value['level'] >= max(1, hero_level - 2)
+            if value['level'] <= hero_level + 1 and value['level'] >= max(1, hero_level - 2)
         ]
         
         if level_appropriate_monsters:

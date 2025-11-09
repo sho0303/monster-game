@@ -8,4 +8,5 @@ Wyvern:
   level: 7
   xp: 7
   art: art/wyvern_monster.png
+  attack_sound: kraken-attack.mp3
   biome: desert

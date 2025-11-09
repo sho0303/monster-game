@@ -8,4 +8,5 @@ Hydra:
   level: 5
   xp: 5
   art: art/hydra_monster.png
+  attack_sound: hydra-attack.mp3
   biome: dungeon

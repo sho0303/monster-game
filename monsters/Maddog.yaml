@@ -8,4 +8,5 @@ MadDog:
   level: 1
   xp: 1
   art: art/maddog_monster.png
+  attack_sound: dog-bark.mp3
   biome: dungeon

@@ -8,4 +8,5 @@ Mermaid Wrangler:
   level: 5
   xp: 5
   art: art/merman_king_monster.png
+  attack_sound: mermaid-attack.mp3
   biome: ocean

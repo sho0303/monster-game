@@ -8,4 +8,5 @@ Demon:
   level: 8
   xp: 8
   art: art/demon_monster.png
+  attack_sound: demon-attack.mp3
   biome: dungeon

@@ -8,4 +8,5 @@ Snake:
   level: 3
   xp: 3
   art: art/snake_monster.png
+  attack_sound: snake-attack.mp3
   biome: desert

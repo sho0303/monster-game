@@ -8,4 +8,5 @@ Vampire:
   level: 9
   xp: 9
   art: art/vampire_monster.png
+  attack_sound: vampire-attack.mp3
   biome: dungeon
