@@ -6,4 +6,5 @@ Eduardo the wise:
   hp: 10
   maxhp: 10
   defense: 5
+  level: 1
   class: 'Magician'

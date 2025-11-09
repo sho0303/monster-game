@@ -6,4 +6,5 @@ Shadow Billy Bob:
     hp: 15
     maxhp: 15
     defense: 10
+    level: 1
     class: 'Ninja'

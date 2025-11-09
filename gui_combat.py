@@ -45,9 +45,11 @@ class CombatGUI:
         # Random initiative - determine who attacks first this round
         hero_goes_first = random.choice([True, False])
         
-        # Calculate damage for both attacks
-        hero_damage = self.calculate_damage(hero['attack'], monster['defense'])
-        monster_damage = self.calculate_damage(monster['attack'], hero['defense'])
+        # Calculate damage for both attacks (with level consideration)
+        hero_level = hero.get('level', 1)
+        monster_level = monster.get('level', 1)
+        hero_damage = self.calculate_damage(hero['attack'], monster['defense'], hero_level, monster_level)
+        monster_damage = self.calculate_damage(monster['attack'], hero['defense'], monster_level, hero_level)
         
         if hero_goes_first:
             # Hero attacks first, then monster attacks
@@ -351,7 +353,26 @@ class CombatGUI:
             # Fallback - show both as crossed swords
             self.gui.show_images(['art/crossed_swords.png', 'art/crossed_swords.png'], layout="horizontal")
 
-    def calculate_damage(self, attack, defense):
-        strike = random.randint(1, max(1, attack)) * 2
-        damage = strike - defense
-        return max(1, damage)
+    def calculate_damage(self, attack, defense, attacker_level=1, defender_level=1):
+        """Improved damage calculation with level consideration"""
+        import random
+        
+        # Base damage with controlled randomness (80-120% of attack)
+        variance = random.uniform(0.8, 1.2)
+        base_damage = attack * variance
+        
+        # Level differential bonus/penalty (±15% per level difference, capped at ±75%)
+        level_diff = max(-5, min(5, attacker_level - defender_level))
+        level_modifier = 1.0 + (level_diff * 0.15)
+        base_damage *= level_modifier
+        
+        # Defense as damage reduction percentage (diminishing returns)
+        defense_percentage = defense / (defense + 15)
+        defense_percentage = min(0.85, defense_percentage)  # Cap at 85% reduction
+        
+        final_damage = base_damage * (1 - defense_percentage)
+        
+        # Minimum damage scales with attacker level
+        min_damage = max(1, (attacker_level + 1) // 2)
+        
+        return max(min_damage, int(round(final_damage)))

@@ -38,17 +38,35 @@ def load_store(file_path: str = 'store.yaml') -> Dict[str, Any]:
         return yaml.safe_load(fh) or {}
 
 
-def damage_calculator(attack: int, defense: int) -> int:
-    """Pure function: computes damage from attack/defense.
-
-    This is extracted from the original project but has no side-effects.
+def damage_calculator(attack: int, defense: int, attacker_level: int = 1, defender_level: int = 1) -> int:
+    """Improved damage calculator with level consideration and reduced variance
+    
+    Key improvements:
+    - Reduced randomness (80-120% instead of 100-200%)
+    - Level differential matters (±15% per level difference)
+    - Percentage-based defense (prevents complete immunity)
+    - Minimum damage scales with level
+    - More predictable combat flow
     """
-    strike = random.randint(1, max(1, attack))
-    strike = strike * 2
-    damage = strike - defense
-    if damage <= 0:
-        damage = 1
-    return damage
+    # Base damage with controlled randomness (80-120% of attack)
+    variance = random.uniform(0.8, 1.2)
+    base_damage = attack * variance
+    
+    # Level differential bonus/penalty (±15% per level difference, capped at ±75%)
+    level_diff = max(-5, min(5, attacker_level - defender_level))
+    level_modifier = 1.0 + (level_diff * 0.15)
+    base_damage *= level_modifier
+    
+    # Defense as damage reduction percentage (diminishing returns)
+    defense_percentage = defense / (defense + 15)
+    defense_percentage = min(0.85, defense_percentage)  # Cap at 85% reduction
+    
+    final_damage = base_damage * (1 - defense_percentage)
+    
+    # Minimum damage scales with attacker level
+    min_damage = max(1, (attacker_level + 1) // 2)
+    
+    return max(min_damage, int(round(final_damage)))
 
 
 def fight_round(hero: Dict[str, Any], monster: Dict[str, Any]) -> Dict[str, Any]:
@@ -57,10 +75,14 @@ def fight_round(hero: Dict[str, Any], monster: Dict[str, Any]) -> Dict[str, Any]
     Returns a dict with the damage done and updated hp values. Does not
     perform any I/O or sleeps — the caller (UI) controls presentation.
     """
-    hero_damage = damage_calculator(hero.get('attack', 1), monster.get('defense', 0))
+    # Get levels for damage calculation
+    hero_level = hero.get('level', 1)
+    monster_level = monster.get('level', 1)
+    
+    hero_damage = damage_calculator(hero.get('attack', 1), monster.get('defense', 0), hero_level, monster_level)
     monster['hp'] = max(0, monster.get('hp', 0) - hero_damage)
 
-    monster_damage = damage_calculator(monster.get('attack', 1), hero.get('defense', 0))
+    monster_damage = damage_calculator(monster.get('attack', 1), hero.get('defense', 0), monster_level, hero_level)
     hero['hp'] = max(0, hero.get('hp', 0) - monster_damage)
 
     result = {

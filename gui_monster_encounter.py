@@ -246,9 +246,11 @@ class MonsterEncounterGUI:
             self.gui.print_text("\n🏃 You try to run away...")
             self.gui.print_text(f"💀 But {monster['name']} attacks as you flee!")
             
-            # Use combat system's damage calculation
+            # Use combat system's damage calculation (with level consideration)
             hero = self.gui.game_state.hero
-            damage = self.gui.combat.calculate_damage(monster['attack'], hero['defense'])
+            hero_level = hero.get('level', 1)
+            monster_level = monster.get('level', 1)
+            damage = self.gui.combat.calculate_damage(monster['attack'], hero['defense'], monster_level, hero_level)
             
             # Show monster attack animation
             self.gui.combat.current_hero_image = self.current_hero_image

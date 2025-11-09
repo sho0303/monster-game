@@ -6,4 +6,5 @@ Destroyer Dan:
   hp: 15
   maxhp: 15
   defense: 5
+  level: 1
   class: 'Warrior'
