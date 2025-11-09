@@ -1,7 +1,7 @@
 Dragon:
   name: Dragon Nightmare
-  hp: 500
-  maxhp: 500
+  hp: 300
+  maxhp: 300
   attack: 30
   defense: 30
   gold: 100
