@@ -21,6 +21,7 @@ class MonsterEncounterGUI:
         """Start monster encounter"""
         monster_result = self._select_random_monster()
         if not monster_result:
+            self._show_no_monsters_message()
             return
         
         # Unpack monster type and data
@@ -73,6 +74,71 @@ class MonsterEncounterGUI:
                 self._handle_run_choice(monster)
         
         self.gui.set_buttons(["⚔️ Fight", "🏃 Run"], on_choice)
+    
+    def _show_no_monsters_message(self):
+        """Show message when no level-appropriate monsters are available in current biome"""
+        current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        hero_level = self.gui.game_state.hero['level']
+        
+        # Get biome info for display
+        biome_emojis = {
+            'grassland': '🌱',
+            'desert': '🏜️', 
+            'dungeon': '🏰',
+            'ocean': '🌊',
+            'town': '🏘️'
+        }
+        
+        biome_descriptions = {
+            'grassland': 'rolling meadows',
+            'desert': 'sandy dunes',
+            'dungeon': 'dark corridors', 
+            'ocean': 'crystal waters',
+            'town': 'peaceful streets'
+        }
+        
+        emoji = biome_emojis.get(current_biome, '🌍')
+        description = biome_descriptions.get(current_biome, 'this area')
+        
+        self.gui.clear_text()
+        
+        # Show "no monsters" message with biome context
+        no_monsters_parts = [
+            (f"\n{emoji} ", "#ffffff"),
+            ("No Suitable Monsters Found", "#ffaa00"),
+            (f" {emoji}\n", "#ffffff")
+        ]
+        self.gui._print_colored_parts(no_monsters_parts)
+        
+        explanation_parts = [
+            ("The ", "#ffffff"),
+            (description, "#cccccc"),
+            (f" of {current_biome.title()}", "#ffffff"),
+            (" seem peaceful right now.\n", "#cccccc")
+        ]
+        self.gui._print_colored_parts(explanation_parts)
+        
+        level_parts = [
+            ("No monsters within your level range ", "#ffffff"),
+            (f"({hero_level-1} to {hero_level*2})", "#ffdd00"),
+            (" are currently active in this biome.\n", "#ffffff")
+        ]
+        self.gui._print_colored_parts(level_parts)
+        
+        suggestion_parts = [
+            ("💡 Try ", "#888888"),
+            ("teleporting", "#88ff88"),
+            (" to a different biome, or ", "#888888"),
+            ("leveling up", "#88ff88"),
+            (" to access stronger monsters!", "#888888")
+        ]
+        self.gui._print_colored_parts(suggestion_parts)
+        
+        # Return to main menu after showing message
+        def return_to_menu():
+            self.gui.main_menu()
+        
+        self.gui.set_buttons(["🏠 Return to Menu"], lambda choice: return_to_menu())
     
     def _handle_fight_choice(self, monster, monster_type):
         """Handle when player chooses to fight the monster"""
@@ -589,25 +655,5 @@ class MonsterEncounterGUI:
             monster_data = value.copy()
             return (key, monster_data)
         
-        # If no level-appropriate monsters in biome, still prefer biome monsters
-        # but relax the level requirements slightly  
-        if biome_specific_monsters:
-            # Choose any monster from the biome, regardless of level
-            key, value = random.choice(biome_specific_monsters)
-            monster_data = value.copy()
-            return (key, monster_data)
-        
-        # Final fallback: if no monsters exist for this biome, use grassland monsters
-        # This should rarely happen since all biomes should have monsters
-        grassland_monsters = [
-            (key, value) for key, value in self.gui.game_state.monsters.items()
-            if value.get('biome', 'grassland') == 'grassland'
-        ]
-        
-        if grassland_monsters:
-            key, value = random.choice(grassland_monsters)
-            monster_data = value.copy()
-            return (key, monster_data)
-        
-        # Absolute fallback - should never happen
+        # No level-appropriate monsters found in this biome
         return None

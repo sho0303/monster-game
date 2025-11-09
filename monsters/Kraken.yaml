@@ -1,0 +1,11 @@
+Kraken:
+  name: Almighty Kraken
+  hp: 117
+  maxhp: 117
+  attack: 29
+  defense: 20
+  gold: 90
+  level: 9
+  xp: 9
+  art: art/kraken_monster.png
+  biome: ocean
