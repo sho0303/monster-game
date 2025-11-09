@@ -16,6 +16,8 @@ from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
 from gui_save_load import SaveLoadManager
 from gui_town import TownGUI
+from gui_image_manager import ImageManager
+from gui_background_manager import BackgroundManager
 
 
 class GameGUI:
@@ -47,10 +49,6 @@ class GameGUI:
         # Keyboard shortcut state
         self.keyboard_enabled = True
         self.current_selected_button = 1  # Track which button is selected for arrow navigation
-        
-        # Biome system
-        self.current_biome = 'grassland'  # Initialize default biome
-        self.last_biome = 'grassland'     # Track previous biome to avoid teleport loops
         
         # Game state
         self.game_state = None
@@ -97,8 +95,38 @@ class GameGUI:
         # Set background image for the canvas
         self._set_frame_background()
         
-        # Track current image layout mode
-        self.current_image_layout = "single"
+        # Initialize Image Manager
+        self.image_manager = ImageManager(self.image_canvas, self.print_text)
+        
+        # Initialize Background Manager
+        self.background_manager = BackgroundManager(
+            image_canvas=self.image_canvas,
+            audio_manager=self.audio,
+            print_text_callback=self.print_text,
+            lock_interface_callback=self.lock_interface,
+            clear_text_callback=self.clear_text,
+            main_menu_callback=self.main_menu
+        )
+    
+    @property
+    def current_biome(self):
+        """Get current biome from BackgroundManager"""
+        return self.background_manager.current_biome
+    
+    @current_biome.setter  
+    def current_biome(self, value):
+        """Set current biome in BackgroundManager"""
+        self.background_manager.current_biome = value
+    
+    @property
+    def last_biome(self):
+        """Get last biome from BackgroundManager"""
+        return self.background_manager.last_biome
+    
+    @last_biome.setter
+    def last_biome(self, value):
+        """Set last biome in BackgroundManager"""
+        self.background_manager.last_biome = value
         
         # Text output area (read-only)
         self.text_area = scrolledtext.ScrolledText(
@@ -128,158 +156,42 @@ class GameGUI:
         """Set the background image using canvas for proper compositing"""
         # Schedule background setup after the canvas is properly sized
         self.root.after(100, self._update_canvas_background)
-        
-        # Initialize foreground image storage
-        self.canvas_images = []  # Keep references to prevent GC
     
     def _update_canvas_background(self):
-        """Update the canvas background using fixed canvas size"""
-        try:
-            # Use fixed canvas dimensions (800x400)
-            canvas_width = 800
-            canvas_height = 400
-                
-            # Load the grassy background image
-            bg_img = Image.open('art/grassy_background.png')
-            
-            # Resize to fixed canvas dimensions
-            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
-            self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
-            
-            # Clear canvas and draw background
-            self.image_canvas.delete("all")
-            self.image_canvas.create_image(0, 0, image=self.bg_photo, anchor='nw', tags="background")
-            
-        except Exception as e:
-            print(f"Warning: Could not load background image: {e}")
-            # Fallback to solid color
-            self.image_canvas.configure(bg='#4a7c59')
+        """Update the canvas background using BackgroundManager"""
+        self.background_manager.initialize_default_background()
     
     def set_background_image(self, background_path, fallback_color='#4a7c59'):
         """Set a custom background image for the canvas"""
-        try:
-            # Use fixed canvas dimensions (800x400)
-            canvas_width = 800
-            canvas_height = 400
-                
-            # Load and resize the background image
-            bg_img = Image.open(background_path)
-            bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
-            self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
-            
-            # Clear canvas and draw new background
-            self.image_canvas.delete("all")
-            self.image_canvas.create_image(0, 0, image=self.bg_photo, anchor='nw', tags="background")
-            
-        except Exception as e:
-            print(f"Warning: Could not load background image {background_path}: {e}")
-            # Fallback to solid color
-            self.image_canvas.configure(bg=fallback_color)
+        self.background_manager.set_background_image(background_path, fallback_color)
     
     def reset_background(self):
         """Reset to the default biome background"""
-        self.set_biome_background(self.current_biome)
+        self.background_manager.reset_background()
     
     def set_biome_background(self, biome_name='grassland'):
         """Set background based on biome type"""
-        # Initialize current biome if not set
-        if not hasattr(self, 'current_biome'):
-            self.current_biome = 'grassland'
-        
-        biome_configs = {
-            'grassland': {
-                'background': 'art/grassy_background.png',
-                'fallback_color': '#4a7c59'
-            },
-            'desert': {
-                'background': 'art/desert_background.png', 
-                'fallback_color': '#daa520'
-            },
-            'dungeon': {
-                'background': 'art/dungeon_background.png',
-                'fallback_color': '#2d1f1a'
-            },
-            'ocean': {
-                'background': 'art/ocean_background.png',
-                'fallback_color': '#0077be'
-            },
-            'town': {
-                'background': 'art/town_background.png',
-                'fallback_color': '#2B4C3D'
-            }
-        }
-        
-        if biome_name in biome_configs:
-            # Track previous biome before changing - but only if we're actually changing biomes
-            if hasattr(self, 'current_biome') and self.current_biome != biome_name:
-                self.last_biome = self.current_biome
-            elif not hasattr(self, 'current_biome'):
-                # First time initialization
-                self.last_biome = 'grassland'
-            # If current_biome == biome_name, keep the existing last_biome
-            
-            self.current_biome = biome_name
-            config = biome_configs[biome_name]
-            self.set_background_image(config['background'], config['fallback_color'])
-        else:
-            # Default to grassland - only update last_biome if we're changing
-            if hasattr(self, 'current_biome') and self.current_biome != 'grassland':
-                self.last_biome = self.current_biome
-            elif not hasattr(self, 'current_biome'):
-                self.last_biome = 'grassland'
-            # If already grassland, keep the existing last_biome
-            
-            self.current_biome = 'grassland'
-            self.set_background_image('art/grassy_background.png', '#4a7c59')
+        self.background_manager.set_biome_background(biome_name)
     
     def set_shop_background(self):
         """Set the shop-specific background (not part of biome system)"""
-        self.set_background_image('art/shop_background.png', '#654321')
+        self.background_manager.set_shop_background()
     
     def set_town_background(self):
         """Set the town-specific background"""
-        self.set_background_image('art/town_background.png', '#2B4C3D')
+        self.background_manager.set_town_background()
     
     def _get_canvas_dimensions(self):
         """Get fixed canvas dimensions"""
-        # Return fixed canvas dimensions (no dynamic sizing)
-        return 800, 400
+        return self.image_manager.get_canvas_dimensions()
     
     def _add_canvas_image(self, image_path, x, y, width=None, height=None, tags="foreground"):
-        """Add an image to the canvas at the specified position
-        
-        Args:
-            image_path: Path to the image file
-            x, y: Position on canvas
-            width, height: Target size (if None, uses natural image size)
-            tags: Canvas tags for the image
-        """
-        try:
-            # Load image
-            img = Image.open(image_path)
-            
-            # Resize only if dimensions are specified
-            if width is not None and height is not None:
-                img = img.resize((width, height), Image.Resampling.NEAREST)
-            
-            photo = ImageTk.PhotoImage(img)
-            
-            # Add to canvas
-            canvas_id = self.image_canvas.create_image(x, y, image=photo, anchor='nw', tags=tags)
-            
-            # Keep reference to prevent garbage collection
-            self.canvas_images.append(photo)
-            
-            return canvas_id
-            
-        except Exception as e:
-            print(f"Failed to add canvas image {image_path}: {e}")
-            return None
+        """Add an image to the canvas at the specified position"""
+        return self.image_manager.add_canvas_image(image_path, x, y, width, height, tags)
     
     def _clear_foreground_images(self):
         """Clear all foreground images from canvas"""
-        self.image_canvas.delete("foreground")
-        self.canvas_images.clear()
+        self.image_manager.clear_foreground_images()
     
     def _create_buttons(self, count):
         """Create the specified number of buttons in rows of 3"""
@@ -339,41 +251,7 @@ class GameGUI:
     
     def show_image(self, image_path):
         """Display a single image using canvas for proper background compositing"""
-        if isinstance(image_path, list):
-            # If a list is passed, use show_images instead
-            self.show_images(image_path)
-            return
-            
-        # Clear existing foreground images
-        self._clear_foreground_images()
-        
-        try:
-            # Get current canvas dimensions
-            canvas_width, canvas_height = self._get_canvas_dimensions()
-            
-            # Handle text files (ASCII art) - convert to image or display as text
-            if image_path.endswith('.txt'):
-                with open(image_path, 'r', encoding='utf-8') as f:
-                    ascii_art = f.read()
-                # Create text on canvas (centered)
-                self.image_canvas.create_text(canvas_width//2, canvas_height//2, text=ascii_art, 
-                                            fill='#00ff00', font=('Courier', 8), 
-                                            anchor='center', tags='foreground')
-                return
-            
-            # Handle image files - center the image on the canvas at natural size
-            # First, get the original image dimensions
-            with Image.open(image_path) as img:
-                img_width, img_height = img.size
-            
-            # Calculate center position based on actual canvas size
-            center_x = (canvas_width - img_width) // 2
-            center_y = (canvas_height - img_height) // 2
-            # Use natural size (don't pass width/height to avoid resizing)
-            self._add_canvas_image(image_path, center_x, center_y)
-            
-        except Exception as e:
-            self.print_text(f"Could not load image: {e}")
+        self.image_manager.show_image(image_path)
     
     def show_images(self, image_paths, layout="auto"):
         """Display multiple images using canvas for proper background compositing
@@ -382,101 +260,35 @@ class GameGUI:
             image_paths: List of image file paths
             layout: "horizontal", "vertical", "grid", or "auto" (default)
         """
-        if not image_paths:
-            return
-        
-        # If single image, fall back to show_image
-        if len(image_paths) == 1:
-            self.show_image(image_paths[0])
-            return
-        
-        # Clear existing images
-        self._clear_foreground_images()
-        
-        # Get current canvas dimensions for dynamic positioning
-        canvas_width, canvas_height = self._get_canvas_dimensions()
-        
-        # Determine layout and positions based on number of images and canvas size
-        num_images = len(image_paths)
-        
-        if num_images == 2:
-            # Side by side
-            img_size = min(canvas_width // 3, canvas_height // 2, 120)
-            spacing_x = canvas_width // 3
-            start_y = (canvas_height - img_size) // 2
-            positions = [(spacing_x - img_size//2, start_y), (2*spacing_x - img_size//2, start_y)]
-            size = (img_size, img_size)
-        elif num_images == 3:
-            # Triangle layout
-            img_size = min(canvas_width // 4, canvas_height // 3, 100)
-            center_x = canvas_width // 2
-            positions = [(center_x - img_size//2, 20), 
-                        (center_x//2 - img_size//2, canvas_height - img_size - 20), 
-                        (3*center_x//2 - img_size//2, canvas_height - img_size - 20)]
-            size = (img_size, img_size)
-        elif num_images == 4:
-            # 2x2 grid
-            img_size = min(canvas_width // 3, canvas_height // 3, 100)
-            spacing_x = canvas_width // 3
-            spacing_y = canvas_height // 2
-            positions = [(spacing_x//2, spacing_y//2 - img_size//2), 
-                        (3*spacing_x//2, spacing_y//2 - img_size//2),
-                        (spacing_x//2, 3*spacing_y//2 - img_size//2), 
-                        (3*spacing_x//2, 3*spacing_y//2 - img_size//2)]
-            size = (img_size, img_size)
-        else:
-            # Grid layout for more images
-            cols = 3 if num_images <= 6 else 4
-            rows = (num_images + cols - 1) // cols
-            img_size = min(canvas_width // (cols + 1), canvas_height // (rows + 1), 80)
-            
-            positions = []
-            spacing_x = canvas_width // (cols + 1)
-            spacing_y = canvas_height // (rows + 1)
-            
-            for i in range(num_images):
-                row = i // cols
-                col = i % cols
-                x = (col + 1) * spacing_x - img_size // 2
-                y = (row + 1) * spacing_y - img_size // 2
-                positions.append((x, y))
-            size = (img_size, img_size)
-        
-        # Place images on canvas
-        for i, image_path in enumerate(image_paths[:len(positions)]):
-            x, y = positions[i]
-            self._add_canvas_image(image_path, x, y, size[0], size[1])
-        
-        self.current_image_layout = layout
+        self.image_manager.show_images(image_paths, layout)
     
     def _reset_image_layout(self):
         """Reset to single image layout using canvas"""
-        self._clear_foreground_images()
-        self.current_image_layout = "single"
+        self.image_manager.reset_image_layout()
     
     def _clear_image_area(self):
         """Clear all foreground images from canvas, preserving background"""
-        self._clear_foreground_images()
+        self.image_manager.clear_image_area()
         
         # Re-set the background if needed
         if hasattr(self, 'bg_label'):
             self.bg_label.lower()
     
     def _create_horizontal_layout(self, image_paths):
-        """Legacy method - now handled by show_images canvas approach"""
-        pass
+        """Legacy method - now handled by ImageManager"""
+        self.image_manager.create_horizontal_layout(image_paths)
     
     def _create_vertical_layout(self, image_paths):
-        """Legacy method - now handled by show_images canvas approach"""
-        pass
+        """Legacy method - now handled by ImageManager"""
+        self.image_manager.create_vertical_layout(image_paths)
     
     def _create_grid_layout(self, image_paths):
-        """Legacy method - now handled by show_images canvas approach"""
-        pass
+        """Legacy method - now handled by ImageManager"""
+        self.image_manager.create_grid_layout(image_paths)
     
     def _load_image_to_label(self, image_path, label, size=(200, 150)):
-        """Legacy method - now using canvas for image display"""
-        pass
+        """Legacy method - now handled by ImageManager"""
+        self.image_manager.load_image_to_label(image_path, label, size)
     
     def print_text(self, text, color='#00ff00'):
         """Print text to the text area with color support"""
@@ -779,28 +591,7 @@ class GameGUI:
         
     def _cycle_biomes(self):
         """Cycle through available biomes for testing"""
-        # Ensure current_biome is initialized
-        if not hasattr(self, 'current_biome') or self.current_biome is None:
-            self.current_biome = 'grassland'
-            
-        biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
-        current_index = biomes.index(self.current_biome) if self.current_biome in biomes else 0
-        next_index = (current_index + 1) % len(biomes)
-        next_biome = biomes[next_index]
-        
-        # Set the new biome
-        self.set_biome_background(next_biome)
-        
-        # Show feedback message
-        biome_emojis = {
-            'grassland': '🌱',
-            'desert': '🏜️', 
-            'dungeon': '🏰',
-            'ocean': '🌊',
-            'town': '🏘️'
-        }
-        emoji = biome_emojis.get(next_biome, '🌍')
-        self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
+        next_biome = self.background_manager.cycle_biomes()
         
         # Also update any active encounter screens
         if hasattr(self, 'monster_encounter') and self.monster_encounter:
@@ -808,73 +599,7 @@ class GameGUI:
     
     def teleport_to_random_biome(self):
         """Teleport to a random biome different from the current one"""
-        import random
-        
-        # Lock interface to prevent interruptions during teleportation
-        self.lock_interface()
-        
-        # Ensure biomes are initialized
-        if not hasattr(self, 'current_biome') or self.current_biome is None:
-            self.current_biome = 'grassland'
-        if not hasattr(self, 'last_biome') or self.last_biome is None:
-            self.last_biome = 'grassland'
-        
-        # Available biomes for combat (excludes town as it's a safe zone)
-        available_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
-        
-        # Remove current biome and last biome from options to prevent teleport loops
-        excluded_biomes = {self.current_biome}
-        if hasattr(self, 'last_biome') and self.last_biome:
-            excluded_biomes.add(self.last_biome)
-        
-        other_biomes = [biome for biome in available_biomes if biome not in excluded_biomes]
-        
-        # Fallback: if we've excluded too many biomes, just exclude current biome
-        if not other_biomes:
-            other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
-        
-        # Select random biome from remaining options
-        new_biome = random.choice(other_biomes)
-        
-        # Set the new biome
-        self.set_biome_background(new_biome)
-        
-        # Show teleport message with dramatic effect
-        biome_descriptions = {
-            'grassland': '🌱 Rolling green meadows stretch before you...',
-            'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
-            'dungeon': '🏰 Cold stone walls echo with mysterious sounds...',
-            'ocean': '🌊 Crystal blue waters and coral reefs surround you...'
-        }
-        
-        biome_emojis = {
-            'grassland': '🌱',
-            'desert': '🏜️', 
-            'dungeon': '🏰',
-            'ocean': '🌊'
-        }
-        
-        emoji = biome_emojis.get(new_biome, '🌍')
-        description = biome_descriptions.get(new_biome, 'You find yourself in a strange new place...')
-        
-        # Clear screen for dramatic effect
-        self.clear_text()
-        self.print_text("✨ TELEPORTING... ✨")
-        self.audio.play_sound_effect('teleport.mp3')  # Play teleport sound effect
-        
-        # Show teleport result after brief delay
-        def show_teleport_result():
-            self.print_text(f"\n{emoji} ═══════════════════════════════════════════════ {emoji}")
-            self.print_text("🌀 TELEPORTATION COMPLETE 🌀")
-            self.print_text(f"{emoji} ═══════════════════════════════════════════════ {emoji}")
-            self.print_text(f"\n{description}")
-            self.print_text(f"\n📍 Current location: {new_biome.title()}")
-            
-            # Return to main menu after showing result
-            self.root.after(3000, self.main_menu)
-        
-        # Show result after teleportation delay
-        self.root.after(1000, show_teleport_result)
+        self.background_manager.teleport_to_random_biome()
 
     def _navigate_buttons(self, direction):
         """Legacy navigation - now uses grid navigation"""
