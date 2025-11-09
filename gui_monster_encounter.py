@@ -27,6 +27,9 @@ class MonsterEncounterGUI:
         # Unpack monster type and data
         monster_type, monster = monster_result
         
+        # Store monster data for Dragon boss detection
+        self.current_monster_data = monster
+        
         # Keep the current biome background for immersive encounters
         # (Don't change the background - use whatever biome the player is in)
         
@@ -420,17 +423,27 @@ class MonsterEncounterGUI:
         canvas_width, canvas_height = self.gui._get_canvas_dimensions()
         
         # Calculate final positions (same as horizontal layout in show_images)
-        img_size = min(canvas_width // 3, canvas_height // 2, 120)
+        base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
+        
+        # Special handling for double-resolution Dragon final boss
+        monster_data = getattr(self, 'current_monster_data', {})
+        is_dragon_boss = (monster_data.get('finalboss', False) and 
+                         'dragon_endboss' in self.current_monster_image.lower())
+        
+        # Use larger size for Dragon boss to show its high-resolution art
+        hero_img_size = base_img_size
+        monster_img_size = int(base_img_size * 1.8) if is_dragon_boss else base_img_size
+        
         spacing_x = canvas_width // 3
-        start_y = (canvas_height - img_size) // 2
+        start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
         
         # Final positions for hero (left) and monster (right)
-        hero_final_x = spacing_x - img_size // 2
-        monster_final_x = 2 * spacing_x - img_size // 2
+        hero_final_x = spacing_x - hero_img_size // 2
+        monster_final_x = 2 * spacing_x - monster_img_size // 2
         final_y = start_y
         
         # Starting positions (off-screen)
-        hero_start_x = -img_size  # Off-screen left
+        hero_start_x = -hero_img_size  # Off-screen left
         monster_start_x = canvas_width  # Off-screen right
         
         # Animation parameters
@@ -443,11 +456,12 @@ class MonsterEncounterGUI:
         self.hero_step_x = (hero_final_x - hero_start_x) / self.animation_steps
         self.monster_step_x = (monster_final_x - monster_start_x) / self.animation_steps
         
-        # Store final positions and image size for animation
+        # Store final positions and image sizes for animation
         self.hero_final_x = hero_final_x
         self.monster_final_x = monster_final_x
         self.final_y = final_y
-        self.img_size = img_size
+        self.hero_img_size = hero_img_size
+        self.monster_img_size = monster_img_size
         
         # Start the animation
         self._update_entrance_animation()
@@ -464,7 +478,7 @@ class MonsterEncounterGUI:
         eased_progress = 1 - (1 - progress) ** 2
         
         # Calculate current positions using eased progress
-        hero_start_x = -self.img_size
+        hero_start_x = -self.hero_img_size
         monster_start_x = self.gui._get_canvas_dimensions()[0]
         
         self.hero_current_x = hero_start_x + (self.hero_final_x - hero_start_x) * eased_progress
@@ -475,17 +489,17 @@ class MonsterEncounterGUI:
             self.current_hero_image, 
             int(self.hero_current_x), 
             self.final_y, 
-            self.img_size, 
-            self.img_size
+            self.hero_img_size, 
+            self.hero_img_size
         )
         
-        # Add monster image at current position
+        # Add monster image at current position (larger for Dragon boss)
         monster_id = self.gui._add_canvas_image(
             self.current_monster_image, 
             int(self.monster_current_x), 
             self.final_y, 
-            self.img_size, 
-            self.img_size
+            self.monster_img_size, 
+            self.monster_img_size
         )
         
         # Continue animation or finish
@@ -500,15 +514,15 @@ class MonsterEncounterGUI:
                 self.current_hero_image, 
                 self.hero_final_x, 
                 self.final_y, 
-                self.img_size, 
-                self.img_size
+                self.hero_img_size, 
+                self.hero_img_size
             )
             self.gui._add_canvas_image(
                 self.current_monster_image, 
                 self.monster_final_x, 
                 self.final_y, 
-                self.img_size, 
-                self.img_size
+                self.monster_img_size, 
+                self.monster_img_size
             )
             
             # Optional: Play a subtle encounter sound when animation completes
@@ -645,9 +659,10 @@ class MonsterEncounterGUI:
         ]
         
         # Try to find level-appropriate monsters in current biome first
+        # More inclusive level range for high-level monsters and final bosses
         level_appropriate_monsters = [
             (key, value) for key, value in biome_specific_monsters
-            if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1
+            if value['level'] <= hero_level + 3 and value['level'] >= max(1, hero_level - 2)
         ]
         
         if level_appropriate_monsters:

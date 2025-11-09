@@ -1,0 +1,12 @@
+Dragon:
+  name: Dragon Nightmare
+  hp: 500
+  maxhp: 500
+  attack: 30
+  defense: 30
+  gold: 100
+  level: 10
+  xp: 10
+  finalboss: True
+  art: art/dragon_endboss.png
+  biome: dungeon

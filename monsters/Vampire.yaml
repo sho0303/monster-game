@@ -1,12 +1,11 @@
 Vampire:
   name: Vlad the Vampire
-  hp: 900
-  maxhp: 900
+  hp: 150
+  maxhp: 150
   attack: 30
   defense: 30
-  gold: 100
-  level: 10
-  xp: 10
-  finalboss: True
+  gold: 90
+  level: 9
+  xp: 9
   art: art/vampire_monster.png
   biome: dungeon
