@@ -210,21 +210,24 @@ class GameGUI:
         }
         
         if biome_name in biome_configs:
-            # Track previous biome before changing
-            if hasattr(self, 'current_biome'):
+            # Track previous biome before changing - but only if we're actually changing biomes
+            if hasattr(self, 'current_biome') and self.current_biome != biome_name:
                 self.last_biome = self.current_biome
-            else:
+            elif not hasattr(self, 'current_biome'):
+                # First time initialization
                 self.last_biome = 'grassland'
+            # If current_biome == biome_name, keep the existing last_biome
             
             self.current_biome = biome_name
             config = biome_configs[biome_name]
             self.set_background_image(config['background'], config['fallback_color'])
         else:
-            # Default to grassland
-            if hasattr(self, 'current_biome'):
+            # Default to grassland - only update last_biome if we're changing
+            if hasattr(self, 'current_biome') and self.current_biome != 'grassland':
                 self.last_biome = self.current_biome
-            else:
+            elif not hasattr(self, 'current_biome'):
                 self.last_biome = 'grassland'
+            # If already grassland, keep the existing last_biome
             
             self.current_biome = 'grassland'
             self.set_background_image('art/grassy_background.png', '#4a7c59')
@@ -810,9 +813,11 @@ class GameGUI:
         # Lock interface to prevent interruptions during teleportation
         self.lock_interface()
         
-        # Ensure current_biome is initialized
+        # Ensure biomes are initialized
         if not hasattr(self, 'current_biome') or self.current_biome is None:
             self.current_biome = 'grassland'
+        if not hasattr(self, 'last_biome') or self.last_biome is None:
+            self.last_biome = 'grassland'
         
         # Available biomes for combat (excludes town as it's a safe zone)
         available_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
