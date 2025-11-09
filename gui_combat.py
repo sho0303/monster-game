@@ -87,9 +87,7 @@ class CombatGUI:
         self.fight_callback(result)
     
     def _display_combat_images(self, hero, monster):
-        """Display hero and monster images side by side for combat"""
-        image_paths = []
-        
+        """Display hero and monster images side by side for combat with Dragon boss special sizing"""
         # Get hero image path
         hero_class = hero.get('class', 'Warrior').lower()
         hero_image_path = f"art/{hero_class.capitalize()}.png"
@@ -97,30 +95,80 @@ class CombatGUI:
         try:
             import os
             if os.path.exists(hero_image_path):
-                image_paths.append(hero_image_path)
+                self.current_hero_image = hero_image_path
             else:
-                image_paths.append('art/crossed_swords.png')
+                self.current_hero_image = 'art/crossed_swords.png'
         except:
-            image_paths.append('art/crossed_swords.png')
+            self.current_hero_image = 'art/crossed_swords.png'
         
         # Get monster image path
         if 'art' in monster and monster['art']:
             try:
                 if os.path.exists(monster['art']):
-                    image_paths.append(monster['art'])
+                    self.current_monster_image = monster['art']
                 else:
-                    image_paths.append('art/crossed_swords.png')
+                    self.current_monster_image = 'art/crossed_swords.png'
             except:
-                image_paths.append('art/crossed_swords.png')
+                self.current_monster_image = 'art/crossed_swords.png'
         else:
-            image_paths.append('art/crossed_swords.png')
+            self.current_monster_image = 'art/crossed_swords.png'
         
-        # Display both images side by side
-        self.gui.show_images(image_paths, layout="horizontal")
+        # Store monster data for Dragon boss detection
+        self.current_monster_data = monster
         
-        # Store current images for animation switching
-        self.current_hero_image = image_paths[0]
-        self.current_monster_image = image_paths[1] if len(image_paths) > 1 else 'art/crossed_swords.png'
+        # Use custom display logic for Dragon boss sizing
+        self._display_combat_images_with_sizing()
+    
+    def _display_combat_images_with_sizing(self):
+        """Display hero and monster images with special Dragon boss sizing"""
+        # Clear existing foreground images
+        self.gui._clear_foreground_images()
+        
+        # Get canvas dimensions for positioning
+        canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+        
+        # Calculate final positions (same logic as encounter system)
+        base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
+        
+        # Special handling for double-resolution Dragon final boss
+        monster_data = getattr(self, 'current_monster_data', {})
+        is_dragon_boss = (monster_data.get('finalboss', False) and 
+                         'dragon_endboss' in self.current_monster_image.lower())
+        
+        # Use larger size for Dragon boss to show its high-resolution art
+        hero_img_size = base_img_size
+        monster_img_size = int(base_img_size * 1.8) if is_dragon_boss else base_img_size
+        
+        spacing_x = canvas_width // 3
+        start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
+        
+        # Final positions for hero (left) and monster (right)
+        hero_final_x = spacing_x - hero_img_size // 2
+        monster_final_x = 2 * spacing_x - monster_img_size // 2
+        final_y = start_y
+        
+        # Store sizes for animation methods
+        self.hero_img_size = hero_img_size
+        self.monster_img_size = monster_img_size
+        self.combat_hero_x = hero_final_x
+        self.combat_monster_x = monster_final_x
+        self.combat_y = final_y
+        
+        # Display both images with appropriate sizes
+        self.gui._add_canvas_image(
+            self.current_hero_image, 
+            hero_final_x, 
+            final_y, 
+            hero_img_size, 
+            hero_img_size
+        )
+        self.gui._add_canvas_image(
+            self.current_monster_image, 
+            monster_final_x, 
+            final_y, 
+            monster_img_size, 
+            monster_img_size
+        )
 
     def _show_hero_attack_animation(self, hero):
         """Show hero attack animation - toggle between normal and attack 3 times"""
@@ -134,27 +182,46 @@ class CombatGUI:
                 self._toggle_attack_animation(0, attack_image_path, self.current_hero_image, self.current_monster_image)
             else:
                 # Fallback - keep current display
-                self.gui.show_images([self.current_hero_image, self.current_monster_image], layout="horizontal")
+                self._display_combat_images_with_sizing()
         except Exception as e:
             # Fallback - keep current display
-            self.gui.show_images([self.current_hero_image, self.current_monster_image], layout="horizontal")
+            self._display_combat_images_with_sizing()
 
     def _toggle_attack_animation(self, toggle_count, attack_image, normal_image, monster_image):
-        """Toggle between normal and attack images with quarter-second delay"""
+        """Toggle between normal and attack images with quarter-second delay using custom sizing"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
+            # Clear and redraw with appropriate image
+            self.gui._clear_foreground_images()
+            
             if toggle_count % 2 == 0:
                 # Even count: show attack image
-                self.gui.show_images([attack_image, monster_image], layout="horizontal")
+                hero_image = attack_image
             else:
                 # Odd count: show normal image
-                self.gui.show_images([normal_image, monster_image], layout="horizontal")
+                hero_image = normal_image
+            
+            # Display with custom sizing for Dragon boss
+            self.gui._add_canvas_image(
+                hero_image, 
+                self.combat_hero_x, 
+                self.combat_y, 
+                self.hero_img_size, 
+                self.hero_img_size
+            )
+            self.gui._add_canvas_image(
+                monster_image, 
+                self.combat_monster_x, 
+                self.combat_y, 
+                self.monster_img_size, 
+                self.monster_img_size
+            )
             
             # Schedule next toggle after 250ms (quarter second)
             self.gui.root.after(250, lambda: self._toggle_attack_animation(
                 toggle_count + 1, attack_image, normal_image, monster_image))
         else:
             # Animation complete - ensure we end with normal hero image
-            self.gui.show_images([normal_image, monster_image], layout="horizontal")
+            self._display_combat_images_with_sizing()
 
     def _complete_hero_attack(self, damage, monster, message_template):
         """Complete hero attack after animation - show damage text and sound"""
@@ -215,8 +282,14 @@ class CombatGUI:
     
     def _show_monster_attack_animation(self, monster):
         """Show monster attack animation - toggle between normal and attack 3 times"""
-        monster_name = monster.get('name', 'Unknown').lower()
-        attack_image_path = f"art/{monster_name}_attack.png"
+        # Special handling for Dragon boss attack image
+        monster_data = getattr(self, 'current_monster_data', {})
+        if (monster_data.get('finalboss', False) and 
+            'dragon_endboss' in self.current_monster_image.lower()):
+            attack_image_path = "art/dragon_endboss_attack.png"
+        else:
+            monster_name = monster.get('name', 'Unknown').lower()
+            attack_image_path = f"art/{monster_name}_attack.png"
         
         try:
             import os
@@ -225,27 +298,46 @@ class CombatGUI:
                 self._toggle_monster_attack_animation(0, attack_image_path, self.current_monster_image, self.current_hero_image)
             else:
                 # Fallback - keep current display
-                self.gui.show_images([self.current_hero_image, self.current_monster_image], layout="horizontal")
+                self._display_combat_images_with_sizing()
         except Exception as e:
             # Fallback - keep current display
-            self.gui.show_images([self.current_hero_image, self.current_monster_image], layout="horizontal")
+            self._display_combat_images_with_sizing()
 
     def _toggle_monster_attack_animation(self, toggle_count, attack_image, normal_image, hero_image):
-        """Toggle between normal and attack images for monster with quarter-second delay"""
+        """Toggle between normal and attack images for monster with quarter-second delay using custom sizing"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
+            # Clear and redraw with appropriate image
+            self.gui._clear_foreground_images()
+            
             if toggle_count % 2 == 0:
                 # Even count: show monster attack image
-                self.gui.show_images([hero_image, attack_image], layout="horizontal")
+                monster_image = attack_image
             else:
                 # Odd count: show normal monster image
-                self.gui.show_images([hero_image, normal_image], layout="horizontal")
+                monster_image = normal_image
+            
+            # Display with custom sizing for Dragon boss
+            self.gui._add_canvas_image(
+                hero_image, 
+                self.combat_hero_x, 
+                self.combat_y, 
+                self.hero_img_size, 
+                self.hero_img_size
+            )
+            self.gui._add_canvas_image(
+                monster_image, 
+                self.combat_monster_x, 
+                self.combat_y, 
+                self.monster_img_size, 
+                self.monster_img_size
+            )
             
             # Schedule next toggle after 500ms (slower for visibility)
             self.gui.root.after(500, lambda: self._toggle_monster_attack_animation(
                 toggle_count + 1, attack_image, normal_image, hero_image))
         else:
             # Animation complete - ensure we end with normal monster image
-            self.gui.show_images([hero_image, normal_image], layout="horizontal")
+            self._display_combat_images_with_sizing()
 
     def _complete_monster_attack_start_hero(self, monster_damage, hero_damage, monster, hero, message_template, round_num):
         """Complete monster attack and start hero counter-attack"""
@@ -347,11 +439,18 @@ class CombatGUI:
     def _return_to_monster_view(self, monster):
         """Return to normal hero and monster display after attack"""
         try:
-            # Return to normal hero and monster images
-            self.gui.show_images([self.current_hero_image, self.current_monster_image], layout="horizontal")
+            # Return to normal hero and monster images with custom sizing
+            self._display_combat_images_with_sizing()
         except Exception as e:
-            # Fallback - show both as crossed swords
-            self.gui.show_images(['art/crossed_swords.png', 'art/crossed_swords.png'], layout="horizontal")
+            # Fallback - show both as crossed swords with normal sizing
+            self.gui._clear_foreground_images()
+            canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+            img_size = 120
+            spacing_x = canvas_width // 3
+            start_y = (canvas_height - img_size) // 2
+            
+            self.gui._add_canvas_image('art/crossed_swords.png', spacing_x - img_size // 2, start_y, img_size, img_size)
+            self.gui._add_canvas_image('art/crossed_swords.png', 2 * spacing_x - img_size // 2, start_y, img_size, img_size)
 
     def calculate_damage(self, attack, defense, attacker_level=1, defender_level=1):
         """Improved damage calculation with level consideration"""
