@@ -99,6 +99,7 @@ class MonsterEncounterGUI:
             
             # Check if game is over (0 lives left)
             if self.gui.check_game_over():
+                # Don't return to main menu if game is over - let game over screen stay
                 return
             
             # Wait before returning to main menu, interface unlocks when main_menu sets buttons
@@ -296,6 +297,7 @@ class MonsterEncounterGUI:
             
             # Check if game is over (0 lives left)
             if self.gui.check_game_over():
+                # Don't return to main menu if game is over - let game over screen stay
                 return
         else:
             self.gui.print_text("\n🏃 You managed to escape, but not unscathed!")
