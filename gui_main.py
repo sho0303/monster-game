@@ -50,6 +50,7 @@ class GameGUI:
         
         # Biome system
         self.current_biome = 'grassland'  # Initialize default biome
+        self.last_biome = 'grassland'     # Track previous biome to avoid teleport loops
         
         # Game state
         self.game_state = None
@@ -209,11 +210,22 @@ class GameGUI:
         }
         
         if biome_name in biome_configs:
+            # Track previous biome before changing
+            if hasattr(self, 'current_biome'):
+                self.last_biome = self.current_biome
+            else:
+                self.last_biome = 'grassland'
+            
             self.current_biome = biome_name
             config = biome_configs[biome_name]
             self.set_background_image(config['background'], config['fallback_color'])
         else:
             # Default to grassland
+            if hasattr(self, 'current_biome'):
+                self.last_biome = self.current_biome
+            else:
+                self.last_biome = 'grassland'
+            
             self.current_biome = 'grassland'
             self.set_background_image('art/grassy_background.png', '#4a7c59')
     
@@ -805,8 +817,16 @@ class GameGUI:
         # Available biomes for combat (excludes town as it's a safe zone)
         available_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
         
-        # Remove current biome from options
-        other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
+        # Remove current biome and last biome from options to prevent teleport loops
+        excluded_biomes = {self.current_biome}
+        if hasattr(self, 'last_biome') and self.last_biome:
+            excluded_biomes.add(self.last_biome)
+        
+        other_biomes = [biome for biome in available_biomes if biome not in excluded_biomes]
+        
+        # Fallback: if we've excluded too many biomes, just exclude current biome
+        if not other_biomes:
+            other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
         
         # Select random biome from remaining options
         new_biome = random.choice(other_biomes)

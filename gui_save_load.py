@@ -81,7 +81,8 @@ class SaveLoadManager:
             save_data = {
                 'hero': self._prepare_hero_data(hero),
                 'game_state': {
-                    'current_biome': current_biome or getattr(self.gui, 'current_biome', 'grassland')
+                    'current_biome': current_biome or getattr(self.gui, 'current_biome', 'grassland'),
+                    'last_biome': getattr(self.gui, 'last_biome', 'grassland')
                 },
                 'save_metadata': {
                     'save_date': datetime.now().isoformat(),
@@ -131,6 +132,7 @@ class SaveLoadManager:
                 'success': True,
                 'hero': hero_data,
                 'current_biome': game_state.get('current_biome', 'grassland'),
+                'last_biome': game_state.get('last_biome', 'grassland'),
                 'save_metadata': save_metadata
             }
         except Exception as e:
@@ -384,8 +386,11 @@ class SaveLoadManager:
                     # Successfully loaded - set up game state
                     self.gui.game_state.hero = result['hero']
                     
-                    # Restore biome
+                    # Restore biome and last biome
                     if hasattr(self.gui, 'set_biome_background'):
+                        # Restore last_biome first to maintain proper tracking
+                        if 'last_biome' in result:
+                            self.gui.last_biome = result['last_biome']
                         self.gui.set_biome_background(result['current_biome'])
                     
                     # Reinitialize quest system with loaded quests
