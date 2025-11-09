@@ -220,10 +220,21 @@ class ShopGUI:
             self.gui.print_text(f"🛡️  Defense: {old_defense} → {hero['defense']}")
             
         elif self.current_category == 'Items':
-            # Add to inventory
-            hero['item'] = item
-            self.gui.print_text(f"🧪 Added {item['name']} to inventory!")
-            self.gui.print_text(f"   Use it from the main menu")
+            # Add to inventory (new multi-item system)
+            if 'items' not in hero:
+                hero['items'] = {}
+            
+            item_name = item['name']
+            if item_name in hero['items']:
+                # Increase quantity
+                hero['items'][item_name]['quantity'] += 1
+                self.gui.print_text(f"🧪 Added {item['name']} to inventory!")
+                self.gui.print_text(f"   You now have {hero['items'][item_name]['quantity']} {item_name}s")
+            else:
+                # Add new item
+                hero['items'][item_name] = {'data': item, 'quantity': 1}
+                self.gui.print_text(f"🧪 Added {item['name']} to inventory!")
+                self.gui.print_text(f"   Use it from the main menu")
         
         # Play purchase sound effect (won't interrupt background music)
         self.gui.audio.play_sound_effect('store.mp3')  # Use celebration sound for purchases

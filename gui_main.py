@@ -1081,6 +1081,15 @@ class GameGUI:
                     self.game_state.hero['gold'] = 50
                     self.game_state.hero['level'] = 1
                     self.game_state.hero['xp'] = 0
+                    # Initialize items as dictionary for multiple items
+                    if 'items' not in self.game_state.hero:
+                        self.game_state.hero['items'] = {}
+                    # Migrate old 'item' to new 'items' system if present
+                    if 'item' in self.game_state.hero and self.game_state.hero['item'] is not None:
+                        old_item = self.game_state.hero['item']
+                        item_name = old_item['name']
+                        self.game_state.hero['items'][item_name] = {'data': old_item, 'quantity': 1}
+                        del self.game_state.hero['item']
                     
                     # Initialize quest system for hero
                     self.quest_manager.initialize_hero_quests(self.game_state.hero)
@@ -1187,7 +1196,19 @@ class GameGUI:
                 self.text_area.see(tk.END)
                 self.text_area.config(state=tk.DISABLED)
                 
+            elif key == 'items' and value:
+                # Display items with quantities
+                item_names = []
+                for item_name, item_info in value.items():
+                    quantity = item_info.get('quantity', 1)
+                    if quantity > 1:
+                        item_names.append(f"{item_name} x{quantity}")
+                    else:
+                        item_names.append(item_name)
+                if item_names:
+                    self.print_colored_value(f"  items: ", ", ".join(item_names), 'name')
             elif key == 'item' and value is not None:
+                # Legacy support for old save files
                 self.print_colored_value(f"  {key}: ", value['name'], 'name')
             elif key in ['hp', 'maxhp']:
                 self.print_colored_value(f"  {key}: ", value, 'hp')

@@ -166,9 +166,25 @@ class SaveLoadManager:
             if field in hero:
                 hero_data[field] = hero[field]
         
-        # Handle item (equipment) field
+        # Handle items - ensure they're serializable (new multi-item system)
+        if 'items' in hero and hero['items']:
+            hero_data['items'] = {}
+            for item_name, item_info in hero['items'].items():
+                hero_data['items'][item_name] = {
+                    'data': dict(item_info['data']),
+                    'quantity': item_info['quantity']
+                }
+        else:
+            hero_data['items'] = {}
+        
+        # Handle legacy single item - migrate to new system
         if 'item' in hero and hero['item'] is not None:
-            hero_data['item'] = dict(hero['item'])  # Ensure it's a plain dict
+            if not hero_data['items']:
+                hero_data['items'] = {}
+            old_item = hero['item']
+            item_name = old_item['name']
+            hero_data['items'][item_name] = {'data': dict(old_item), 'quantity': 1}
+            hero_data['item'] = None  # Clear legacy field
         else:
             hero_data['item'] = None
         
@@ -213,6 +229,7 @@ class SaveLoadManager:
             'weapon': 'Basic Weapon',
             'armour': 'Basic Armour',
             'item': None,
+            'items': {},
             'quests': []
         }
         
@@ -231,6 +248,20 @@ class SaveLoadManager:
         # Ensure quests is a list
         if not isinstance(validated_data['quests'], list):
             validated_data['quests'] = []
+        
+        # Migrate old single item system to new multi-item system
+        if 'item' in validated_data and validated_data['item'] is not None:
+            if 'items' not in validated_data or not validated_data['items']:
+                validated_data['items'] = {}
+            old_item = validated_data['item']
+            if isinstance(old_item, dict) and 'name' in old_item:
+                item_name = old_item['name']
+                validated_data['items'][item_name] = {'data': old_item, 'quantity': 1}
+            validated_data['item'] = None  # Clear legacy field
+        
+        # Ensure items is a dictionary
+        if 'items' not in validated_data or not isinstance(validated_data['items'], dict):
+            validated_data['items'] = {}
         
         return validated_data
     

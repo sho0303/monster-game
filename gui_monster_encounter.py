@@ -116,11 +116,47 @@ class MonsterEncounterGUI:
         # Check and handle quest completion
         self._process_quest_completion(monster_type)
     
+    def _apply_gold_loss_on_death(self, death_message="💀 Defeat!"):
+        """Apply gold loss on death, with Miser Coin Purse protection if available"""
+        hero = self.gui.game_state.hero
+        
+        # Check if hero has Miser Coin Purse for reduced gold loss
+        has_coin_purse = False
+        if 'items' in hero and hero['items']:
+            has_coin_purse = 'Miser Coin Purse' in hero['items']
+        
+        original_gold = hero['gold']
+        if has_coin_purse and original_gold > 0:
+            # Only lose 50% of gold with coin purse
+            gold_lost = original_gold // 2
+            hero['gold'] = original_gold - gold_lost
+            
+            # Show protected gold message
+            protection_parts = [
+                (f"\n{death_message} Your ", "#ffffff"),
+                ("Miser Coin Purse", "#ffdd00"),
+                (" protected you!", "#ffffff")
+            ]
+            self.gui._print_colored_parts(protection_parts)
+            
+            loss_parts = [
+                ("💰 Lost ", "#ffffff"),
+                (f"{gold_lost} gold", "#ff6666"),
+                (f" (kept {hero['gold']} gold)", "#ffdd00")
+            ]
+            self.gui._print_colored_parts(loss_parts)
+        else:
+            # Lose all gold without protection
+            self.gui.print_text(f"\n{death_message} You lost all your gold!")
+            hero['gold'] = 0
+
     def _handle_defeat(self):
         """Handle defeat consequences"""
         hero = self.gui.game_state.hero
-        self.gui.print_text(f"\n💀 Defeat! You lost all your gold!")
-        hero['gold'] = 0
+        
+        # Apply gold loss with potential coin purse protection
+        self._apply_gold_loss_on_death()
+        
         hero['lives_left'] -= 1
         hero['hp'] = hero['maxhp']
     
@@ -253,8 +289,8 @@ class MonsterEncounterGUI:
         
         # Check if hero died while running away
         if hero['hp'] <= 0:
-            self.gui.print_text("\n💀 You collapsed while trying to escape!")
-            self.gui.game_state.hero['gold'] = 0
+            # Apply gold loss with potential coin purse protection
+            self._apply_gold_loss_on_death("💀 You collapsed while trying to escape!")
             self.gui.game_state.hero['lives_left'] -= 1
             self.gui.game_state.hero['hp'] = self.gui.game_state.hero['maxhp']
             
@@ -528,33 +564,46 @@ class MonsterEncounterGUI:
 
     def _select_random_monster(self):
         """Select random monster based on current biome from YAML biome field"""
+        import random
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        hero_level = self.gui.game_state.hero['level']
         
-        # Filter monsters by biome from their YAML biome field
-        attempts = 0
-        while attempts < 100:
-            # First try to get monsters from current biome using biome field
-            biome_specific_monsters = [
-                (key, value) for key, value in self.gui.game_state.monsters.items()
-                if value.get('biome', 'grassland') == current_biome
-            ]
-            
-            if biome_specific_monsters:
-                key, value = random.choice(biome_specific_monsters)
-                hero_level = self.gui.game_state.hero['level']
-                if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1:
-                    monster_data = value.copy()
-                    return (key, monster_data)  # Return both monster type and data
-            
-            attempts += 1
+        # Get all monsters for this biome
+        biome_specific_monsters = [
+            (key, value) for key, value in self.gui.game_state.monsters.items()
+            if value.get('biome', 'grassland') == current_biome
+        ]
         
-        # Fallback: if no appropriate monsters found in biome, use any monster
-        attempts = 0
-        while attempts < 100:
-            key, value = random.choice(list(self.gui.game_state.monsters.items()))
-            hero_level = self.gui.game_state.hero['level']
-            if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1:
-                monster_data = value.copy()
-                return (key, monster_data)  # Return both monster type and data
-            attempts += 1
+        # Try to find level-appropriate monsters in current biome first
+        level_appropriate_monsters = [
+            (key, value) for key, value in biome_specific_monsters
+            if value['level'] <= hero_level * 2 and value['level'] >= hero_level - 1
+        ]
+        
+        if level_appropriate_monsters:
+            key, value = random.choice(level_appropriate_monsters)
+            monster_data = value.copy()
+            return (key, monster_data)
+        
+        # If no level-appropriate monsters in biome, still prefer biome monsters
+        # but relax the level requirements slightly  
+        if biome_specific_monsters:
+            # Choose any monster from the biome, regardless of level
+            key, value = random.choice(biome_specific_monsters)
+            monster_data = value.copy()
+            return (key, monster_data)
+        
+        # Final fallback: if no monsters exist for this biome, use grassland monsters
+        # This should rarely happen since all biomes should have monsters
+        grassland_monsters = [
+            (key, value) for key, value in self.gui.game_state.monsters.items()
+            if value.get('biome', 'grassland') == 'grassland'
+        ]
+        
+        if grassland_monsters:
+            key, value = random.choice(grassland_monsters)
+            monster_data = value.copy()
+            return (key, monster_data)
+        
+        # Absolute fallback - should never happen
         return None
