@@ -188,8 +188,21 @@ class ShopGUI:
         
         # Apply item effects based on category
         if self.current_category == 'Weapons':
+            # Check if player already owns this specific weapon
+            current_weapon = hero.get('weapon', 'None')
+            if current_weapon == item['name']:
+                self.gui.clear_text()
+                self.gui.print_text(f"\n❌ You already own {item['name']}!")
+                self.gui.print_text("   You cannot purchase the same weapon again.")
+                # Refund the gold since we already deducted it
+                hero['gold'] += item_cost
+                # Unlock interface and return to shop after delay
+                self.gui.unlock_interface()
+                self.gui.root.after(2500, self._show_items)
+                return
+            
             # Update weapon and attack
-            old_weapon = hero.get('weapon', 'None')
+            old_weapon = current_weapon
             
             # Store base attack if not already stored
             if 'base_attack' not in hero:
@@ -204,8 +217,21 @@ class ShopGUI:
             self.gui.print_text(f"⚔️  Attack: {old_attack} → {hero['attack']}")
             
         elif self.current_category == 'Armour':
+            # Check if player already owns this specific armor
+            current_armour = hero.get('armour', 'None')
+            if current_armour == item['name']:
+                self.gui.clear_text()
+                self.gui.print_text(f"\n❌ You already own {item['name']}!")
+                self.gui.print_text("   You cannot purchase the same armor again.")
+                # Refund the gold since we already deducted it
+                hero['gold'] += item_cost
+                # Unlock interface and return to shop after delay
+                self.gui.unlock_interface()
+                self.gui.root.after(2500, self._show_items)
+                return
+            
             # Update armour and defense
-            old_armour = hero.get('armour', 'None')
+            old_armour = current_armour
             
             # Store base defense if not already stored
             if 'base_defense' not in hero:
