@@ -1,0 +1,12 @@
+Goblin Thief:
+  name: Goblin Thief
+  hp: 18
+  maxhp: 18
+  attack: 4
+  defense: 3
+  gold: 25
+  level: 3
+  xp: 3
+  art: art/goblin_monster.png
+  attack_sound: goblin-attack.mp3
+  biome: grassland

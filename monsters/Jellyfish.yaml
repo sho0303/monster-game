@@ -1,0 +1,12 @@
+Jellyfish Swarm:
+  name: Jellyfish Swarm
+  hp: 20
+  maxhp: 20
+  attack: 5
+  defense: 3
+  gold: 25
+  level: 3
+  xp: 3
+  art: art/jellyfish_monster.png
+  attack_sound: jellyfish-attack.mp3
+  biome: ocean

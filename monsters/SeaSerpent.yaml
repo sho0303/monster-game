@@ -1,0 +1,12 @@
+Sea Serpent:
+  name: Sea Serpent
+  hp: 80
+  maxhp: 80
+  attack: 16
+  defense: 12
+  gold: 70
+  level: 7
+  xp: 7
+  art: art/sea_serpent_monster.png
+  attack_sound: serpent-attack.mp3
+  biome: ocean

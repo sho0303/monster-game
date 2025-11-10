@@ -1,0 +1,42 @@
+"""
+Quick demo of level-aware quest system
+Run the game and test quest generation at different levels
+"""
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+print("="*70)
+print("LEVEL-AWARE QUEST SYSTEM - QUICK DEMO")
+print("="*70)
+print("\nThis demo shows how quests now match your level and biome!")
+print("\nKey Improvements:")
+print("  ✅ Quests only for monsters you can actually encounter")
+print("  ✅ Level range: Your Level -2 to +1 (same as encounters)")
+print("  ✅ Quest descriptions show monster level")
+print("  ✅ No more impossible quests!")
+print("\n" + "="*70)
+print("\nTo test in-game:")
+print("  1. Run: python monster-game-gui.py")
+print("  2. Select a hero")
+print("  3. Click 'Quests' to generate quests")
+print("  4. Notice quests match your current biome and level!")
+print("  5. Teleport to different biomes to see different quests")
+print("  6. Level up and see higher-level quest options")
+print("\n" + "="*70)
+print("\nExample Quest Progression:")
+print("\n  Level 1 in Grassland:")
+print("    - Hunt a Wild Boar (Lv.2) in the grasslands")
+print("    - Hunt an Angry Bee Swarm (Lv.2) in the grasslands")
+print("    - Hunt a Spider (Lv.1) in the grasslands")
+print("\n  Level 5 in Desert:")
+print("    - Defeat a Sand Serpent (Lv.5) in the desert sands")
+print("    - Defeat a Scorpion King (Lv.6) in the desert sands")
+print("    - Defeat a Cyclops (Lv.5) in the desert sands")
+print("\n  Level 10 in Dungeon:")
+print("    - Slay a Dragon (Lv.10) in the dark dungeons")
+print("    - Slay a Demon (Lv.8) in the dark dungeons")
+print("    - Slay a Vampire (Lv.9) in the dark dungeons")
+print("\n" + "="*70)
+print("See LEVEL_AWARE_QUEST_SYSTEM.md for full details!")
+print("="*70)

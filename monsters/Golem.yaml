@@ -1,0 +1,12 @@
+Stone Golem:
+  name: Stone Golem
+  hp: 100
+  maxhp: 100
+  attack: 15
+  defense: 20
+  gold: 75
+  level: 8
+  xp: 8
+  art: art/golem_monster.png
+  attack_sound: golem-attack.mp3
+  biome: dungeon

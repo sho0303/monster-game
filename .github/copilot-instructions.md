@@ -1,51 +1,233 @@
 ## Quick purpose
-This repository is a single-file, terminal-based Python game (`monster-game.py`) that loads YAML-backed data for heroes, monsters and the in-game store. The guidance below helps an AI agent make safe, useful edits and add small features without breaking runtime assumptions.
+PyQuest Monster Game — a turn-based RPG with both GUI (primary) and legacy terminal versions. GUI uses tkinter, PIL, and pygame for visuals/audio. YAML-backed data for heroes, monsters, and shops. Modular architecture with separate GUI components for combat, town, quests, inventory, and blacksmith.
 
-## High-level architecture (big picture)
-- One main program: `monster-game.py` — procedural script that wires data, audio, and I/O together.
-- Data sources: YAML files under `heros/`, `monsters/`, and `store.yaml` are merged into Python dicts at startup.
-- Assets: `ascii_art/` (printed directly), `sounds/` (played via `pygame.mixer`).
-- Runtime expectations: run from repository root so relative paths like `monsters/` and `ascii_art/` resolve.
+## High-level architecture (two versions)
+### GUI Version (Primary: `monster-game-gui.py`)
+- **Entry point**: `monster-game-gui.py` — launcher with dependency checks, logging setup, error handling
+- **Main GUI**: `gui_main.py` (`GameGUI` class) — 800x1050 tkinter window, keyboard shortcuts (1-9 for buttons, B for biome cycling, T for teleport)
+- **Modular GUI components**: Each feature is a separate class injected into `GameGUI`:
+  - `gui_combat.py` (`CombatGUI`) — turn-based combat with animations, async round execution
+  - `gui_town.py` (`TownGUI`) — town hub with shop, blacksmith, tavern (placeholder), fountain (heal 3 HP)
+  - `gui_shop.py` (`ShopGUI`) — class-filtered item purchases, duplicate prevention
+  - `gui_blacksmith.py` (`BlacksmithGUI`) — permanent stat upgrades (+1 attack/defense for 100 gold)
+  - `gui_inventory.py` (`InventoryGUI`) — equip/unequip items, stat display
+  - `gui_quests.py` (`QuestManager`) — biome-aware monster kill quests, dynamic rewards
+  - `gui_monster_encounter.py` (`MonsterEncounterGUI`) — random encounters, biome-filtered spawns
+  - `gui_save_load.py` (`SaveLoadManager`) — JSON save/load with metadata
+  - `gui_image_manager.py` (`ImageManager`) — image display, layout (single/multi), canvas management
+  - `gui_background_manager.py` (`BackgroundManager`) — biome switching, backgrounds, teleportation
+  - `gui_audio.py` (`Audio`) — pygame.mixer wrapper for sounds/music
+- **Game state**: `game_state.py` (`GameState` class) — holds `hero`, `monsters`, `heros` dicts; `initialize_game_state()` loads YAML
+- **Game logic**: `game_logic.py` — `damage_calculator()` (level-aware, 80-120% randomness, percentage-based defense), `fight_round()`, `level_up()`
 
-## Key files and patterns to reference
-- `monster-game.py` — entrypoint. Many helper functions (e.g. `fight_calculator`, `shop`, `use_item`) assume global variables `monsters`, `heros`, and a runtime `hero` object.
-- `heros/*.yaml` — hero templates. Example (`heros/Billy.yaml`):
-  - keys: `attack`, `hp`, `maxhp`, `defense`, `class`, `weapon`, `armour`.
-- `monsters/*.yaml` — monster definitions. Example (`monsters/Cyclops.yaml`):
-  - keys: `name`, `hp`, `maxhp`, `attack`, `defense`, `gold`, `level`, optional `finalboss`.
-- `store.yaml` — store categories used by `shop()`; items have `class`, `cost`, and optional `ascii_art` and equipment fields like `attack` or `defense`.
+### Legacy Terminal Version
+- `monster-game.py` (not actively maintained) — single-file procedural script with global state, colorama output, ASCII art
+
+## Data schema (YAML files)
+### Heroes (`heros/*.yaml`)
+```yaml
+Shadow Billy Bob:  # Top-level key is hero name
+    age: 16
+    weapon: Ninja Stars
+    armour: Students Robe
+    attack: 5
+    hp: 15
+    maxhp: 15
+    defense: 10
+    level: 1
+    class: 'Ninja'  # Must be Warrior, Ninja, or Magician
+```
+
+### Monsters (`monsters/*.yaml`)
+```yaml
+Cyclops:
+  name: Cyclops
+  hp: 55
+  maxhp: 55
+  attack: 7
+  defense: 10
+  gold: 50
+  level: 5
+  xp: 5
+  art: art/cyclops_monster.png  # PNG image path
+  attack_sound: cyclops-attack.mp3  # Sound file in sounds/
+  biome: desert  # grassland, desert, dungeon, ocean (town excluded from spawns)
+  finalboss: True  # Optional, only for Dragon
+```
+
+### Store (`store.yaml`)
+```yaml
+Weapons:  # Category name
+  - name: Excalibur
+    attack: 40
+    cost: 500
+    class: Warrior  # Or 'All' for all classes
+    ascii_art: art/strong_sword.png  # PNG (not ASCII despite name)
+```
+
+## Biome system (critical for spawns/quests)
+- **Biomes**: `grassland`, `desert`, `dungeon`, `ocean`, `town`
+- **Monster spawns**: Filtered by `monster.get('biome', 'grassland')` — town monsters don't spawn randomly
+- **Backgrounds**: Each biome has `art/{biome}_background.png` (800x600 or larger)
+- **Switching**: B key cycles biomes, T key teleports (excludes town unless explicitly navigating)
+- **Quest integration**: `QuestManager.generate_kill_quest()` filters by `current_biome` to avoid impossible quests
 
 ## Runtime & developer workflow
-- Dependencies (discoverable from imports): `PyYAML`, `pygame`, `colorama`.
-  - Install with pip before running: `pip install pyyaml pygame colorama` (run from virtualenv).
-- Run locally from repo root (paths are relative):
-  - Windows PowerShell: `python .\monster-game.py`
-- Audio: `play_sound(name)` loads files from `./sounds/{name}`. If audio device isn't present, `pygame.mixer` calls may raise—wrap or mock when testing.
+### Running the GUI (primary method)
+```powershell
+# From repo root (critical — relative paths required)
+python .\monster-game-gui.py
+```
+**Dependencies**: `pip install pyyaml pygame pillow` (tkinter is built-in on most Python installs)
 
-## Project-specific conventions and gotchas
-- Global state: many functions reference globals (notably `hero`, `monsters`, `heros`). When refactoring, either preserve the global usage or update all call sites.
-- YAML merging: `yaml_file_to_dictionary` reads each file and calls `dict.update(...)`. Each hero/monster file typically contains a mapping where top-level key is the entity name.
-- Item filtering: `shop()` uses the item's `class` field (string) to filter gear for hero classes (e.g. `class: 'Ninja'` or `class: 'All'`).
-- ASCII art: `print_ascii(path, color)` expects plain text files under `ascii_art/` and ANSI color codes or `colorama` usage.
-- Minimal error handling: code assumes files exist and keys are present. Add validation checks before changing behavior.
+### Testing
+- **Test directory**: `tests/` contains 40+ integration tests (no unit test framework — tests are manual GUI scripts)
+- **Test pattern**: Create `tk.Tk()` root, instantiate `GameGUI`, manipulate `game_state.hero`, call GUI methods, observe
+- **Example**: `tests/test_town_system.py` — sets up hero, calls `gui.town.show_town_menu()`
+- **Run tests**: `python .\tests\test_town_system.py` (opens GUI window, manual verification)
 
-## Safe edit rules for an AI agent
-1. Preserve existing function signatures unless updating all call sites (many functions rely on globals).
-2. When adding new YAML fields, ensure defaulting logic is added where values are read (e.g., `hero.get('item')`).
-3. Prefer non-breaking changes: add new helper functions rather than changing global state semantics.
-4. For audio/IO changes, keep relative paths and verify files exist under `sounds/` or `ascii_art/`.
+### Logging
+- Auto-created in `logs/game_YYYYMMDD_HHMMSS.log` by `monster-game-gui.py`
+- Use `logging.info()` for new features (already configured)
 
-## Examples (use when making edits)
-- Adding a monster: create `monsters/MyBeast.yaml` with structure similar to `Cyclops.yaml` (include `level`, `hp`, `maxhp`, `attack`, `defense`, `gold`).
-- Adding an item to store: update `store.yaml` with an item that has `name`, `cost`, `class` and optional `ascii_art` path used by `shop()`.
-- Debugging run: if screen clearing or colors look wrong on Windows, run from PowerShell and ensure `colorama` is installed; call `colorama.init()` if adding prints in other modules.
+## Critical conventions and gotchas
+### 1. Canvas vs Frame image display
+- **Background images**: Use `ImageManager.show_background()` → renders to canvas
+- **Foreground images** (monsters, heroes): Use `ImageManager.show_image()` or `show_images()` → renders to canvas with transparency support
+- **Why**: Canvas allows layering (background + multiple foreground images), Frame widgets don't stack properly
 
-## Integration points and places to check when changing behavior
-- `pygame.mixer` usage (calls to `mixer.init()` and `mixer.music.load()` in `play_sound`) — audio issues can crash runs.
-- File I/O: `os.listdir('monsters/')` and `open('store.yaml')` — ensure working directory is the repo root in tests or runtime.
-- Global modifications: `hero` is populated interactively after reading `heros/` files. Modifying hero shape requires edits to selection logic and `hero_status()`.
+### 2. Async combat pattern (avoid blocking UI)
+```python
+# CombatGUI uses root.after() for timing between rounds
+def _start_combat_round(self):
+    self._show_hero_attack_animation(hero)
+    self.gui.root.after(1500, lambda: self._complete_hero_attack(...))  # 1.5s delay
+```
+**Reason**: Tkinter is single-threaded — blocking sleep() freezes UI. Use `root.after()` for delays.
 
-## Where tests/builds/live checks are (or are not)
-- There are no discovered tests or build scripts. Introduce tests carefully and mock audio and terminal I/O.
+### 3. Class filtering in shop
+```python
+hero_class = hero.get('class', 'Warrior')
+filtered = [item for item in items if item.get('class') == hero_class or item.get('class') == 'All']
+```
+**Critical**: All items must have `class` field. Missing `class` = item never shows.
 
-If any section is unclear or you'd like examples turned into small automated checks (e.g., a schema validator for YAML files), tell me which part to expand and I'll iterate.
+### 4. Monster biome filtering
+```python
+# MonsterEncounterGUI.get_random_encounter()
+valid = [m for m in monsters.values() if m.get('biome', 'grassland') == current_biome]
+```
+**Gotcha**: Monsters without `biome` default to `grassland`. Town monsters (if any) should have `biome: town` and won't spawn via random encounter.
+
+### 5. Image paths (PNG, not ASCII despite legacy names)
+- **Art directory**: `art/` contains PNG images (e.g., `art/cyclops_monster.png`, `art/grassy_background.png`)
+- **Sounds directory**: `sounds/` contains MP3/WAV files
+- **Legacy**: Some YAML fields say `ascii_art` but expect PNG paths (historical artifact from terminal version)
+
+### 6. Keyboard shortcuts (gui_main.py)
+```python
+# _handle_keypress() method
+'1'-'9': Click numbered buttons
+'b': Cycle biomes (grassland → desert → dungeon → ocean → town)
+'t': Random teleport (excludes town)
+```
+**Implementation**: Each button is tagged with `button_1`, `button_2`, etc. Keypress invokes button callback.
+
+## Safe edit rules
+1. **When adding GUI features**: Create new `gui_*.py` module, instantiate in `gui_main.py.__init__()`, pass `self` as `gui` parameter
+2. **New YAML fields**: Add `.get('field', default)` everywhere the field is read (YAML files lack validation)
+3. **New monsters**: Require `biome` field (or they spawn in grassland by default)
+4. **New items**: Require `class` field (or they won't appear in shop for any class)
+5. **Images/sounds**: Verify file exists before referencing (no asset validation at runtime)
+6. **Combat changes**: Update `game_logic.damage_calculator()` (shared by all combat) — don't duplicate logic in `gui_combat.py`
+
+## Implementation patterns (copy these)
+### Adding a new monster
+1. Create `monsters/MyMonster.yaml`:
+```yaml
+MyMonster:
+  name: My Fearsome Beast
+  hp: 80
+  maxhp: 80
+  attack: 15
+  defense: 12
+  gold: 60
+  level: 6
+  xp: 6
+  art: art/my_monster.png
+  attack_sound: my-attack.mp3
+  biome: desert  # Don't forget this!
+```
+2. Add `art/my_monster.png` (512x256 recommended)
+3. Add `sounds/my-attack.mp3`
+4. Add `art/my_monster_attack.png` (for attack animation, optional)
+
+### Adding a new GUI feature (e.g., tavern)
+1. Create `gui_tavern.py`:
+```python
+class TavernGUI:
+    def __init__(self, gui):
+        self.gui = gui  # Access to GameGUI instance
+    
+    def show_tavern(self):
+        self.gui.clear_text()
+        self.gui.show_background('art/tavern_background.png')
+        self.gui.print_text("🍺 Welcome to the Tavern!")
+        # ... implementation
+```
+2. In `gui_main.py.__init__()`:
+```python
+from gui_tavern import TavernGUI
+self.tavern = TavernGUI(self)
+```
+3. Wire up button callback:
+```python
+self.show_buttons([("🍺 Tavern", self.tavern.show_tavern)])
+```
+
+### Adding a test
+```python
+# tests/test_my_feature.py
+import tkinter as tk
+from gui_main import GameGUI
+
+def test_my_feature():
+    root = tk.Tk()
+    gui = GameGUI(root)
+    root.update()  # Process pending events
+    
+    # Setup test hero
+    gui.game_state.hero = {'name': 'Tester', 'hp': 100, ...}
+    
+    # Test the feature
+    gui.my_feature.do_something()
+    
+    # Manual verification
+    print("✓ Feature works!")
+    root.mainloop()
+
+if __name__ == '__main__':
+    test_my_feature()
+```
+
+## Where implementation details live
+- **Damage formula**: `game_logic.py:damage_calculator()` — level differential (±15%/level), 80-120% randomness, capped defense (max 85% reduction)
+- **Save format**: `gui_save_load.py` — JSON with `{'hero': {...}, 'current_biome': '...', 'quests': [...], 'timestamp': ...}`
+- **Button rendering**: `gui_main.py:show_buttons()` — creates labeled buttons with keyboard shortcuts (1-9)
+- **Quest generation**: `gui_quests.py:generate_kill_quest()` — filters by biome, prevents duplicates
+- **Animation timing**: `gui_combat.py` — all delays use `root.after(milliseconds, callback)` pattern
+
+## Documentation markdown files (*.md in repo root)
+Feature implementation histories (useful for understanding design decisions):
+- `TOWN_SYSTEM_IMPLEMENTATION.md` — Town hub design, fountain mechanics
+- `BLACKSMITH_IMPLEMENTATION.md` — Permanent stat upgrades, 100 gold cost rationale
+- `IMPROVED_DAMAGE_CALCULATOR.md` — Damage formula evolution, level scaling
+- `DROP_QUEST_IMPLEMENTATION.md` — Quest reward system, biome filtering
+- `LAST_BIOME_TRACKING.md` — Teleport exclusion logic
+
+## Known limitations
+- No automated tests (all tests are manual GUI scripts in `tests/`)
+- No YAML schema validation (rely on `.get()` with defaults)
+- Single-threaded (tkinter limitation) — use `root.after()` for delays, not `time.sleep()`
+- Hardcoded window size (800x1050) — responsive layouts not implemented
+- Legacy `monster-game.py` unmaintained — focus on GUI version

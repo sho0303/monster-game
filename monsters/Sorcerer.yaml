@@ -1,0 +1,12 @@
+Dark Sorcerer:
+  name: Dark Sorcerer
+  hp: 65
+  maxhp: 65
+  attack: 20
+  defense: 8
+  gold: 75
+  level: 7
+  xp: 7
+  art: art/sorcerer_monster.png
+  attack_sound: sorcerer-attack.mp3
+  biome: dungeon
