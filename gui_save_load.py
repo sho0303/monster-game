@@ -2,6 +2,7 @@
 Save/Load system for the monster game using YAML
 """
 import os
+import sys
 import yaml
 from datetime import datetime
 from pathlib import Path
@@ -12,8 +13,34 @@ class SaveLoadManager:
     
     def __init__(self, gui):
         self.gui = gui
-        self.saves_dir = Path("saves")
+        self.saves_dir = self._get_save_directory()
         self._ensure_saves_directory()
+    
+    def _get_save_directory(self):
+        """Get the appropriate save directory based on how the game is running"""
+        if getattr(sys, 'frozen', False):
+            # Running as PyInstaller executable - use persistent location
+            # Try to use the directory where the exe is located
+            exe_dir = Path(sys.executable).parent
+            saves_dir = exe_dir / "saves"
+            
+            # If we can't write there (e.g., Program Files), use user's documents
+            try:
+                saves_dir.mkdir(exist_ok=True)
+                test_file = saves_dir / ".write_test"
+                test_file.touch()
+                test_file.unlink()
+                return saves_dir
+            except (PermissionError, OSError):
+                # Fall back to user's documents folder
+                if os.name == 'nt':  # Windows
+                    docs = Path.home() / "Documents" / "PyQuest Monster Game" / "saves"
+                else:  # Linux/Mac
+                    docs = Path.home() / ".pyquest" / "saves"
+                return docs
+        else:
+            # Running from source - use local saves directory
+            return Path("saves")
     
     def _ensure_saves_directory(self):
         """Create saves directory if it doesn't exist"""
@@ -84,6 +111,7 @@ class SaveLoadManager:
                     'current_biome': current_biome or getattr(self.gui, 'current_biome', 'grassland'),
                     'last_biome': getattr(self.gui, 'last_biome', 'grassland')
                 },
+                'bounties': self._prepare_bounty_data(),
                 'save_metadata': {
                     'save_date': datetime.now().isoformat(),
                     'game_version': '1.0',
@@ -123,6 +151,7 @@ class SaveLoadManager:
             # Extract data
             hero_data = save_data['hero']
             game_state = save_data.get('game_state', {})
+            bounty_data = save_data.get('bounties', {})
             save_metadata = save_data.get('save_metadata', {})
             
             # Ensure hero has all required fields
@@ -133,6 +162,7 @@ class SaveLoadManager:
                 'hero': hero_data,
                 'current_biome': game_state.get('current_biome', 'grassland'),
                 'last_biome': game_state.get('last_biome', 'grassland'),
+                'bounties': bounty_data,
                 'save_metadata': save_metadata
             }
         except Exception as e:
@@ -213,6 +243,28 @@ class SaveLoadManager:
         
         return hero_data
     
+    def _prepare_bounty_data(self):
+        """Prepare bounty data for saving"""
+        if not hasattr(self.gui, 'bounty_manager'):
+            return {'available': [], 'active': []}
+        
+        bounty_manager = self.gui.bounty_manager
+        
+        # Serialize available bounties
+        available_bounties = []
+        for bounty in bounty_manager.available_bounties:
+            available_bounties.append(bounty.to_dict())
+        
+        # Serialize active bounties
+        active_bounties = []
+        for bounty in bounty_manager.active_bounties:
+            active_bounties.append(bounty.to_dict())
+        
+        return {
+            'available': available_bounties,
+            'active': active_bounties
+        }
+    
     def _validate_hero_data(self, hero_data):
         """Validate and fill in missing hero data fields with defaults"""
         # Default values for all hero fields
@@ -271,6 +323,14 @@ class SaveLoadManager:
         """Display save game interface"""
         self.gui.clear_text()
         self.gui.print_text("💾 SAVE GAME 💾\n")
+        
+        # Show save location
+        save_location_parts = [
+            ("Save Location: ", "#888888"),
+            (str(self.saves_dir.absolute()), "#00aaff")
+        ]
+        self.gui._print_colored_parts(save_location_parts)
+        self.gui.print_text("")
         
         hero = self.gui.game_state.hero
         hero_name = hero.get('name', 'Hero')
@@ -396,6 +456,10 @@ class SaveLoadManager:
                     # Reinitialize quest system with loaded quests
                     if hasattr(self.gui, 'quest_manager'):
                         self.gui.quest_manager.initialize_hero_quests(self.gui.game_state.hero)
+                    
+                    # Restore bounty data
+                    if hasattr(self.gui, 'bounty_manager') and 'bounties' in result:
+                        self.gui.bounty_manager.load_bounties(result['bounties'])
                     
                     # Show success message
                     load_parts = [

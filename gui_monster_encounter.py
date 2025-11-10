@@ -27,6 +27,20 @@ class MonsterEncounterGUI:
         # Unpack monster type and data
         monster_type, monster = monster_result
         
+        # Check for elite bounty encounter (10% chance if bounty active)
+        hero = self.gui.game_state.hero
+        elite_monster = self.gui.bounty_manager.check_for_elite_encounter(
+            hero, monster_type
+        )
+        
+        # 10% chance to spawn elite if bounty is active
+        if elite_monster and random.random() < 0.10:
+            monster = elite_monster
+            monster_type = f"Elite {monster_type}"
+            is_elite = True
+        else:
+            is_elite = False
+        
         # Store monster data for Dragon boss detection
         self.current_monster_data = monster
         
@@ -36,7 +50,6 @@ class MonsterEncounterGUI:
         self.gui.clear_text()
         
         # Display hero and monster images side by side in top frame
-        hero = self.gui.game_state.hero
         self._display_hero_vs_monster_images(hero, monster)
         
         # Show biome-specific encounter message
@@ -57,11 +70,23 @@ class MonsterEncounterGUI:
         emoji = biome_emojis.get(current_biome, '🌍')
         encounter_desc = biome_encounters.get(current_biome, 'appears before you')
         
-        encounter_parts = [
-            (f"\n{emoji} A ", "#ffffff"),
-            (monster['name'], "#ffaa00"),
-            (f" {encounter_desc}! {emoji}\n", "#ffffff")
-        ]
+        # Special elite encounter message
+        if is_elite:
+            encounter_parts = [
+                (f"\n⚡ {emoji} ", "#ffffff"),
+                ("ELITE ENCOUNTER!", "#ff4444"),
+                (f" {emoji} ⚡\n", "#ffffff"),
+                ("A powerful ", "#ffaa00"),
+                (monster['name'], "#ff4444"),
+                (f" {encounter_desc}!\n", "#ffaa00"),
+                ("💀 This beast is far stronger than normal! 💀", "#ff8888")
+            ]
+        else:
+            encounter_parts = [
+                (f"\n{emoji} A ", "#ffffff"),
+                (monster['name'], "#ffaa00"),
+                (f" {encounter_desc}! {emoji}\n", "#ffffff")
+            ]
         self.gui._print_colored_parts(encounter_parts)
         
         # Show current quest summary before the fight
@@ -269,7 +294,9 @@ class MonsterEncounterGUI:
         hero = self.gui.game_state.hero
         
         # Check for quest completion using monster type (not display name)
-        completed_quests = self.gui.quest_manager.check_quest_completion(hero, monster_type)
+        completed_quests = self.gui.quest_manager.check_quest_completion(
+            hero, monster_type
+        )
         
         if completed_quests:
             for quest in completed_quests:
@@ -277,6 +304,15 @@ class MonsterEncounterGUI:
             
             # Clean up completed quests
             self.gui.quest_manager.clear_completed_quests(hero)
+        
+        # Check for bounty progress
+        progressed_bounties = self.gui.bounty_manager.check_bounty_progress(
+            hero, monster_type
+        )
+        
+        if progressed_bounties:
+            for bounty in progressed_bounties:
+                self._display_bounty_progress(bounty)
     
     def _display_quest_completion(self, quest):
         """Display quest completion message and XP progress"""
@@ -320,6 +356,24 @@ class MonsterEncounterGUI:
             (f"({xp_needed_to_level - xp_after} XP to Level {current_level + 1})", "#888888")
         ]
         self.gui._print_colored_parts(xp_progress_parts)
+    
+    def _display_bounty_progress(self, bounty):
+        """Display bounty progress notification"""
+        if bounty.completed:
+            bounty_parts = [
+                ("\n🎯 Bounty Progress: ", "#ffaa00"),
+                (bounty.description, "#ffffff"),
+                (" - ", "#888888"),
+                ("COMPLETED! ✅", "#00ff00")
+            ]
+        else:
+            progress_text = f"{bounty.current_count}/{bounty.target_count}"
+            bounty_parts = [
+                ("\n🎯 Bounty Progress: ", "#ffaa00"),
+                (bounty.description, "#ffffff"),
+                (f" ({progress_text})", "#8844ff")
+            ]
+        self.gui._print_colored_parts(bounty_parts)
     
     def _attempt_run_away(self, monster):
         """Attempt to run away with 50% chance of monster attack"""
