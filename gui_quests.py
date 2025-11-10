@@ -176,6 +176,23 @@ class QuestManager:
         
         return completed_quests
     
+    def drop_quest(self, hero, quest_index):
+        """Drop (remove) an active quest by index"""
+        self.initialize_hero_quests(hero)
+        active_quests = [q for q in hero['quests'] if not q.get('completed', False)]
+        
+        if 0 <= quest_index < len(active_quests):
+            # Find the quest to drop in the original list
+            quest_to_drop = active_quests[quest_index]
+            # Remove it from the hero's quests
+            hero['quests'] = [q for q in hero['quests'] if not (
+                q['quest_type'] == quest_to_drop['quest_type'] and
+                q['target'] == quest_to_drop['target'] and
+                q.get('completed', False) == quest_to_drop.get('completed', False)
+            )]
+            return True
+        return False
+    
     def clear_completed_quests(self, hero):
         """Remove completed quests from hero's quest list"""
         self.initialize_hero_quests(hero)

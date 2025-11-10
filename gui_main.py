@@ -1150,43 +1150,116 @@ class GameGUI:
             self.print_text(f"\nYou have {len(active_quests)} active quest(s).")
             
             def on_quest_menu_choice(choice):
-                if choice == 1 and len(active_quests) < 3:  # Limit to 3 quests
-                    # Generate additional quest
-                    new_quest = self.quest_manager.generate_kill_monster_quest()
-                    if isinstance(new_quest, str):
-                        # Handle error cases
-                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
-                            current_biome = getattr(self, 'current_biome', 'grassland')
-                            error_parts = [
-                                ("❌ No new quests! ", "#ff6666"),
-                                (f"All {current_biome} monsters already have quests.", "#ffffff")
-                            ]
-                            self._print_colored_parts(error_parts)
-                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
-                            error_parts = [
-                                ("❌ No new quests! ", "#ff6666"),
-                                ("All monsters already have active quests.", "#ffffff")
-                            ]
-                            self._print_colored_parts(error_parts)
+                button_index = 0
+                
+                # Take Another Quest option
+                if len(active_quests) < 3:
+                    if choice == button_index + 1:
+                        new_quest = self.quest_manager.generate_kill_monster_quest()
+                        if isinstance(new_quest, str):
+                            # Handle error cases
+                            if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
+                                current_biome = getattr(self, 'current_biome', 'grassland')
+                                error_parts = [
+                                    ("❌ No new quests! ", "#ff6666"),
+                                    (f"All {current_biome} monsters already have quests.", "#ffffff")
+                                ]
+                                self._print_colored_parts(error_parts)
+                            elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
+                                error_parts = [
+                                    ("❌ No new quests! ", "#ff6666"),
+                                    ("All monsters already have active quests.", "#ffffff")
+                                ]
+                                self._print_colored_parts(error_parts)
+                            else:
+                                self.print_text("❌ Could not generate quest")
+                            self.root.after(2000, self.main_menu)
+                        elif new_quest:
+                            self.quest_manager.add_quest(hero, new_quest)
+                            self.print_text("\n🆕 New quest added!")
+                            self.root.after(1500, self.show_quests)  # Refresh quest view
                         else:
                             self.print_text("❌ Could not generate quest")
-                        self.root.after(2000, self.main_menu)
-                    elif new_quest:
-                        self.quest_manager.add_quest(hero, new_quest)
-                        self.print_text("\n🆕 New quest added!")
-                        self.root.after(1500, self.show_quests)  # Refresh quest view
-                    else:
-                        self.print_text("❌ Could not generate quest")
-                        self.root.after(1500, self.main_menu)
-                else:
+                            self.root.after(1500, self.main_menu)
+                        return
+                    button_index += 1
+                
+                # Drop Quest option
+                if choice == button_index + 1:
+                    self.show_drop_quest_menu()
+                    return
+                button_index += 1
+                
+                # Back option
+                if choice == button_index + 1:
                     self.main_menu()
+                    return
             
             buttons = []
             if len(active_quests) < 3:
                 buttons.append("➕ Take Another Quest")
+            buttons.append("🗑️ Drop Quest")
             buttons.append("🔙 Back")
             
             self.set_buttons(buttons, on_quest_menu_choice)
+
+    def show_drop_quest_menu(self):
+        """Display quest dropping interface"""
+        self.clear_text()
+        
+        hero = self.game_state.hero
+        active_quests = self.quest_manager.get_active_quests(hero)
+        
+        self.print_text("🗑️ DROP QUEST 🗑️\n")
+        
+        if not active_quests:
+            self.print_text("No active quests to drop.")
+            self.root.after(1500, self.show_quests)
+            return
+        
+        self.print_text("Select a quest to drop:\n")
+        
+        # Display active quests with numbers
+        for i, quest in enumerate(active_quests, 1):
+            quest_parts = [
+                (f"{i}. ", "#ffffff"),
+                (quest.description, "#ff6666"),  # Red color to indicate dropping
+                (f" (Reward: {quest.reward_xp} XP)", "#ffdd00")
+            ]
+            self._print_colored_parts(quest_parts)
+        
+        self.print_text("\n⚠️ Warning: Dropped quests cannot be recovered!")
+        
+        def on_drop_choice(choice):
+            if choice <= len(active_quests):
+                # Drop the selected quest (choice is 1-indexed)
+                quest_to_drop = active_quests[choice - 1]
+                if self.quest_manager.drop_quest(hero, choice - 1):
+                    drop_parts = [
+                        ("🗑️ Dropped quest: ", "#ff6666"),
+                        (quest_to_drop.description, "#ffffff")
+                    ]
+                    self._print_colored_parts(drop_parts)
+                    self.print_text("Quest removed from your journal.")
+                    self.root.after(2000, self.show_quests)
+                else:
+                    self.print_text("❌ Failed to drop quest.")
+                    self.root.after(1500, self.show_quests)
+            else:
+                # Back button
+                self.show_quests()
+        
+        # Create buttons for each quest plus back button
+        buttons = []
+        for i, quest in enumerate(active_quests, 1):
+            # Truncate long quest descriptions for button text
+            short_desc = quest.description
+            if len(short_desc) > 25:
+                short_desc = short_desc[:22] + "..."
+            buttons.append(f"🗑️ {short_desc}")
+        buttons.append("🔙 Back")
+        
+        self.set_buttons(buttons, on_drop_choice)
 
     def game_over(self):
         """Handle game over when hero has 0 lives left"""
