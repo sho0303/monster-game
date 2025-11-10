@@ -1,0 +1,12 @@
+DickMobius.yaml:
+  name: Dick Mobius
+  hp: 12
+  maxhp: 50
+  attack: 3
+  defense: 10
+  gold: 40
+  level: 4
+  xp: 4
+  art: art/whale_monster.png
+  attack_sound: whale-attack.mp3
+  biome: ocean
