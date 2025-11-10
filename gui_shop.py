@@ -136,14 +136,14 @@ class ShopGUI:
                     self.gui.show_image(selected_item['ascii_art'])
                 self._purchase_item(selected_item)
             elif choice == len(available_items) + 1:
-                # Go back to main menu (always the last button)
-                self.gui.main_menu()
+                # Go back to category selection (always the last button)
+                self._select_category()
         
-        # Set button labels - show all available items plus main menu button
+        # Set button labels - show all available items plus back button
         button_labels = []
         for item in available_items:
             button_labels.append(f"Buy {item['name']}")
-        button_labels.append("🏠 Main Menu")
+        button_labels.append("🔙 Back to Categories")
         
         self.gui.set_buttons(button_labels, on_item_action)
     
@@ -265,5 +265,5 @@ class ShopGUI:
         # Play purchase sound effect (won't interrupt background music)
         self.gui.audio.play_sound_effect('store.mp3')  # Use celebration sound for purchases
         
-        # Return to main menu after delay
-        self.gui.root.after(3000, self.gui.main_menu)
+        # Return to store category selection after delay
+        self.gui.root.after(3000, self._select_category)
