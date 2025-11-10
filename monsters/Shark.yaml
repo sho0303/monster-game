@@ -1,0 +1,12 @@
+Shark Patrol:
+  name: Shark Patrol
+  hp: 35
+  maxhp: 35
+  attack: 6
+  defense: 5
+  gold: 35
+  level: 4
+  xp: 4
+  art: art/shark_monster.png
+  attack_sound: shark-attack.mp3
+  biome: ocean

@@ -1,0 +1,12 @@
+Pirate Ghost:
+  name: Pirate Ghost
+  hp: 55
+  maxhp: 55
+  attack: 11
+  defense: 9
+  gold: 65
+  level: 6
+  xp: 6
+  art: art/pirate_ghost_monster.png
+  attack_sound: ghost-attack.mp3
+  biome: ocean

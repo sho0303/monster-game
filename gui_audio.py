@@ -90,13 +90,14 @@ class Audio:
         except Exception as e:
             print(f"Warning: Could not stop background music: {e}")
     
-    def play_sound_effect(self, sound_file, volume=None):
+    def play_sound_effect(self, sound_file, volume=None, max_duration_ms=None):
         """
         Play a sound effect (can play simultaneously with background music)
         
         Args:
             sound_file: Name of sound file in sounds/ directory
             volume: Volume level 0.0-1.0 (default: uses self.sfx_volume)
+            max_duration_ms: Maximum duration in milliseconds (None = no limit)
         """
         if not self.initialized:
             return False
@@ -117,7 +118,20 @@ class Audio:
             # Set volume and play
             volume_level = volume if volume is not None else self.sfx_volume
             sound.set_volume(volume_level)
-            sound.play()
+            channel = sound.play()
+            
+            # Limit duration if max_duration_ms is set (only for attack sounds)
+            if channel and max_duration_ms is not None and max_duration_ms > 0:
+                # Use a timer to stop the sound after max_duration_ms
+                import threading
+
+                def stop_after_delay():
+                    import time
+                    time.sleep(max_duration_ms / 1000.0)
+                    if channel.get_busy():
+                        channel.fadeout(100)  # 100ms fadeout
+                threading.Thread(target=stop_after_delay, daemon=True).start()
+            
             return True
             
         except Exception as e:

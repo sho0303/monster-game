@@ -1,0 +1,12 @@
+Sand Serpent:
+  name: Sand Serpent
+  hp: 45
+  maxhp: 45
+  attack: 8
+  defense: 6
+  gold: 45
+  level: 5
+  xp: 5
+  art: art/sand_serpent_monster.png
+  attack_sound: serpent-attack.mp3
+  biome: desert

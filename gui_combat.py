@@ -300,9 +300,9 @@ class CombatGUI:
     
     def _show_monster_attack_animation(self, monster):
         """Show monster attack animation - toggle between normal and attack 3 times"""
-        # Play monster attack sound at the start of animation
+        # Play monster attack sound at the start of animation (limited to 3 seconds)
         attack_sound = self._get_monster_attack_sound(monster)
-        self.gui.audio.play_sound_effect(attack_sound)
+        self.gui.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
         
         # Special handling for Dragon boss attack image
         monster_data = getattr(self, 'current_monster_data', {})

@@ -1,0 +1,12 @@
+Angry Bee Swarm:
+  name: Angry Bee Swarm
+  hp: 10
+  maxhp: 10
+  attack: 3
+  defense: 2
+  gold: 15
+  level: 2
+  xp: 2
+  art: art/bee_swarm_monster.png
+  attack_sound: bee-attack.mp3
+  biome: grassland

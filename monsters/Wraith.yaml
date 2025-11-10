@@ -1,0 +1,12 @@
+Shadow Wraith:
+  name: Shadow Wraith
+  hp: 70
+  maxhp: 70
+  attack: 18
+  defense: 10
+  gold: 70
+  level: 7
+  xp: 7
+  art: art/wraith_monster.png
+  attack_sound: wraith-attack.mp3
+  biome: dungeon

@@ -1,0 +1,12 @@
+Wild Boar:
+  name: Wild Boar
+  hp: 15
+  maxhp: 15
+  attack: 3
+  defense: 4
+  gold: 20
+  level: 2
+  xp: 2
+  art: art/boar_monster.png
+  attack_sound: boar-attack.mp3
+  biome: grassland

@@ -71,58 +71,80 @@ class QuestManager:
         # Get current biome from GUI
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
         
+        # Get hero level for level-appropriate filtering
+        hero = self.gui.game_state.hero
+        hero_level = hero.get('level', 1)
+        
         # Get existing quest targets to avoid duplicates
         existing_quest_targets = set()
         if hasattr(self.gui.game_state, 'hero') and self.gui.game_state.hero:
             active_quests = self.get_active_quests(self.gui.game_state.hero)
             existing_quest_targets = {quest.target for quest in active_quests if quest.quest_type == 'kill_monster'}
         
-        # Filter monsters by current biome AND exclude those with existing quests
+        # Filter monsters by:
+        # 1. Current biome
+        # 2. Level range (same as encounter system: hero_level - 2 to hero_level + 1)
+        # 3. Not already a quest target
         available_biome_monsters = [
             (key, value) for key, value in monsters.items()
             if (value.get('biome', 'grassland') == current_biome and 
+                value['level'] <= hero_level + 1 and
+                value['level'] >= max(1, hero_level - 2) and
                 key not in existing_quest_targets)
         ]
         
         if not available_biome_monsters:
-            # Check if there are any monsters in this biome (even with quests)
-            biome_monsters = [
+            # Check if there are level-appropriate monsters in this biome
+            biome_level_monsters = [
                 (key, value) for key, value in monsters.items()
-                if value.get('biome', 'grassland') == current_biome
+                if (value.get('biome', 'grassland') == current_biome and
+                    value['level'] <= hero_level + 1 and
+                    value['level'] >= max(1, hero_level - 2))
             ]
             
-            if biome_monsters:
-                # All monsters in this biome already have quests
+            if biome_level_monsters:
+                # All level-appropriate monsters in biome have quests
                 return "NO_QUESTS_AVAILABLE_BIOME"
             else:
-                # No monsters in this biome at all - fallback to other biomes
+                # No level-appropriate monsters in this biome
+                # Try any biome with level-appropriate monsters
                 available_all_monsters = [
                     (key, value) for key, value in monsters.items()
-                    if key not in existing_quest_targets
+                    if (key not in existing_quest_targets and
+                        value['level'] <= hero_level + 1 and
+                        value['level'] >= max(1, hero_level - 2))
                 ]
                 
                 if not available_all_monsters:
-                    # All monsters everywhere have quests
-                    return "NO_QUESTS_AVAILABLE_ALL"
+                    # No level-appropriate monsters anywhere
+                    return "NO_QUESTS_AVAILABLE_LEVEL"
                 else:
-                    # Pick from any available monster
-                    monster_name, monster_data = random.choice(available_all_monsters)
+                    # Pick from any level-appropriate monster
+                    monster_name, monster_data = random.choice(
+                        available_all_monsters
+                    )
         else:
             # Pick a random monster from available biome monsters
-            monster_name, monster_data = random.choice(available_biome_monsters)
+            monster_name, monster_data = random.choice(
+                available_biome_monsters
+            )
         
         # Get the monster's XP value (with fallback to 1 if not specified)
         monster_xp = monster_data.get('xp', 1)
+        monster_level = monster_data.get('level', 1)
         
-        # Create biome-aware quest description
+        # Create biome-aware quest description with level
         biome_descriptions = {
-            'grassland': f"Hunt a {monster_name} in the grasslands",
-            'desert': f"Defeat a {monster_name} in the desert sands", 
-            'dungeon': f"Slay a {monster_name} in the dark dungeons",
-            'ocean': f"Battle a {monster_name} in the ocean depths"
+            'grassland': f"Hunt a {monster_name} (Lv.{monster_level}) in the grasslands",
+            'desert': f"Defeat a {monster_name} (Lv.{monster_level}) in the desert sands",
+            'dungeon': f"Slay a {monster_name} (Lv.{monster_level}) in the dark dungeons",
+            'ocean': f"Battle a {monster_name} (Lv.{monster_level}) in the ocean depths"
         }
         
-        quest_description = biome_descriptions.get(current_biome, f"Kill a {monster_name}")
+        quest_description = biome_descriptions.get(
+            current_biome,
+            f"Kill a {monster_name} (Lv.{monster_level})"
+        )
         
         # Create quest with monster's XP as reward
         quest = Quest(

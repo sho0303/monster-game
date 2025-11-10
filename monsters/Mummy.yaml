@@ -1,0 +1,12 @@
+Mummy Guardian:
+  name: Mummy Guardian
+  hp: 60
+  maxhp: 60
+  attack: 7
+  defense: 12
+  gold: 60
+  level: 6
+  xp: 6
+  art: art/mummy_monster.png
+  attack_sound: mummy-attack.mp3
+  biome: desert

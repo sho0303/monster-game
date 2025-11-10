@@ -1,0 +1,12 @@
+Scorpion King:
+  name: Scorpion King
+  hp: 50
+  maxhp: 50
+  attack: 9
+  defense: 8
+  gold: 55
+  level: 6
+  xp: 6
+  art: art/scorpion_monster.png
+  attack_sound: scorpion-attack.mp3
+  biome: desert
