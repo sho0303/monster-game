@@ -63,7 +63,7 @@ class TownGUI:
         self.gui.shop.open()
     
     def _visit_tavern(self):
-        """Visit the tavern (placeholder for future functionality)"""
+        """Visit the tavern and access bounty board"""
         self.gui.clear_text()
         self.gui.lock_interface()
         
@@ -73,11 +73,22 @@ class TownGUI:
         self.gui.print_text("The smell of roasted meat and ale fills the air.")
         self.gui.print_text("Adventurers gather around wooden tables,")
         self.gui.print_text("sharing tales of their exploits.")
-        self.gui.print_text("\n🚧 The tavern is under construction!")
-        self.gui.print_text("Come back soon for drinks, meals, and gossip.")
+        self.gui.print_text("\nA large wooden board on the wall displays")
+        self.gui.print_text("various bounty notices offering rewards.")
         
-        # Return to town after 3 seconds
-        self.gui.root.after(3000, self.enter_town)
+        def on_tavern_choice(choice):
+            if choice == 1:
+                self.gui.bounty_manager.show_bounty_board()
+            else:
+                self.enter_town()
+        
+        tavern_buttons = [
+            "📜 Check Bounty Board",
+            "🚪 Leave Tavern"
+        ]
+        
+        self.gui.set_buttons(tavern_buttons, on_tavern_choice)
+        self.gui.unlock_interface()
     
     def _visit_blacksmith(self):
         """Visit the blacksmith"""

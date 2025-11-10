@@ -15,6 +15,7 @@ from gui_blacksmith import BlacksmithGUI
 from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
+from gui_bounty import BountyManager
 from gui_save_load import SaveLoadManager
 from gui_town import TownGUI
 from gui_image_manager import ImageManager
@@ -813,6 +814,7 @@ class GameGUI:
         self.inventory = InventoryGUI(self)
         self.monster_encounter = MonsterEncounterGUI(self)
         self.quest_manager = QuestManager(self)
+        self.bounty_manager = BountyManager(self)
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
         

@@ -84,6 +84,7 @@ class SaveLoadManager:
                     'current_biome': current_biome or getattr(self.gui, 'current_biome', 'grassland'),
                     'last_biome': getattr(self.gui, 'last_biome', 'grassland')
                 },
+                'bounties': self._prepare_bounty_data(),
                 'save_metadata': {
                     'save_date': datetime.now().isoformat(),
                     'game_version': '1.0',
@@ -123,6 +124,7 @@ class SaveLoadManager:
             # Extract data
             hero_data = save_data['hero']
             game_state = save_data.get('game_state', {})
+            bounty_data = save_data.get('bounties', {})
             save_metadata = save_data.get('save_metadata', {})
             
             # Ensure hero has all required fields
@@ -133,6 +135,7 @@ class SaveLoadManager:
                 'hero': hero_data,
                 'current_biome': game_state.get('current_biome', 'grassland'),
                 'last_biome': game_state.get('last_biome', 'grassland'),
+                'bounties': bounty_data,
                 'save_metadata': save_metadata
             }
         except Exception as e:
@@ -212,6 +215,28 @@ class SaveLoadManager:
             hero_data['quests'] = []
         
         return hero_data
+    
+    def _prepare_bounty_data(self):
+        """Prepare bounty data for saving"""
+        if not hasattr(self.gui, 'bounty_manager'):
+            return {'available': [], 'active': []}
+        
+        bounty_manager = self.gui.bounty_manager
+        
+        # Serialize available bounties
+        available_bounties = []
+        for bounty in bounty_manager.available_bounties:
+            available_bounties.append(bounty.to_dict())
+        
+        # Serialize active bounties
+        active_bounties = []
+        for bounty in bounty_manager.active_bounties:
+            active_bounties.append(bounty.to_dict())
+        
+        return {
+            'available': available_bounties,
+            'active': active_bounties
+        }
     
     def _validate_hero_data(self, hero_data):
         """Validate and fill in missing hero data fields with defaults"""
@@ -396,6 +421,10 @@ class SaveLoadManager:
                     # Reinitialize quest system with loaded quests
                     if hasattr(self.gui, 'quest_manager'):
                         self.gui.quest_manager.initialize_hero_quests(self.gui.game_state.hero)
+                    
+                    # Restore bounty data
+                    if hasattr(self.gui, 'bounty_manager') and 'bounties' in result:
+                        self.gui.bounty_manager.load_bounties(result['bounties'])
                     
                     # Show success message
                     load_parts = [
