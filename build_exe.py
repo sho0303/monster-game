@@ -1,10 +1,12 @@
 """
 Build script for creating PyQuest Monster Game executable
-Run: python build_exe.py
+Run: python build_exe.py          (builds folder with exe)
+Run: python build_exe.py --onefile (builds single exe)
 """
 import PyInstaller.__main__
 import os
 import shutil
+import sys
 from pathlib import Path
 
 def clean_previous_builds():
@@ -22,8 +24,15 @@ def clean_previous_builds():
 
 def build_executable():
     """Build the executable with PyInstaller"""
+    # Check for --onefile argument
+    use_onefile = '--onefile' in sys.argv
+    
     print("\n" + "="*60)
     print("Building PyQuest Monster Game Executable")
+    if use_onefile:
+        print("Mode: Single File (--onefile)")
+    else:
+        print("Mode: Folder (--onedir)")
     print("="*60 + "\n")
     
     clean_previous_builds()
@@ -32,7 +41,7 @@ def build_executable():
     args = [
         'monster-game-gui.py',  # Main script
         '--name=PyQuest-Monster-Game',  # Executable name
-        '--onedir',  # Create a folder with dependencies (easier to debug)
+        '--onefile' if use_onefile else '--onedir',  # Single file or folder
         '--windowed',  # No console window (GUI only)
         
         # Add data files and directories
@@ -41,8 +50,11 @@ def build_executable():
         '--add-data=sounds;sounds',
         '--add-data=art;art',
         '--add-data=store.yaml;.',
-        '--add-data=game_state.py;.',
-        '--add-data=game_logic.py;.',
+        
+        # Collect all Python modules (not as data, as code)
+        '--collect-all=gui_main',
+        '--collect-all=game_state',
+        '--collect-all=game_logic',
         
         # Hidden imports (modules loaded dynamically)
         '--hidden-import=yaml',
@@ -79,9 +91,14 @@ def build_executable():
         print("Note: No icon file found, building without custom icon")
     
     print("Running PyInstaller with the following configuration:")
-    print("  - Output: dist/PyQuest-Monster-Game/")
-    print("  - Mode: Windowed (no console)")
-    print("  - Including: YAML data, images, sounds")
+    if use_onefile:
+        print("  - Output: Single executable file")
+        print("  - Mode: Windowed (no console)")
+        print("  - Including: YAML data, images, sounds (embedded)")
+    else:
+        print("  - Output: dist/PyQuest-Monster-Game/ folder")
+        print("  - Mode: Windowed (no console)")
+        print("  - Including: YAML data, images, sounds")
     print("\nThis may take a few minutes...\n")
     
     PyInstaller.__main__.run(args)
@@ -89,12 +106,22 @@ def build_executable():
     print("\n" + "="*60)
     print("Build Complete!")
     print("="*60)
-    print("\nExecutable location: dist/PyQuest-Monster-Game/")
-    print("Run: dist\\PyQuest-Monster-Game\\PyQuest-Monster-Game.exe")
-    print("\nTo distribute:")
-    print("  1. Zip the entire 'dist/PyQuest-Monster-Game' folder")
-    print("  2. Users extract and run PyQuest-Monster-Game.exe")
-    print("  3. All save files will be created in the same folder")
+    
+    if use_onefile:
+        print("\nExecutable location: dist/PyQuest-Monster-Game.exe")
+        print("Run: dist\\PyQuest-Monster-Game.exe")
+        print("\nTo distribute:")
+        print("  1. Share the single PyQuest-Monster-Game.exe file")
+        print("  2. Users run it directly (no extraction needed)")
+        print("  3. Save files created in user's temp folder or exe directory")
+        print("\nNote: First launch may be slower (extracts files to temp)")
+    else:
+        print("\nExecutable location: dist/PyQuest-Monster-Game/")
+        print("Run: dist\\PyQuest-Monster-Game\\PyQuest-Monster-Game.exe")
+        print("\nTo distribute:")
+        print("  1. Zip the entire 'dist/PyQuest-Monster-Game' folder")
+        print("  2. Users extract and run PyQuest-Monster-Game.exe")
+        print("  3. All save files will be created in the same folder")
     print("="*60 + "\n")
 
 if __name__ == '__main__':

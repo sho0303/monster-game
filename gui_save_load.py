@@ -2,6 +2,7 @@
 Save/Load system for the monster game using YAML
 """
 import os
+import sys
 import yaml
 from datetime import datetime
 from pathlib import Path
@@ -12,8 +13,34 @@ class SaveLoadManager:
     
     def __init__(self, gui):
         self.gui = gui
-        self.saves_dir = Path("saves")
+        self.saves_dir = self._get_save_directory()
         self._ensure_saves_directory()
+    
+    def _get_save_directory(self):
+        """Get the appropriate save directory based on how the game is running"""
+        if getattr(sys, 'frozen', False):
+            # Running as PyInstaller executable - use persistent location
+            # Try to use the directory where the exe is located
+            exe_dir = Path(sys.executable).parent
+            saves_dir = exe_dir / "saves"
+            
+            # If we can't write there (e.g., Program Files), use user's documents
+            try:
+                saves_dir.mkdir(exist_ok=True)
+                test_file = saves_dir / ".write_test"
+                test_file.touch()
+                test_file.unlink()
+                return saves_dir
+            except (PermissionError, OSError):
+                # Fall back to user's documents folder
+                if os.name == 'nt':  # Windows
+                    docs = Path.home() / "Documents" / "PyQuest Monster Game" / "saves"
+                else:  # Linux/Mac
+                    docs = Path.home() / ".pyquest" / "saves"
+                return docs
+        else:
+            # Running from source - use local saves directory
+            return Path("saves")
     
     def _ensure_saves_directory(self):
         """Create saves directory if it doesn't exist"""
@@ -296,6 +323,14 @@ class SaveLoadManager:
         """Display save game interface"""
         self.gui.clear_text()
         self.gui.print_text("💾 SAVE GAME 💾\n")
+        
+        # Show save location
+        save_location_parts = [
+            ("Save Location: ", "#888888"),
+            (str(self.saves_dir.absolute()), "#00aaff")
+        ]
+        self.gui._print_colored_parts(save_location_parts)
+        self.gui.print_text("")
         
         hero = self.gui.game_state.hero
         hero_name = hero.get('name', 'Hero')
