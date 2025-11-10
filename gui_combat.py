@@ -73,18 +73,27 @@ class CombatGUI:
         
         result = 'won' if hero['hp'] > 0 else 'lost'
         
-        # Show final result image
-        if result == 'won':
-            self.gui.show_image('art/you_won.png')
-            self.gui.audio.play_sound_effect('win.mp3')
+        # Check if this is a final boss victory for special animation
+        monster_data = getattr(self, 'current_monster_data', {})
+        is_final_boss_victory = (result == 'won' and 
+                               monster_data.get('finalboss', False))
+        
+        if is_final_boss_victory:
+            # For final boss victory, start epic fireworks animation with interface locked
+            self._start_victory_fireworks_animation()
         else:
-            self.gui.show_image('art/you_lost.png')
-            self.gui.audio.play_sound_effect('death.mp3')
-        
-        # Unlock interface before calling callback (so next screen can set buttons)
-        self.gui.unlock_interface()
-        
-        self.fight_callback(result)
+            # Standard victory/defeat handling
+            if result == 'won':
+                self.gui.show_image('art/you_won.png')
+                self.gui.audio.play_sound_effect('win.mp3')
+            else:
+                self.gui.show_image('art/you_lost.png')
+                self.gui.audio.play_sound_effect('death.mp3')
+            
+            # Unlock interface before calling callback (so next screen can set buttons)
+            self.gui.unlock_interface()
+            
+            self.fight_callback(result)
     
     def _display_combat_images(self, hero, monster):
         """Display hero and monster images side by side for combat with Dragon boss special sizing"""
@@ -484,3 +493,41 @@ class CombatGUI:
         min_damage = max(1, (attacker_level + 1) // 2)
         
         return max(min_damage, int(round(final_damage)))
+    
+    def _start_victory_fireworks_animation(self):
+        """Start epic victory fireworks animation for final boss defeat"""
+        # Keep interface locked during animation to prevent interruptions
+        self.gui.lock_interface()
+        
+        # Play epic fireworks victory sound at start
+        self.gui.audio.play_sound_effect('win-fireworks.mp3')
+        
+        # Start fireworks animation sequence - 4 frames, 1.5 seconds each
+        self._show_fireworks_frame(1)
+    
+    def _show_fireworks_frame(self, frame_number):
+        """Show specific fireworks frame and schedule next one"""
+        try:
+            # Show the fireworks frame
+            self.gui.show_image(f'art/victory_fireworks_{frame_number}.png')
+            
+            if frame_number < 4:
+                # Schedule next frame after 1.5 seconds
+                self.gui.root.after(1500, lambda: self._show_fireworks_frame(frame_number + 1))
+            else:
+                # Animation complete - show final victory screen and end
+                self.gui.root.after(1500, self._complete_victory_animation)
+        except Exception as e:
+            # Fallback if fireworks images not found
+            self._complete_victory_animation()
+    
+    def _complete_victory_animation(self):
+        """Complete the victory animation and return control"""
+        # Show final victory screen
+        self.gui.show_image('art/you_won.png')
+        
+        # Unlock interface before calling callback
+        self.gui.unlock_interface()
+        
+        # Call the fight callback with victory result
+        self.fight_callback('won')

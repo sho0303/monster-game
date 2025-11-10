@@ -180,8 +180,17 @@ class MonsterEncounterGUI:
                 # Don't return to main menu if game is over - let game over screen stay
                 return
             
-            # Wait before returning to main menu, interface unlocks when main_menu sets buttons
-            self.gui.root.after(3000, self.gui.main_menu)
+            # For final boss victories, the fireworks animation handles timing and return to menu
+            # For regular victories, wait before returning to main menu
+            is_final_boss_victory = (result == 'won' and monster.get('finalboss', False))
+            
+            if not is_final_boss_victory:
+                # Standard delay for regular victories/defeats - interface unlocks when main_menu sets buttons
+                self.gui.root.after(3000, self.gui.main_menu)
+            else:
+                # Final boss victory - fireworks animation will handle the return to main menu
+                # Add extra delay for epic victory celebration, then return to main menu
+                self.gui.root.after(8000, self.gui.main_menu)  # 6 seconds for fireworks + 2 second buffer
         
         return after_fight
     
