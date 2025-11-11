@@ -485,7 +485,7 @@ class TownGUI:
         
         self.gui.print_text("\n💎 SIDE QUEST: Recover stolen gems from bandits")
         self.gui.print_text("   Reward: 200 gold + experience")
-        self.gui.print_text("   Location: Desert biome")
+        self.gui.print_text("   Location: Desert biome (Level 3+ required)")
         
         self._show_side_quest_choice("merchant_caravan", 200, "desert")
     
@@ -508,7 +508,7 @@ class TownGUI:
         
         self.gui.print_text("\n🌾 SIDE QUEST: Eliminate crop-destroying boars")
         self.gui.print_text("   Reward: 150 gold + food items")
-        self.gui.print_text("   Location: Grassland biome")
+        self.gui.print_text("   Location: Grassland biome (Level 1+)")
         
         self._show_side_quest_choice("desperate_farmer", 150, "grassland")
     
@@ -531,7 +531,7 @@ class TownGUI:
         
         self.gui.print_text("\n📜 SIDE QUEST: Recover ancient tome")
         self.gui.print_text("   Reward: 300 gold + magical knowledge")
-        self.gui.print_text("   Location: Dungeon biome")
+        self.gui.print_text("   Location: Dungeon biome (Level 7+ required)")
         
         self._show_side_quest_choice("mysterious_scholar", 300, "dungeon")
     
@@ -555,7 +555,7 @@ class TownGUI:
         
         self.gui.print_text("\n🎵 SIDE QUEST: Recover the stolen lute")
         self.gui.print_text("   Reward: 180 gold + fame bonus")
-        self.gui.print_text("   Location: Ocean biome")
+        self.gui.print_text("   Location: Ocean biome (Level 5+ required)")
         
         self._show_side_quest_choice("traveling_minstrel", 180, "ocean")
     
@@ -579,7 +579,7 @@ class TownGUI:
         
         self.gui.print_text("\n👨‍👩‍👧‍👦 SIDE QUEST: Rescue the missing child")
         self.gui.print_text("   Reward: 250 gold + heartfelt gratitude")
-        self.gui.print_text("   Location: Dungeon biome")
+        self.gui.print_text("   Location: Dungeon biome (Level 7+ required)")
         
         self._show_side_quest_choice("worried_mother", 250, "dungeon")
     
@@ -603,12 +603,51 @@ class TownGUI:
         
         self.gui.print_text("\n🐲 SIDE QUEST: Slay the desert wyrm")
         self.gui.print_text("   Reward: 400 gold + legendary weapon")
-        self.gui.print_text("   Location: Desert biome")
+        self.gui.print_text("   Location: Desert biome (Level 3+ required)")
         
         self._show_side_quest_choice("grizzled_veteran", 400, "desert")
     
+    def _can_access_biome(self, biome):
+        """Check if hero can access a specific biome based on level"""
+        if not hasattr(self.gui, 'quest_manager') or not self.gui.quest_manager:
+            return True  # Fallback to allow access if quest manager not available
+        
+        hero = self.gui.game_state.hero
+        hero_level = hero.get('level', 1)
+        required_level = self.gui.quest_manager.BIOME_UNLOCK_LEVELS.get(biome, 1)
+        return hero_level >= required_level
+    
     def _show_side_quest_choice(self, quest_id, reward_gold, target_biome):
         """Show options for accepting or declining a side quest"""
+        
+        # Check if hero can access the target biome
+        hero = self.gui.game_state.hero
+        hero_level = hero.get('level', 1)
+        
+        if not self._can_access_biome(target_biome):
+            # Hero cannot access this biome yet - show level requirement
+            required_level = self.gui.quest_manager.BIOME_UNLOCK_LEVELS.get(target_biome, 1)
+            
+            biome_names = {
+                'grassland': 'Grasslands',
+                'desert': 'Desert',
+                'ocean': 'Ocean',
+                'dungeon': 'Dungeons'
+            }
+            biome_name = biome_names.get(target_biome, target_biome.title())
+            
+            self.gui.print_text(f"\n⚠️  QUEST UNAVAILABLE")
+            self.gui.print_text(f"You need to be level {required_level} to access the {biome_name}.")
+            self.gui.print_text(f"Your current level: {hero_level}")
+            self.gui.print_text("Come back when you're stronger!")
+            
+            # Return to normal tavern
+            self.gui.unlock_interface()
+            def return_to_tavern():
+                self._show_normal_tavern()
+            
+            self.gui.set_buttons([("🍺 Return to Tavern", return_to_tavern)])
+            return
         
         # Unlock interface for NPC interaction
         self.gui.unlock_interface()
@@ -729,6 +768,27 @@ class TownGUI:
         }
         
         self.gui.print_text(f"\n{details[quest_id]}")
+        
+        # Add biome and level information
+        biome_names = {
+            'grassland': 'Grasslands',
+            'desert': 'Desert', 
+            'ocean': 'Ocean',
+            'dungeon': 'Dungeons'
+        }
+        biome_name = biome_names.get(target_biome, target_biome.title())
+        required_level = self.gui.quest_manager.BIOME_UNLOCK_LEVELS.get(target_biome, 1)
+        
+        self.gui.print_text(f"\n🌍 Location: {biome_name}")
+        if required_level > 1:
+            self.gui.print_text(f"🎯 Required Level: {required_level}")
+        
+        hero = self.gui.game_state.hero
+        hero_level = hero.get('level', 1)
+        if hero_level >= required_level:
+            self.gui.print_text("✅ You meet the requirements!")
+        else:
+            self.gui.print_text(f"⚠️  You need level {required_level} (current: {hero_level})")
         
         self.gui.print_text(f"\n💰 The reward of {reward_gold} gold is")
         self.gui.print_text("guaranteed upon successful completion.")

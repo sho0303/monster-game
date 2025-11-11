@@ -96,6 +96,9 @@ class AchievementManager:
             'fountain_uses': 0,
             'blacksmith_visits': 0,
             'items_purchased': 0,
+            'side_quests_completed': 0,
+            'total_gold_earned': 0,
+            'bounties_completed': 0,
             'time_played_seconds': 0,
             'first_play_date': None,
             'last_play_date': None
@@ -409,6 +412,54 @@ class AchievementManager:
         """Track fountain uses for achievements"""
         self.player_stats['fountain_uses'] += 1
         # Currently no specific fountain achievements, but tracking for future use
+    
+    def track_combat_win(self):
+        """Track combat victories for achievements"""
+        self.player_stats['combats_won'] += 1
+        
+        # Check combat-related achievements
+        self.update_progress("first_victory", 1)
+        self.update_progress("monster_hunter", 1)
+        self.update_progress("experienced_fighter", 1)
+    
+    def track_monster_kill(self, monster_name: str):
+        """Track monster kills (alias for track_monster_defeat for compatibility)"""
+        self.track_monster_defeat(monster_name)
+    
+    def track_combat_loss(self):
+        """Track combat losses for achievements"""
+        self.player_stats['combats_lost'] = self.player_stats.get('combats_lost', 0) + 1
+        # Could add achievements for perseverance, getting back up, etc.
+    
+    def track_death(self):
+        """Track player deaths for achievements"""
+        self.player_stats['deaths'] = self.player_stats.get('deaths', 0) + 1
+        # Could add achievements for resurrection, learning from failure, etc.
+    
+    def track_blacksmith_visit(self):
+        """Track blacksmith visits for achievements"""
+        self.player_stats['blacksmith_visits'] = self.player_stats.get('blacksmith_visits', 0) + 1
+        # Could add achievements for gear upgrades, crafting mastery, etc.
+    
+    def track_side_quest_completion(self):
+        """Track side quest completion for achievements"""
+        self.player_stats['side_quests_completed'] = self.player_stats.get('side_quests_completed', 0) + 1
+        # Check side quest achievements
+        self.update_progress("quest_giver", 1)
+    
+    def track_gold_earned(self, amount: int):
+        """Track gold earned for achievements"""
+        self.player_stats['total_gold_earned'] = self.player_stats.get('total_gold_earned', 0) + amount
+        
+        # Check wealth-related achievements
+        total_gold = self.player_stats['total_gold_earned']
+        if total_gold >= 1000:
+            self.update_progress("wealthy", 1)
+    
+    def track_bounty_completion(self):
+        """Track bounty completion for achievements"""
+        self.player_stats['bounties_completed'] = self.player_stats.get('bounties_completed', 0) + 1
+        # Could add specific bounty hunter achievements
     
     def get_achievements_by_category(self, category: str) -> List[Achievement]:
         """Get all achievements in a category"""
