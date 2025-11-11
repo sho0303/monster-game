@@ -8,5 +8,6 @@ Mutant Venus Flytrap:
   level: 2
   xp: 2
   art: art/flytrap_monster.png
+  art_attack: art/flytrap_monster_attack.png
   attack_sound: flytrap-attack.mp3
   biome: grassland

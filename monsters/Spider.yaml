@@ -8,5 +8,6 @@ Giant Spider:
   level: 2
   xp: 2
   art: art/spider_queen_monster.png
+  attack_art: art/spider_queen_monster_attack.png
   attack_sound: snake-attack.mp3
   biome: grassland

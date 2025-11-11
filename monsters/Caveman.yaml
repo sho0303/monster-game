@@ -8,5 +8,6 @@ Caveman:
   level: 2
   xp: 2
   art: art/caveman_monster.png
+  art_attack: art/caveman_monster_attack.png
   attack_sound: caveman-attack.mp3
   biome: dungeon

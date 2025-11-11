@@ -8,5 +8,6 @@ Carnivorous Bunny Rabbit:
   level: 1
   xp: 1
   art: art/bunny_monster.png
+  art_attack: art/bunny_monster_attack.png
   attack_sound: bunny-attack.mp3
   biome: grassland

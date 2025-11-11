@@ -7,6 +7,7 @@ Cursed Wraith:
   gold: 150
   level: 6
   xp: 8
-  art: art/cursed_wraith_monster.png
+  art: art/wraith_monster.png
+  art_attack: art/wraith_monster_attack.png
   attack_sound: wraith-attack.mp3
   biome: secret_dungeon

@@ -8,4 +8,5 @@ Spider:
   level: 1
   xp: 1
   art: art/spider_monster.png
+  attack_art: art/spider_monster_attack.png
   biome: grassland

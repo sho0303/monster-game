@@ -8,5 +8,6 @@ Sabertooth Tiger:
   level: 2
   xp: 2
   art: art/tiger_monster.png
+  art_attack: art/tiger_monster_attack.png
   attack_sound: kraken-attack.mp3
   biome: grassland

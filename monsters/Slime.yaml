@@ -8,5 +8,6 @@ Bright Orange Slime:
   level: 1
   xp: 1
   art: art/slime_monster.png
+  art_attack: art/slime_monster_attack.png
   attack_sound: slime-attack.mp3
   biome: grassland

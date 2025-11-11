@@ -8,4 +8,5 @@ Manticore:
   level: 4
   xp: 4
   art: art/manticore_monster.png
+  art_attack: art/manticore_monster_attack.png
   biome: desert
