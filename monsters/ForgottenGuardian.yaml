@@ -1,0 +1,12 @@
+Forgotten Guardian:
+  name: Forgotten Guardian
+  hp: 120
+  maxhp: 120
+  attack: 15
+  defense: 20
+  gold: 300
+  level: 10
+  xp: 15
+  art: art/forgotten_guardian_monster.png
+  attack_sound: guardian-attack.mp3
+  biome: secret_dungeon

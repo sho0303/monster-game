@@ -21,11 +21,13 @@ class Audio:
         self._initialize_mixer()
     
     def _initialize_mixer(self):
-        """Initialize pygame mixer with optimal settings"""
+        """Initialize pygame mixer with optimal settings to prevent crackling"""
         try:
-            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
+            # Use larger buffer size to prevent crackling/distortion
+            # Lower frequency and larger buffer for better stability
+            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=2048)
             mixer.init()
-            mixer.set_num_channels(8)  # Allow multiple sound effects simultaneously
+            mixer.set_num_channels(6)  # Reduce simultaneous channels to prevent overload
             self.initialized = True
         except Exception as e:
             print(f"Warning: Could not initialize audio system: {e}")
@@ -208,3 +210,31 @@ class Audio:
         else:
             restored_volume = getattr(self, '_saved_volume', 0.5)
             self.set_music_volume(restored_volume)
+    
+    def reset_audio(self):
+        """Reset audio system to fix crackling/distortion issues"""
+        try:
+            # Stop all sounds
+            mixer.stop()
+            if self.background_music_playing:
+                mixer.music.stop()
+            
+            # Clear sound cache to free memory
+            self.sound_cache.clear()
+            
+            # Reinitialize mixer with anti-crackling settings
+            mixer.quit()
+            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=2048)
+            mixer.init()
+            mixer.set_num_channels(6)
+            
+            # Reset state
+            self.background_music_playing = False
+            self.current_background_music = None
+            
+            print("🔊 Audio system reset to fix crackling")
+            return True
+            
+        except Exception as e:
+            print(f"Warning: Could not reset audio system: {e}")
+            return False

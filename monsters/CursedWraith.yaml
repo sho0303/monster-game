@@ -1,0 +1,12 @@
+Cursed Wraith:
+  name: Cursed Wraith
+  hp: 60
+  maxhp: 60
+  attack: 10
+  defense: 8
+  gold: 150
+  level: 6
+  xp: 8
+  art: art/cursed_wraith_monster.png
+  attack_sound: wraith-attack.mp3
+  biome: secret_dungeon

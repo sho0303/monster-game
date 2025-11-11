@@ -1,19 +1,20 @@
 ## Quick purpose
-PyQuest Monster Game — a turn-based RPG with both GUI (primary) and legacy terminal versions. GUI uses tkinter, PIL, and pygame for visuals/audio. YAML-backed data for heroes, monsters, and shops. Modular architecture with separate GUI components for combat, town, quests, inventory, and blacksmith.
+PyQuest Monster Game — a turn-based RPG with both GUI (primary) and legacy terminal versions. GUI uses tkinter, PIL, and pygame for visuals/audio. YAML-backed data for heroes, monsters, and shops. Modular architecture with separate GUI components for combat, town, quests, inventory, blacksmith, and bounty system.
 
 ## High-level architecture (two versions)
 ### GUI Version (Primary: `monster-game-gui.py`)
-- **Entry point**: `monster-game-gui.py` — launcher with dependency checks, logging setup, error handling
+- **Entry point**: `monster-game-gui.py` — launcher with comprehensive startup checks, dependency validation, logging setup, PyInstaller support
 - **Main GUI**: `gui_main.py` (`GameGUI` class) — 800x1050 tkinter window, keyboard shortcuts (1-9 for buttons, B for biome cycling, T for teleport)
 - **Modular GUI components**: Each feature is a separate class injected into `GameGUI`:
   - `gui_combat.py` (`CombatGUI`) — turn-based combat with animations, async round execution
-  - `gui_town.py` (`TownGUI`) — town hub with shop, blacksmith, tavern (placeholder), fountain (heal 3 HP)
+  - `gui_town.py` (`TownGUI`) — town hub with shop, blacksmith, fountain (heal 3 HP), tavern with bounty board
   - `gui_shop.py` (`ShopGUI`) — class-filtered item purchases, duplicate prevention
   - `gui_blacksmith.py` (`BlacksmithGUI`) — permanent stat upgrades (+1 attack/defense for 100 gold)
   - `gui_inventory.py` (`InventoryGUI`) — equip/unequip items, stat display
-  - `gui_quests.py` (`QuestManager`) — biome-aware monster kill quests, dynamic rewards
-  - `gui_monster_encounter.py` (`MonsterEncounterGUI`) — random encounters, biome-filtered spawns
-  - `gui_save_load.py` (`SaveLoadManager`) — JSON save/load with metadata
+  - `gui_quests.py` (`QuestManager`) — level-aware biome-filtered monster kill quests, dynamic rewards
+  - `gui_bounty.py` (`BountyManager`) — hunt/collector/elite boss bounties with unique rewards, elite monster spawns
+  - `gui_monster_encounter.py` (`MonsterEncounterGUI`) — random encounters, biome/level-filtered spawns, elite encounters
+  - `gui_save_load.py` (`SaveLoadManager`) — JSON save/load with metadata, bounty persistence
   - `gui_image_manager.py` (`ImageManager`) — image display, layout (single/multi), canvas management
   - `gui_background_manager.py` (`BackgroundManager`) — biome switching, backgrounds, teleportation
   - `gui_audio.py` (`Audio`) — pygame.mixer wrapper for sounds/music
@@ -70,7 +71,15 @@ Weapons:  # Category name
 - **Monster spawns**: Filtered by `monster.get('biome', 'grassland')` — town monsters don't spawn randomly
 - **Backgrounds**: Each biome has `art/{biome}_background.png` (800x600 or larger)
 - **Switching**: B key cycles biomes, T key teleports (excludes town unless explicitly navigating)
-- **Quest integration**: `QuestManager.generate_kill_quest()` filters by `current_biome` to avoid impossible quests
+- **Quest integration**: `QuestManager.generate_kill_quest()` filters by `current_biome` AND hero level range (±2 levels) to avoid impossible quests
+
+## Bounty system (advanced quests)
+- **Three bounty types**: Hunt (kill 1), Collector (kill 3-7), Elite Boss (enhanced monsters with 1.5x stats)
+- **Difficulty tiers**: Bronze/Silver/Gold with unique rewards not available in shop
+- **Elite encounters**: 10% spawn chance when elite boss bounty active, marked with "⚡ ELITE ENCOUNTER! ⚡"
+- **Level-aware generation**: Bounties filter by hero level range (same as quests/encounters)
+- **Persistence**: Bounties saved/loaded with game state, tracked separately from regular quests
+- **Access**: Town → Tavern → Bounty Board (replaces old "under construction" tavern)
 
 ## Runtime & developer workflow
 ### Running the GUI (primary method)
@@ -78,7 +87,8 @@ Weapons:  # Category name
 # From repo root (critical — relative paths required)
 python .\monster-game-gui.py
 ```
-**Dependencies**: `pip install pyyaml pygame pillow` (tkinter is built-in on most Python installs)
+**Dependencies**: `pip install -r requirements.txt` or individually: `pip install PyYAML>=6.0 Pillow>=10.0.0 pygame>=2.5.0` (tkinter built-in)
+**Startup checks**: Automatic validation of Python version, dependencies, working directory, and module imports with detailed error messages
 
 ### Testing
 - **Test directory**: `tests/` contains 40+ integration tests (no unit test framework — tests are manual GUI scripts)
@@ -89,6 +99,11 @@ python .\monster-game-gui.py
 ### Logging
 - Auto-created in `logs/game_YYYYMMDD_HHMMSS.log` by `monster-game-gui.py`
 - Use `logging.info()` for new features (already configured)
+
+### Building executable
+- **PyInstaller support**: `monster-game-gui.py` detects bundled execution via `sys._MEIPASS`
+- **Build script**: `build_exe.py` creates standalone executable with all assets
+- **Resource handling**: `get_resource_path()` function works for both dev and bundled modes
 
 ## Critical conventions and gotchas
 ### 1. Canvas vs Frame image display
@@ -212,9 +227,10 @@ if __name__ == '__main__':
 
 ## Where implementation details live
 - **Damage formula**: `game_logic.py:damage_calculator()` — level differential (±15%/level), 80-120% randomness, capped defense (max 85% reduction)
-- **Save format**: `gui_save_load.py` — JSON with `{'hero': {...}, 'current_biome': '...', 'quests': [...], 'timestamp': ...}`
+- **Save format**: `gui_save_load.py` — JSON with `{'hero': {...}, 'current_biome': '...', 'quests': [...], 'bounties': {...}, 'timestamp': ...}`
 - **Button rendering**: `gui_main.py:show_buttons()` — creates labeled buttons with keyboard shortcuts (1-9)
-- **Quest generation**: `gui_quests.py:generate_kill_quest()` — filters by biome, prevents duplicates
+- **Quest generation**: `gui_quests.py:generate_kill_quest()` — filters by biome AND level range, prevents duplicates
+- **Bounty generation**: `gui_bounty.py:generate_bounty()` — three types (hunt/collector/elite_boss) with level-aware filtering
 - **Animation timing**: `gui_combat.py` — all delays use `root.after(milliseconds, callback)` pattern
 
 ## Documentation markdown files (*.md in repo root)
@@ -224,6 +240,8 @@ Feature implementation histories (useful for understanding design decisions):
 - `IMPROVED_DAMAGE_CALCULATOR.md` — Damage formula evolution, level scaling
 - `DROP_QUEST_IMPLEMENTATION.md` — Quest reward system, biome filtering
 - `LAST_BIOME_TRACKING.md` — Teleport exclusion logic
+- `BOUNTY_SYSTEM_IMPLEMENTATION.md` — Complete bounty board system with elite monsters
+- `LEVEL_AWARE_QUEST_SYSTEM.md` — Level filtering to prevent impossible quests
 
 ## Known limitations
 - No automated tests (all tests are manual GUI scripts in `tests/`)

@@ -546,6 +546,13 @@ class GameGUI:
         elif key == 'minus':
             self.audio.adjust_volume(-0.1) 
             self.print_text(f"🔉 Volume: {int(self.audio.get_volume() * 100)}%")
+        
+        # Audio reset (for fixing crackling/distortion)
+        elif key == 'r' and event.state & 0x4:  # Ctrl+R
+            if self.audio.reset_audio():
+                self.print_text("🔊 Audio system reset - crackling should be fixed!")
+            else:
+                self.print_text("❌ Failed to reset audio system")
             
         # Biome switching (for testing)
         elif key == 'b':
@@ -597,7 +604,16 @@ class GameGUI:
         
     def _cycle_biomes(self):
         """Cycle through available biomes for testing"""
-        next_biome = self.background_manager.cycle_biomes()
+        # Get available biomes for the current hero (includes secret dungeon if discovered)
+        if hasattr(self, 'game_state') and self.game_state and hasattr(self.game_state, 'hero'):
+            available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
+            # Add town for cycling
+            if 'town' not in available_biomes:
+                available_biomes.append('town')
+            next_biome = self.background_manager.cycle_biomes(available_biomes)
+        else:
+            # Fallback to default cycling
+            next_biome = self.background_manager.cycle_biomes()
         
         # Also update any active encounter screens
         if hasattr(self, 'monster_encounter') and self.monster_encounter:
@@ -605,7 +621,12 @@ class GameGUI:
     
     def teleport_to_random_biome(self):
         """Teleport to a random biome different from the current one"""
-        self.background_manager.teleport_to_random_biome()
+        # Get available biomes for the current hero (includes secret dungeon if discovered)
+        hero_available_biomes = None
+        if hasattr(self, 'game_state') and self.game_state and hasattr(self.game_state, 'hero'):
+            hero_available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
+        
+        self.background_manager.teleport_to_random_biome(hero_available_biomes=hero_available_biomes)
 
     def _navigate_buttons(self, direction):
         """Legacy navigation - now uses grid navigation"""
@@ -1075,7 +1096,47 @@ class GameGUI:
         hero = self.game_state.hero
         self.quest_manager.initialize_hero_quests(hero)
         
-        self.print_text("📜 QUESTS 📜\n")
+        self.print_text("📜 QUEST SYSTEM 📜")
+        self.print_text("=" * 50 + "\n")
+        
+        # Display quest limits and progress
+        hero_level = hero.get('level', 1)
+        completed_at_level = self.quest_manager.get_quests_completed_at_level(hero, hero_level)
+        max_quests = self.quest_manager.MAX_QUESTS_PER_LEVEL
+        
+        # Quest limit status
+        quest_status_parts = [
+            (f"📊 Level {hero_level} Quest Progress: ", "#ffffff"),
+            (f"{completed_at_level}/{max_quests}", "#ffaa00"),
+            (" completed", "#ffffff")
+        ]
+        self._print_colored_parts(quest_status_parts)
+        
+        # Available biomes
+        available_biomes = self.quest_manager.get_available_biomes_for_hero(hero)
+        biome_parts = [
+            ("🗺️ Available Areas: ", "#ffffff"),
+            (", ".join(biome.title() for biome in available_biomes), "#00ff88")
+        ]
+        self._print_colored_parts(biome_parts)
+        
+        # Next biome unlock info
+        next_unlock_level = None
+        next_biome = None
+        for biome, required_level in self.quest_manager.BIOME_UNLOCK_LEVELS.items():
+            if required_level > hero_level:
+                if next_unlock_level is None or required_level < next_unlock_level:
+                    next_unlock_level = required_level
+                    next_biome = biome
+        
+        if next_biome:
+            unlock_parts = [
+                ("🔒 Next Unlock: ", "#ffffff"),
+                (f"{next_biome.title()} at Level {next_unlock_level}", "#ffdd44")
+            ]
+            self._print_colored_parts(unlock_parts)
+        
+        self.print_text("\n" + "-" * 50)
         
         active_quests = self.quest_manager.get_active_quests(hero)
         
@@ -1091,7 +1152,22 @@ class GameGUI:
                     new_quest = self.quest_manager.generate_kill_monster_quest()
                     if isinstance(new_quest, str):
                         # Handle error cases
-                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
+                        if new_quest == "QUEST_LIMIT_REACHED":
+                            hero_level = self.game_state.hero.get('level', 1)
+                            completed = self.quest_manager.get_quests_completed_at_level(self.game_state.hero, hero_level)
+                            max_quests = self.quest_manager.MAX_QUESTS_PER_LEVEL
+                            
+                            error_parts = [
+                                ("🚫 Quest Limit Reached! ", "#ff6666"),
+                                (f"You've completed {completed}/{max_quests} quests at Level {hero_level}.", "#ffffff")
+                            ]
+                            self._print_colored_parts(error_parts)
+                            self.print_text("💡 Level up to unlock more quests!")
+                            self.print_text("🌟 Focus on combat and exploration to gain XP.")
+                            # Return to main menu
+                            self.root.after(3000, self.main_menu)
+                            
+                        elif new_quest == "NO_QUESTS_AVAILABLE_BIOME":
                             current_biome = getattr(self, 'current_biome', 'grassland')
                             error_parts = [
                                 ("❌ No quests available! ", "#ff6666"),
@@ -1101,15 +1177,20 @@ class GameGUI:
                             self.print_text("💡 Complete existing quests or explore other biomes!")
                             # Stay in quest menu to see existing quests
                             self.root.after(2500, self.show_quests)
-                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
+                            
+                        elif new_quest == "NO_SUITABLE_MONSTERS":
+                            hero_level = self.game_state.hero.get('level', 1)
+                            available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
+                            
                             error_parts = [
-                                ("❌ No quests available! ", "#ff6666"),
-                                ("You have active quests for all available monsters.", "#ffffff")
+                                ("❌ No suitable monsters found! ", "#ff6666"),
+                                (f"Level {hero_level} - Available biomes: {', '.join(available_biomes)}", "#ffffff")
                             ]
                             self._print_colored_parts(error_parts)
-                            self.print_text("💡 Complete some existing quests first!")
-                            # Stay in quest menu to see existing quests
-                            self.root.after(2500, self.show_quests)
+                            self.print_text("💡 Continue exploring or level up to unlock new areas!")
+                            # Return to main menu
+                            self.root.after(3000, self.main_menu)
+                            
                         else:
                             self.print_text("❌ Could not generate quest (unknown error)")
                             # Return to main menu for unknown errors

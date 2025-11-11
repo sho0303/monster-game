@@ -71,12 +71,16 @@ class BackgroundManager:
             'town': {
                 'background': 'art/town_background.png',
                 'fallback_color': '#2B4C3D'
+            },
+            'secret_dungeon': {
+                'background': 'art/secret_dungeon_background.png',
+                'fallback_color': '#1a0d0d'
             }
         }
         
         # Combat biomes (excludes safe zones)
-        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
-        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
+        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'secret_dungeon']
+        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town', 'secret_dungeon']
     
     def _default_print_text(self, text, color='#00ff00'):
         """Default print function if none provided"""
@@ -160,15 +164,25 @@ class BackgroundManager:
         """Set the town-specific background"""
         self.set_background_image('art/town_background.png', '#2B4C3D')
     
-    def cycle_biomes(self):
+    def set_secret_dungeon_background(self):
+        """Set the secret dungeon background"""
+        self.set_background_image('art/secret_dungeon_background.png', '#1a0d0d')
+    
+    def cycle_biomes(self, available_biomes=None):
         """Cycle through available biomes for testing/debugging
+        
+        Args:
+            available_biomes: List of biomes to cycle through (default: all biomes)
         
         Returns:
             str: The new biome name
         """
-        current_index = self.all_biomes.index(self.current_biome) if self.current_biome in self.all_biomes else 0
-        next_index = (current_index + 1) % len(self.all_biomes)
-        next_biome = self.all_biomes[next_index]
+        # Use provided biomes or default to all biomes
+        biomes_to_cycle = available_biomes if available_biomes else self.all_biomes
+        
+        current_index = biomes_to_cycle.index(self.current_biome) if self.current_biome in biomes_to_cycle else 0
+        next_index = (current_index + 1) % len(biomes_to_cycle)
+        next_biome = biomes_to_cycle[next_index]
         
         # Set the new biome
         self.set_biome_background(next_biome)
@@ -179,20 +193,22 @@ class BackgroundManager:
             'desert': '🏜️', 
             'dungeon': '🏰',
             'ocean': '🌊',
-            'town': '🏘️'
+            'town': '🏘️',
+            'secret_dungeon': '🕳️'
         }
         emoji = biome_emojis.get(next_biome, '🌍')
-        self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
+        self.print_text(f"{emoji} Biome switched to: {next_biome.title().replace('_', ' ')}")
         
         return next_biome
     
-    def teleport_to_random_biome(self, exclude_current=True, exclude_last=True, combat_only=True):
+    def teleport_to_random_biome(self, exclude_current=True, exclude_last=True, combat_only=True, hero_available_biomes=None):
         """Teleport to a random biome with exclusion logic
         
         Args:
             exclude_current: Whether to exclude the current biome (default: True)
             exclude_last: Whether to exclude the last biome to prevent loops (default: True)
             combat_only: Whether to only include combat biomes (default: True)
+            hero_available_biomes: List of biomes available to hero (includes secret areas) (default: None)
         
         Returns:
             str: The new biome name
@@ -200,8 +216,16 @@ class BackgroundManager:
         # Lock interface to prevent interruptions during teleportation
         self.lock_interface()
         
-        # Choose biome pool based on combat_only flag
-        available_biomes = self.combat_biomes if combat_only else self.all_biomes
+        # Choose biome pool based on what's available to the hero
+        if hero_available_biomes:
+            if combat_only:
+                # Filter to only combat biomes that the hero can access
+                available_biomes = [biome for biome in hero_available_biomes if biome in self.combat_biomes]
+            else:
+                available_biomes = hero_available_biomes
+        else:
+            # Fallback to default biome pool
+            available_biomes = self.combat_biomes if combat_only else self.all_biomes
         
         # Build exclusion set
         excluded_biomes = set()
@@ -238,14 +262,16 @@ class BackgroundManager:
             'grassland': '🌱 Rolling green meadows stretch before you...',
             'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
             'dungeon': '🏰 Cold stone walls echo with mysterious sounds...',
-            'ocean': '🌊 Crystal blue waters and coral reefs surround you...'
+            'ocean': '🌊 Crystal blue waters and coral reefs surround you...',
+            'secret_dungeon': '🕳️ Ancient shadows whisper forgotten secrets...'
         }
         
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
             'dungeon': '🏰',
-            'ocean': '🌊'
+            'ocean': '🌊',
+            'secret_dungeon': '🕳️'
         }
         
         emoji = biome_emojis.get(new_biome, '🌍')

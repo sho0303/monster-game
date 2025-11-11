@@ -1,0 +1,12 @@
+Ancient Shadow:
+  name: Ancient Shadow
+  hp: 80
+  maxhp: 80
+  attack: 12
+  defense: 15
+  gold: 200
+  level: 8
+  xp: 10
+  art: art/ancient_shadow_monster.png
+  attack_sound: shadow-attack.mp3
+  biome: secret_dungeon
