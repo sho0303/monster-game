@@ -241,6 +241,15 @@ class BackgroundManager:
         if not other_biomes:
             other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
         
+        # Final fallback: if still no options (hero only has access to current biome), 
+        # use all available biomes (allow staying in same biome)
+        if not other_biomes:
+            other_biomes = available_biomes
+            # Show special message if we're forced to stay in the same biome
+            if len(available_biomes) == 1 and available_biomes[0] == self.current_biome:
+                self.print_text("🌀 The teleportation magic shimmers but you remain in the same location...")
+                self.print_text("💡 Explore and level up to unlock new biomes!")
+        
         # Select random biome from remaining options
         new_biome = random.choice(other_biomes)
         
