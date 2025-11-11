@@ -8,5 +8,5 @@ Angry Bee Swarm:
   level: 2
   xp: 2
   art: art/bee_swarm_monster.png
-  attack_sound: bees-attack.mp3
+  attack_sound: bee-attack.mp3
   biome: grassland

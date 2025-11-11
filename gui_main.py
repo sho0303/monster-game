@@ -15,7 +15,6 @@ from gui_blacksmith import BlacksmithGUI
 from gui_inventory import InventoryGUI
 from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
-from gui_bounty import BountyManager
 from gui_save_load import SaveLoadManager
 from gui_town import TownGUI
 from gui_image_manager import ImageManager
@@ -130,7 +129,6 @@ class GameGUI:
             audio_manager=self.audio,
             print_text_callback=self.print_text,
             lock_interface_callback=self.lock_interface,
-            unlock_interface_callback=self.unlock_interface,
             clear_text_callback=self.clear_text,
             main_menu_callback=self.main_menu
         )
@@ -547,13 +545,6 @@ class GameGUI:
         elif key == 'minus':
             self.audio.adjust_volume(-0.1) 
             self.print_text(f"🔉 Volume: {int(self.audio.get_volume() * 100)}%")
-        
-        # Audio reset (for fixing crackling/distortion)
-        elif key == 'r' and event.state & 0x4:  # Ctrl+R
-            if self.audio.reset_audio():
-                self.print_text("🔊 Audio system reset - crackling should be fixed!")
-            else:
-                self.print_text("❌ Failed to reset audio system")
             
         # Biome switching (for testing)
         elif key == 'b':
@@ -605,16 +596,7 @@ class GameGUI:
         
     def _cycle_biomes(self):
         """Cycle through available biomes for testing"""
-        # Get available biomes for the current hero (includes secret dungeon if discovered)
-        if hasattr(self, 'game_state') and self.game_state and hasattr(self.game_state, 'hero'):
-            available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
-            # Add town for cycling
-            if 'town' not in available_biomes:
-                available_biomes.append('town')
-            next_biome = self.background_manager.cycle_biomes(available_biomes)
-        else:
-            # Fallback to default cycling
-            next_biome = self.background_manager.cycle_biomes()
+        next_biome = self.background_manager.cycle_biomes()
         
         # Also update any active encounter screens
         if hasattr(self, 'monster_encounter') and self.monster_encounter:
@@ -622,24 +604,7 @@ class GameGUI:
     
     def teleport_to_random_biome(self):
         """Teleport to a random biome different from the current one"""
-        # Get available biomes for the current hero (includes secret dungeon if discovered)
-        hero_available_biomes = None
-        if hasattr(self, 'game_state') and self.game_state and hasattr(self.game_state, 'hero'):
-            hero_available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
-        
-        # Store current biome before teleporting
-        old_biome = self.background_manager.current_biome
-        
-        # Perform teleportation
-        self.background_manager.teleport_to_random_biome(hero_available_biomes=hero_available_biomes)
-        
-        # Track biome visit for achievements (only if biome actually changed)
-        new_biome = self.background_manager.current_biome
-        if hasattr(self, 'achievement_manager') and old_biome != new_biome:
-            self.achievement_manager.track_biome_visit(new_biome)
-            # Check for secret dungeon discovery
-            if new_biome == 'secret_dungeon':
-                self.achievement_manager.track_secret_dungeon_discovery()
+        self.background_manager.teleport_to_random_biome()
 
     def _navigate_buttons(self, direction):
         """Legacy navigation - now uses grid navigation"""
@@ -848,13 +813,8 @@ class GameGUI:
         self.inventory = InventoryGUI(self)
         self.monster_encounter = MonsterEncounterGUI(self)
         self.quest_manager = QuestManager(self)
-        self.bounty_manager = BountyManager(self)
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
-        
-        # Initialize achievement system
-        from gui_achievements import AchievementManager
-        self.achievement_manager = AchievementManager(self)
         
         # Start hero selection
         self.select_hero()
@@ -1100,13 +1060,11 @@ class GameGUI:
             elif choice == 4:
                 self.show_quests()
             elif choice == 5:
-                self.show_achievements()
-            elif choice == 6:
                 self.teleport_to_random_biome()
-            elif choice == 7:
+            elif choice == 6:
                 self.save_load_manager.show_save_interface()
         
-        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🏆 Achievements", "🌀 Teleport", "💾 Save Game"], on_menu_select)
+        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""
@@ -1115,65 +1073,11 @@ class GameGUI:
         hero = self.game_state.hero
         self.quest_manager.initialize_hero_quests(hero)
         
-        self.print_text("📜 QUEST SYSTEM 📜")
-        self.print_text("=" * 50 + "\n")
+        self.print_text("📜 QUESTS 📜\n")
         
-        # Display quest limits and progress
-        hero_level = hero.get('level', 1)
-        completed_at_level = self.quest_manager.get_quests_completed_at_level(hero, hero_level)
-        max_quests = self.quest_manager.MAX_QUESTS_PER_LEVEL
-        
-        # Quest limit status
-        quest_status_parts = [
-            (f"📊 Level {hero_level} Quest Progress: ", "#ffffff"),
-            (f"{completed_at_level}/{max_quests}", "#ffaa00"),
-            (" completed", "#ffffff")
-        ]
-        self._print_colored_parts(quest_status_parts)
-        
-        # Available biomes
-        available_biomes = self.quest_manager.get_available_biomes_for_hero(hero)
-        biome_parts = [
-            ("🗺️ Available Areas: ", "#ffffff"),
-            (", ".join(biome.title() for biome in available_biomes), "#00ff88")
-        ]
-        self._print_colored_parts(biome_parts)
-        
-        # Next biome unlock info
-        next_unlock_level = None
-        next_biome = None
-        for biome, required_level in self.quest_manager.BIOME_UNLOCK_LEVELS.items():
-            if required_level > hero_level:
-                if next_unlock_level is None or required_level < next_unlock_level:
-                    next_unlock_level = required_level
-                    next_biome = biome
-        
-        if next_biome:
-            unlock_parts = [
-                ("🔒 Next Unlock: ", "#ffffff"),
-                (f"{next_biome.title()} at Level {next_unlock_level}", "#ffdd44")
-            ]
-            self._print_colored_parts(unlock_parts)
-        
-        self.print_text("\n" + "-" * 50)
-        
-        # Display main quests
         active_quests = self.quest_manager.get_active_quests(hero)
         
-        # Display side quests from tavern encounters
-        side_quests = hero.get('side_quests', [])
-        active_side_quests = [q for q in side_quests if not q.get('completed', False)]
-        
-        if active_side_quests:
-            self.print_text("🎭 ACTIVE SIDE QUESTS:")
-            for i, quest in enumerate(active_side_quests, 1):
-                self.print_text(f"\n{i}. {quest['name']}")
-                self.print_text(f"   📍 {quest['description']}")
-                self.print_text(f"   💰 Reward: {quest['reward_gold']} gold")
-                self.print_text(f"   🗺️ Area: {quest['target_biome'].title()}")
-            self.print_text("\n" + "-" * 50)
-        
-        if not active_quests and not active_side_quests:
+        if not active_quests:
             self.print_text("No active quests.\n")
             
             # Offer to generate a new quest
@@ -1185,22 +1089,7 @@ class GameGUI:
                     new_quest = self.quest_manager.generate_kill_monster_quest()
                     if isinstance(new_quest, str):
                         # Handle error cases
-                        if new_quest == "QUEST_LIMIT_REACHED":
-                            hero_level = self.game_state.hero.get('level', 1)
-                            completed = self.quest_manager.get_quests_completed_at_level(self.game_state.hero, hero_level)
-                            max_quests = self.quest_manager.MAX_QUESTS_PER_LEVEL
-                            
-                            error_parts = [
-                                ("🚫 Quest Limit Reached! ", "#ff6666"),
-                                (f"You've completed {completed}/{max_quests} quests at Level {hero_level}.", "#ffffff")
-                            ]
-                            self._print_colored_parts(error_parts)
-                            self.print_text("💡 Level up to unlock more quests!")
-                            self.print_text("🌟 Focus on combat and exploration to gain XP.")
-                            # Return to main menu
-                            self.root.after(3000, self.main_menu)
-                            
-                        elif new_quest == "NO_QUESTS_AVAILABLE_BIOME":
+                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
                             current_biome = getattr(self, 'current_biome', 'grassland')
                             error_parts = [
                                 ("❌ No quests available! ", "#ff6666"),
@@ -1210,20 +1099,15 @@ class GameGUI:
                             self.print_text("💡 Complete existing quests or explore other biomes!")
                             # Stay in quest menu to see existing quests
                             self.root.after(2500, self.show_quests)
-                            
-                        elif new_quest == "NO_SUITABLE_MONSTERS":
-                            hero_level = self.game_state.hero.get('level', 1)
-                            available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
-                            
+                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
                             error_parts = [
-                                ("❌ No suitable monsters found! ", "#ff6666"),
-                                (f"Level {hero_level} - Available biomes: {', '.join(available_biomes)}", "#ffffff")
+                                ("❌ No quests available! ", "#ff6666"),
+                                ("You have active quests for all available monsters.", "#ffffff")
                             ]
                             self._print_colored_parts(error_parts)
-                            self.print_text("💡 Continue exploring or level up to unlock new areas!")
-                            # Return to main menu
-                            self.root.after(3000, self.main_menu)
-                            
+                            self.print_text("💡 Complete some existing quests first!")
+                            # Stay in quest menu to see existing quests
+                            self.root.after(2500, self.show_quests)
                         else:
                             self.print_text("❌ Could not generate quest (unknown error)")
                             # Return to main menu for unknown errors
@@ -1376,294 +1260,6 @@ class GameGUI:
         buttons.append("🔙 Back")
         
         self.set_buttons(buttons, on_drop_choice)
-
-    def show_achievements(self):
-        """Display achievement interface"""
-        self.clear_text()
-        
-        self.print_text("🏆 ACHIEVEMENTS & COLLECTIONS 🏆")
-        self.print_text("=" * 60)
-        
-        # Show overall completion stats
-        completion_pct = self.achievement_manager.get_completion_percentage()
-        completion_parts = [
-            ("📊 Overall Progress: ", "#ffffff"),
-            (f"{completion_pct:.1f}%", "#ffaa00"),
-            (" complete", "#ffffff")
-        ]
-        self._print_colored_parts(completion_parts)
-        
-        completed_achievements = self.achievement_manager.get_completed_achievements()
-        total_visible = len(self.achievement_manager.get_visible_achievements())
-        
-        progress_parts = [
-            ("🏅 Achievements Unlocked: ", "#ffffff"),
-            (f"{len(completed_achievements)}/{total_visible}", "#ffdd00")
-        ]
-        self._print_colored_parts(progress_parts)
-        
-        self.print_text("\n" + "-" * 60)
-        
-        # Show achievements by category
-        categories = ["combat", "exploration", "collection", "progression", "special"]
-        category_names = {
-            "combat": "⚔️ Combat Mastery",
-            "exploration": "🗺️ World Explorer", 
-            "collection": "📚 Monster Hunter",
-            "progression": "⭐ Character Growth",
-            "special": "🎭 Special Accomplishments"
-        }
-        
-        for category in categories:
-            achievements = self.achievement_manager.get_achievements_by_category(category)
-            visible_achievements = [ach for ach in achievements if not ach.hidden or ach.unlocked]
-            
-            if visible_achievements:
-                self.print_text(f"\n{category_names[category]}")
-                self.print_text("-" * 30)
-                
-                for ach in visible_achievements[:3]:  # Show first 3 in each category
-                    status_icon = "✅" if ach.completed else "⏳"
-                    progress_text = ""
-                    
-                    if not ach.completed:
-                        if ach.target_value > 1:
-                            progress_text = f" ({ach.current_progress}/{ach.target_value})"
-                        else:
-                            progress_text = f" (In Progress)"
-                    
-                    self.print_text(f"{status_icon} {ach.name}{progress_text}")
-                    self.print_text(f"   {ach.description}")
-                    
-                    if ach.completed and ach.reward_type != "title":
-                        reward_text = ""
-                        if ach.reward_type == "gold":
-                            reward_text = f"💰 Reward: {ach.reward_value} gold"
-                        elif ach.reward_type == "stat_bonus":
-                            reward_text = f"⭐ Reward: +{ach.reward_value} stat bonus"
-                        
-                        if reward_text:
-                            reward_parts = [("   ", "#ffffff"), (reward_text, "#ffdd00")]
-                            self._print_colored_parts(reward_parts)
-        
-        # Show recent achievements
-        recent_completed = [ach for ach in completed_achievements if ach.completed_at]
-        if recent_completed:
-            # Sort by completion date, most recent first
-            recent_completed.sort(key=lambda x: x.completed_at, reverse=True)
-            
-            self.print_text(f"\n🎉 Recent Achievements")
-            self.print_text("-" * 20)
-            
-            for ach in recent_completed[:3]:  # Show 3 most recent
-                self.print_text(f"✨ {ach.name}")
-        
-        # Menu options
-        def on_achievement_choice(choice):
-            if choice == 1:
-                self.show_achievement_details()
-            elif choice == 2:
-                self.show_monster_collection()
-            elif choice == 3:
-                self.show_player_statistics()
-            elif choice == 4:
-                self.main_menu()
-        
-        buttons = [
-            "📋 View All Details",
-            "👹 Monster Collection", 
-            "📊 Statistics",
-            "🔙 Back to Menu"
-        ]
-        
-        self.set_buttons(buttons, on_achievement_choice)
-    
-    def show_achievement_details(self):
-        """Show detailed achievement list"""
-        self.clear_text()
-        
-        self.print_text("🏆 DETAILED ACHIEVEMENTS")
-        self.print_text("=" * 50)
-        
-        visible_achievements = self.achievement_manager.get_visible_achievements()
-        
-        for i, ach in enumerate(visible_achievements, 1):
-            status = "✅ COMPLETED" if ach.completed else "⏳ In Progress"
-            status_color = "#00ff88" if ach.completed else "#ffaa00"
-            
-            self.print_text(f"\n{i}. {ach.name}")
-            
-            status_parts = [
-                ("   Status: ", "#ffffff"),
-                (status, status_color)
-            ]
-            self._print_colored_parts(status_parts)
-            
-            self.print_text(f"   Description: {ach.description}")
-            
-            if not ach.completed and ach.target_value > 1:
-                progress_parts = [
-                    ("   Progress: ", "#ffffff"),
-                    (f"{ach.current_progress}/{ach.target_value}", "#ffaa00"),
-                    (f" ({(ach.current_progress/ach.target_value)*100:.1f}%)", "#888888")
-                ]
-                self._print_colored_parts(progress_parts)
-            
-            # Show reward
-            if ach.reward_type == "gold":
-                reward_text = f"💰 {ach.reward_value} gold"
-            elif ach.reward_type == "title":
-                reward_text = f"🎖️ Title: '{ach.name}'"
-            elif ach.reward_type == "stat_bonus":
-                reward_text = f"⭐ +{ach.reward_value} permanent stat bonus"
-            else:
-                reward_text = "🎁 Special reward"
-            
-            reward_parts = [
-                ("   Reward: ", "#ffffff"),
-                (reward_text, "#ffdd00")
-            ]
-            self._print_colored_parts(reward_parts)
-        
-        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
-    
-    def show_monster_collection(self):
-        """Show monster collection progress"""
-        self.clear_text()
-        
-        self.print_text("👹 MONSTER COLLECTION")
-        self.print_text("=" * 50)
-        
-        monsters_killed = self.achievement_manager.player_stats['monsters_killed']
-        
-        if not monsters_killed:
-            self.print_text("No monsters defeated yet!")
-            self.print_text("Go forth and battle to start your collection!")
-        else:
-            total_kills = sum(monsters_killed.values())
-            unique_monsters = len(monsters_killed)
-            
-            collection_parts = [
-                ("📊 Total Kills: ", "#ffffff"),
-                (str(total_kills), "#ffaa00"),
-                (" | Unique Types: ", "#ffffff"),
-                (str(unique_monsters), "#ffdd00")
-            ]
-            self._print_colored_parts(collection_parts)
-            
-            self.print_text("\n📚 Defeated Monsters:")
-            self.print_text("-" * 25)
-            
-            # Sort by kill count, highest first
-            sorted_monsters = sorted(monsters_killed.items(), key=lambda x: x[1], reverse=True)
-            
-            for monster_name, kill_count in sorted_monsters:
-                kill_parts = [
-                    ("👹 ", "#ffffff"),
-                    (monster_name, "#ffaa00"),
-                    (f": {kill_count}", "#ffdd00"),
-                    (" kills" if kill_count != 1 else " kill", "#ffffff")
-                ]
-                self._print_colored_parts(kill_parts)
-        
-        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
-    
-    def show_player_statistics(self):
-        """Show comprehensive player statistics"""
-        self.clear_text()
-        
-        self.print_text("📊 PLAYER STATISTICS")
-        self.print_text("=" * 50)
-        
-        stats = self.achievement_manager.player_stats
-        hero = self.game_state.hero
-        
-        # Combat Stats
-        self.print_text("⚔️ Combat Statistics")
-        self.print_text("-" * 20)
-        
-        total_monsters = sum(stats['monsters_killed'].values()) if stats['monsters_killed'] else 0
-        win_rate = 0
-        if stats['combats_won'] + stats['combats_lost'] > 0:
-            win_rate = (stats['combats_won'] / (stats['combats_won'] + stats['combats_lost'])) * 100
-        
-        combat_stats = [
-            ("Total Monsters Defeated: ", str(total_monsters)),
-            ("Combats Won: ", str(stats['combats_won'])),
-            ("Combats Lost: ", str(stats['combats_lost'])),
-            ("Win Rate: ", f"{win_rate:.1f}%"),
-            ("Deaths: ", str(stats['deaths']))
-        ]
-        
-        for label, value in combat_stats:
-            stat_parts = [
-                (label, "#ffffff"),
-                (value, "#ffaa00")
-            ]
-            self._print_colored_parts(stat_parts)
-        
-        # Exploration Stats
-        self.print_text("\n🗺️ Exploration Statistics")
-        self.print_text("-" * 25)
-        
-        biomes_count = len(stats['biomes_visited'])
-        secret_discovered = "Yes" if stats['secret_dungeon_discovered'] else "No"
-        
-        exploration_stats = [
-            ("Biomes Discovered: ", f"{biomes_count}/5"),
-            ("Secret Dungeon Found: ", secret_discovered),
-            ("Teleportations Used: ", "N/A")  # Could track this
-        ]
-        
-        for label, value in exploration_stats:
-            stat_parts = [
-                (label, "#ffffff"),
-                (value, "#ffaa00")  
-            ]
-            self._print_colored_parts(stat_parts)
-        
-        # Progress Stats
-        self.print_text("\n⭐ Progress Statistics")
-        self.print_text("-" * 22)
-        
-        total_quests = stats['quests_completed'] + stats['side_quests_completed'] + stats['bounties_completed']
-        
-        progress_stats = [
-            ("Current Level: ", str(hero.get('level', 1))),
-            ("Total Quests Completed: ", str(total_quests)),
-            ("Side Quests Completed: ", str(stats['side_quests_completed'])),
-            ("Bounties Completed: ", str(stats['bounties_completed'])),
-            ("Total Gold Earned: ", str(stats['gold_earned_total']))
-        ]
-        
-        for label, value in progress_stats:
-            stat_parts = [
-                (label, "#ffffff"),
-                (value, "#ffaa00")
-            ]
-            self._print_colored_parts(stat_parts)
-        
-        # Social Stats  
-        self.print_text("\n🎭 Social Statistics")
-        self.print_text("-" * 20)
-        
-        npcs_met = len(stats['tavern_npcs_met'])
-        
-        social_stats = [
-            ("Beers Consumed: ", str(stats['beers_consumed'])),
-            ("Tavern NPCs Met: ", f"{npcs_met}/6"),
-            ("Fountain Uses: ", str(stats['fountain_uses'])),
-            ("Blacksmith Visits: ", str(stats['blacksmith_visits']))
-        ]
-        
-        for label, value in social_stats:
-            stat_parts = [
-                (label, "#ffffff"),
-                (value, "#ffaa00")
-            ]
-            self._print_colored_parts(stat_parts)
-        
-        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
 
     def game_over(self):
         """Handle game over when hero has 0 lives left"""

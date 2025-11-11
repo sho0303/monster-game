@@ -13,11 +13,6 @@ class Quest:
         self.description = description
         self.completed = False
         self.status = 'active'  # 'active', 'completed'
-        
-        # New fields for enhanced quest system
-        self.target_biome = None
-        self.is_cross_biome = False
-        self.hero_level_when_created = 1
 
     def to_dict(self):
         """Convert quest to dictionary for storage in hero object"""
@@ -27,10 +22,7 @@ class Quest:
             'reward_xp': self.reward_xp,
             'description': self.description,
             'completed': self.completed,
-            'status': self.status,
-            'target_biome': getattr(self, 'target_biome', None),
-            'is_cross_biome': getattr(self, 'is_cross_biome', False),
-            'hero_level_when_created': getattr(self, 'hero_level_when_created', 1)
+            'status': self.status
         }
 
     @classmethod
@@ -44,9 +36,6 @@ class Quest:
         )
         quest.completed = quest_dict.get('completed', False)
         quest.status = quest_dict.get('status', 'active')
-        quest.target_biome = quest_dict.get('target_biome', None)
-        quest.is_cross_biome = quest_dict.get('is_cross_biome', False)
-        quest.hero_level_when_created = quest_dict.get('hero_level_when_created', 1)
         return quest
 
 
@@ -54,28 +43,11 @@ class QuestManager:
     """Manages quests for the game"""
     def __init__(self, gui):
         self.gui = gui
-        # Quest limits per hero level to prevent farming
-        self.MAX_QUESTS_PER_LEVEL = 2  # Only 2 quests per level
-        
-        # Biome progression requirements
-        self.BIOME_UNLOCK_LEVELS = {
-            'grassland': 1,   # Starting biome
-            'desert': 3,      # Unlock at level 3
-            'ocean': 5,       # Unlock at level 5  
-            'dungeon': 7      # Unlock at level 7
-        }
-        
-        # Cross-biome mission chance (forces exploration)
-        self.CROSS_BIOME_MISSION_CHANCE = 0.6  # 60% chance for cross-biome quest
         
     def initialize_hero_quests(self, hero):
         """Initialize quest list in hero object if not present"""
         if 'quests' not in hero:
             hero['quests'] = []
-        
-        # Initialize quest tracking per level
-        if 'quests_completed_by_level' not in hero:
-            hero['quests_completed_by_level'] = {}
         
         # Ensure all quests are stored as dictionaries for consistency
         normalized_quests = []
@@ -89,155 +61,100 @@ class QuestManager:
         
         hero['quests'] = normalized_quests
     
-    def get_quests_completed_at_level(self, hero, level):
-        """Get number of quests completed at specific hero level"""
-        self.initialize_hero_quests(hero)
-        return hero['quests_completed_by_level'].get(str(level), 0)
-    
-    def can_take_more_quests(self, hero):
-        """Check if hero can take more quests at current level"""
-        current_level = hero.get('level', 1)
-        completed_at_level = self.get_quests_completed_at_level(hero, current_level)
-        active_quests = len(self.get_active_quests(hero))
-        
-        total_quests_this_level = completed_at_level + active_quests
-        return total_quests_this_level < self.MAX_QUESTS_PER_LEVEL
-    
-    def get_available_biomes_for_hero(self, hero):
-        """Get list of biomes hero has unlocked based on level and discoveries"""
-        hero_level = hero.get('level', 1)
-        available_biomes = []
-        
-        for biome, required_level in self.BIOME_UNLOCK_LEVELS.items():
-            if hero_level >= required_level:
-                available_biomes.append(biome)
-        
-        # Add secret dungeon if discovered through bartender
-        if hero.get('secret_dungeon_discovered', False):
-            available_biomes.append('secret_dungeon')
-        
-        return available_biomes
-    
     def generate_kill_monster_quest(self):
-        """Generate a proper quest with level limits and cross-biome missions"""
-        hero = self.gui.game_state.hero
-        
-        # Check if hero can take more quests at current level
-        if not self.can_take_more_quests(hero):
-            return "QUEST_LIMIT_REACHED"
-        
+        """Generate a random kill monster quest from current biome (avoiding duplicates)"""
+        # Get all available monsters
         monsters = self.gui.game_state.monsters
         if not monsters:
             return None
         
-        hero_level = hero.get('level', 1)
+        # Get current biome from GUI
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
         
-        # Get available biomes for hero level
-        available_biomes = self.get_available_biomes_for_hero(hero)
+        # Get hero level for level-appropriate filtering
+        hero = self.gui.game_state.hero
+        hero_level = hero.get('level', 1)
         
         # Get existing quest targets to avoid duplicates
-        active_quests = self.get_active_quests(hero)
-        existing_quest_targets = {quest.target for quest in active_quests if quest.quest_type == 'kill_monster'}
+        existing_quest_targets = set()
+        if hasattr(self.gui.game_state, 'hero') and self.gui.game_state.hero:
+            active_quests = self.get_active_quests(self.gui.game_state.hero)
+            existing_quest_targets = {quest.target for quest in active_quests if quest.quest_type == 'kill_monster'}
         
-        # Determine if this should be a cross-biome mission
-        should_be_cross_biome = (
-            len(available_biomes) > 1 and  # Hero has unlocked multiple biomes
-            random.random() < self.CROSS_BIOME_MISSION_CHANCE  # Random chance
-        )
-        
-        if should_be_cross_biome:
-            # Force exploration - pick a different biome
-            target_biomes = [biome for biome in available_biomes if biome != current_biome]
-            if target_biomes:
-                target_biome = random.choice(target_biomes)
-                quest_type_prefix = "🌍 EXPLORATION MISSION: "
-            else:
-                target_biome = current_biome  # Fallback to current if only one available
-                quest_type_prefix = ""
-        else:
-            target_biome = current_biome
-            quest_type_prefix = ""
-        
-        # Find level-appropriate monsters in target biome
-        level_range = 2  # Allow ±2 levels for variety
-        suitable_monsters = [
-            (name, data) for name, data in monsters.items()
-            if (data.get('biome', 'grassland') == target_biome and
-                abs(data['level'] - hero_level) <= level_range and
-                name not in existing_quest_targets and
-                data['level'] >= 1)  # Ensure positive level
+        # Filter monsters by:
+        # 1. Current biome
+        # 2. Level range (same as encounter system: hero_level - 2 to hero_level + 1)
+        # 3. Not already a quest target
+        available_biome_monsters = [
+            (key, value) for key, value in monsters.items()
+            if (value.get('biome', 'grassland') == current_biome and 
+                value['level'] <= hero_level + 1 and
+                value['level'] >= max(1, hero_level - 2) and
+                key not in existing_quest_targets)
         ]
         
-        if not suitable_monsters:
-            # No suitable monsters in target biome - try any unlocked biome
-            for backup_biome in available_biomes:
-                suitable_monsters = [
-                    (name, data) for name, data in monsters.items()
-                    if (data.get('biome', 'grassland') == backup_biome and
-                        abs(data['level'] - hero_level) <= level_range and
-                        name not in existing_quest_targets and
-                        data['level'] >= 1)
+        if not available_biome_monsters:
+            # Check if there are level-appropriate monsters in this biome
+            biome_level_monsters = [
+                (key, value) for key, value in monsters.items()
+                if (value.get('biome', 'grassland') == current_biome and
+                    value['level'] <= hero_level + 1 and
+                    value['level'] >= max(1, hero_level - 2))
+            ]
+            
+            if biome_level_monsters:
+                # All level-appropriate monsters in biome have quests
+                return "NO_QUESTS_AVAILABLE_BIOME"
+            else:
+                # No level-appropriate monsters in this biome
+                # Try any biome with level-appropriate monsters
+                available_all_monsters = [
+                    (key, value) for key, value in monsters.items()
+                    if (key not in existing_quest_targets and
+                        value['level'] <= hero_level + 1 and
+                        value['level'] >= max(1, hero_level - 2))
                 ]
-                if suitable_monsters:
-                    target_biome = backup_biome
-                    break
+                
+                if not available_all_monsters:
+                    # No level-appropriate monsters anywhere
+                    return "NO_QUESTS_AVAILABLE_LEVEL"
+                else:
+                    # Pick from any level-appropriate monster
+                    monster_name, monster_data = random.choice(
+                        available_all_monsters
+                    )
+        else:
+            # Pick a random monster from available biome monsters
+            monster_name, monster_data = random.choice(
+                available_biome_monsters
+            )
         
-        if not suitable_monsters:
-            return "NO_SUITABLE_MONSTERS"
-        
-        # Select random monster from suitable options
-        monster_name, monster_data = random.choice(suitable_monsters)
+        # Get the monster's XP value (with fallback to 1 if not specified)
+        monster_xp = monster_data.get('xp', 1)
         monster_level = monster_data.get('level', 1)
         
-        # Calculate XP reward based on level difference and cross-biome bonus
-        base_xp = monster_data.get('xp', monster_level)
-        level_multiplier = 1.0
-        
-        if monster_level > hero_level:
-            level_multiplier = 1.5  # Bonus for higher level monsters
-        elif monster_level < hero_level - 1:
-            level_multiplier = 0.8  # Reduced XP for easier monsters
-        
-        # Cross-biome mission bonus
-        cross_biome_bonus = 1.5 if target_biome != current_biome else 1.0
-        
-        # Final XP calculation
-        final_xp = int(base_xp * level_multiplier * cross_biome_bonus)
-        
-        # Create quest description
+        # Create biome-aware quest description with level
         biome_descriptions = {
-            'grassland': f"🌾 Travel to the Grasslands and hunt a {monster_name} (Lv.{monster_level})",
-            'desert': f"🏜️ Journey to the Desert and defeat a {monster_name} (Lv.{monster_level})", 
-            'dungeon': f"🏰 Venture into the Dungeons and slay a {monster_name} (Lv.{monster_level})",
-            'ocean': f"🌊 Sail to the Ocean and battle a {monster_name} (Lv.{monster_level})",
-            'secret_dungeon': f"🕳️ Descend into the Secret Dungeon and destroy a {monster_name} (Lv.{monster_level})"
+            'grassland': f"Hunt a {monster_name} (Lv.{monster_level}) in the grasslands",
+            'desert': f"Defeat a {monster_name} (Lv.{monster_level}) in the desert sands",
+            'dungeon': f"Slay a {monster_name} (Lv.{monster_level}) in the dark dungeons",
+            'ocean': f"Battle a {monster_name} (Lv.{monster_level}) in the ocean depths"
         }
         
-        quest_description = quest_type_prefix + biome_descriptions.get(
-            target_biome,
-            f"Find and kill a {monster_name} (Lv.{monster_level})"
+        quest_description = biome_descriptions.get(
+            current_biome,
+            f"Kill a {monster_name} (Lv.{monster_level})"
         )
         
-        # Add XP bonus info to description
-        if cross_biome_bonus > 1.0:
-            quest_description += f" (+{int((cross_biome_bonus-1)*100)}% XP bonus for exploration!)"
-        
-        # Create enhanced quest object with biome info
+        # Create quest with monster's XP as reward
         quest = Quest(
             quest_type='kill_monster',
             target=monster_name,
-            reward_xp=final_xp,
+            reward_xp=monster_xp,
             description=quest_description
         )
         
-        # Add biome info to quest for tracking
-        quest_dict = quest.to_dict()
-        quest_dict['target_biome'] = target_biome
-        quest_dict['is_cross_biome'] = target_biome != current_biome
-        quest_dict['hero_level_when_created'] = hero_level
-        
-        return Quest.from_dict(quest_dict)
+        return quest
     
     def add_quest(self, hero, quest):
         """Add a quest to hero's quest list"""
@@ -264,16 +181,6 @@ class QuestManager:
                 
                 # Give XP reward
                 hero['xp'] += quest.reward_xp
-                
-                # Track quest completion by level (for quest limits)
-                current_level = str(hero.get('level', 1))
-                if current_level not in hero['quests_completed_by_level']:
-                    hero['quests_completed_by_level'][current_level] = 0
-                hero['quests_completed_by_level'][current_level] += 1
-                
-                # Track quest completion for achievements
-                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
-                    self.gui.achievement_manager.track_quest_completion()
                 
                 return True
         

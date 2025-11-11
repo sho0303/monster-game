@@ -24,7 +24,7 @@ class BackgroundManager:
     """
     
     def __init__(self, image_canvas, audio_manager=None, print_text_callback=None, 
-                 lock_interface_callback=None, unlock_interface_callback=None, clear_text_callback=None, main_menu_callback=None):
+                 lock_interface_callback=None, clear_text_callback=None, main_menu_callback=None):
         """
         Initialize the Background Manager.
         
@@ -33,7 +33,6 @@ class BackgroundManager:
             audio_manager: Audio manager for sound effects (optional)
             print_text_callback: Function to call for text output (optional)
             lock_interface_callback: Function to lock UI during operations (optional)
-            unlock_interface_callback: Function to unlock UI after operations (optional)
             clear_text_callback: Function to clear text display (optional)
             main_menu_callback: Function to return to main menu (optional)
         """
@@ -41,7 +40,6 @@ class BackgroundManager:
         self.audio = audio_manager
         self.print_text = print_text_callback or self._default_print_text
         self.lock_interface = lock_interface_callback or self._default_lock_interface
-        self.unlock_interface = unlock_interface_callback or self._default_unlock_interface
         self.clear_text = clear_text_callback or self._default_clear_text
         self.main_menu = main_menu_callback or self._default_main_menu
         
@@ -73,16 +71,12 @@ class BackgroundManager:
             'town': {
                 'background': 'art/town_background.png',
                 'fallback_color': '#2B4C3D'
-            },
-            'secret_dungeon': {
-                'background': 'art/secret_dungeon_background.png',
-                'fallback_color': '#1a0d0d'
             }
         }
         
         # Combat biomes (excludes safe zones)
-        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'secret_dungeon']
-        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town', 'secret_dungeon']
+        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
+        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
     
     def _default_print_text(self, text, color='#00ff00'):
         """Default print function if none provided"""
@@ -90,10 +84,6 @@ class BackgroundManager:
     
     def _default_lock_interface(self):
         """Default interface lock function if none provided"""
-        pass
-    
-    def _default_unlock_interface(self):
-        """Default interface unlock function if none provided"""
         pass
     
     def _default_clear_text(self):
@@ -170,25 +160,15 @@ class BackgroundManager:
         """Set the town-specific background"""
         self.set_background_image('art/town_background.png', '#2B4C3D')
     
-    def set_secret_dungeon_background(self):
-        """Set the secret dungeon background"""
-        self.set_background_image('art/secret_dungeon_background.png', '#1a0d0d')
-    
-    def cycle_biomes(self, available_biomes=None):
+    def cycle_biomes(self):
         """Cycle through available biomes for testing/debugging
-        
-        Args:
-            available_biomes: List of biomes to cycle through (default: all biomes)
         
         Returns:
             str: The new biome name
         """
-        # Use provided biomes or default to all biomes
-        biomes_to_cycle = available_biomes if available_biomes else self.all_biomes
-        
-        current_index = biomes_to_cycle.index(self.current_biome) if self.current_biome in biomes_to_cycle else 0
-        next_index = (current_index + 1) % len(biomes_to_cycle)
-        next_biome = biomes_to_cycle[next_index]
+        current_index = self.all_biomes.index(self.current_biome) if self.current_biome in self.all_biomes else 0
+        next_index = (current_index + 1) % len(self.all_biomes)
+        next_biome = self.all_biomes[next_index]
         
         # Set the new biome
         self.set_biome_background(next_biome)
@@ -199,22 +179,20 @@ class BackgroundManager:
             'desert': '🏜️', 
             'dungeon': '🏰',
             'ocean': '🌊',
-            'town': '🏘️',
-            'secret_dungeon': '🕳️'
+            'town': '🏘️'
         }
         emoji = biome_emojis.get(next_biome, '🌍')
-        self.print_text(f"{emoji} Biome switched to: {next_biome.title().replace('_', ' ')}")
+        self.print_text(f"{emoji} Biome switched to: {next_biome.title()}")
         
         return next_biome
     
-    def teleport_to_random_biome(self, exclude_current=True, exclude_last=True, combat_only=True, hero_available_biomes=None):
+    def teleport_to_random_biome(self, exclude_current=True, exclude_last=True, combat_only=True):
         """Teleport to a random biome with exclusion logic
         
         Args:
             exclude_current: Whether to exclude the current biome (default: True)
             exclude_last: Whether to exclude the last biome to prevent loops (default: True)
             combat_only: Whether to only include combat biomes (default: True)
-            hero_available_biomes: List of biomes available to hero (includes secret areas) (default: None)
         
         Returns:
             str: The new biome name
@@ -222,16 +200,8 @@ class BackgroundManager:
         # Lock interface to prevent interruptions during teleportation
         self.lock_interface()
         
-        # Choose biome pool based on what's available to the hero
-        if hero_available_biomes:
-            if combat_only:
-                # Filter to only combat biomes that the hero can access
-                available_biomes = [biome for biome in hero_available_biomes if biome in self.combat_biomes]
-            else:
-                available_biomes = hero_available_biomes
-        else:
-            # Fallback to default biome pool
-            available_biomes = self.combat_biomes if combat_only else self.all_biomes
+        # Choose biome pool based on combat_only flag
+        available_biomes = self.combat_biomes if combat_only else self.all_biomes
         
         # Build exclusion set
         excluded_biomes = set()
@@ -246,15 +216,6 @@ class BackgroundManager:
         # Fallback: if we've excluded too many biomes, just exclude current biome
         if not other_biomes:
             other_biomes = [biome for biome in available_biomes if biome != self.current_biome]
-        
-        # Final fallback: if still no options (hero only has access to current biome), 
-        # use all available biomes (allow staying in same biome)
-        if not other_biomes:
-            other_biomes = available_biomes
-            # Show special message if we're forced to stay in the same biome
-            if len(available_biomes) == 1 and available_biomes[0] == self.current_biome:
-                self.print_text("🌀 The teleportation magic shimmers but you remain in the same location...")
-                self.print_text("💡 Explore and level up to unlock new biomes!")
         
         # Select random biome from remaining options
         new_biome = random.choice(other_biomes)
@@ -277,16 +238,14 @@ class BackgroundManager:
             'grassland': '🌱 Rolling green meadows stretch before you...',
             'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
             'dungeon': '🏰 Cold stone walls echo with mysterious sounds...',
-            'ocean': '🌊 Crystal blue waters and coral reefs surround you...',
-            'secret_dungeon': '🕳️ Ancient shadows whisper forgotten secrets...'
+            'ocean': '🌊 Crystal blue waters and coral reefs surround you...'
         }
         
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
             'dungeon': '🏰',
-            'ocean': '🌊',
-            'secret_dungeon': '🕳️'
+            'ocean': '🌊'
         }
         
         emoji = biome_emojis.get(new_biome, '🌍')
@@ -310,9 +269,6 @@ class BackgroundManager:
             self.print_text(f"{emoji} ═══════════════════════════════════════════════ {emoji}")
             self.print_text(f"\n{description}")
             self.print_text(f"\n📍 Current location: {new_biome.title()}")
-            
-            # Unlock interface before returning to main menu
-            self.unlock_interface()
             
             # Return to main menu after showing result
             if self.main_menu:

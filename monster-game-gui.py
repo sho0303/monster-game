@@ -8,18 +8,6 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-
-def get_resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller"""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-    
-    return os.path.join(base_path, relative_path)
-
-
 def setup_logging():
     """Setup logging system for debugging and error tracking"""
     try:
@@ -96,12 +84,6 @@ def check_dependencies():
 
 def check_working_directory():
     """Verify we're running from the correct directory"""
-    # Skip this check if running as PyInstaller executable
-    if getattr(sys, 'frozen', False):
-        # Running as compiled executable - files are bundled
-        logging.info("Running as executable - skipping directory check")
-        return True
-    
     current_dir = Path.cwd()
     required_files = ['gui_main.py', 'game_state.py', 'store.yaml']
     required_dirs = ['heros', 'monsters', 'sounds', 'art']
@@ -225,15 +207,6 @@ def initialize_game():
 def main():
     """Main entry point with comprehensive startup checks"""
     print("PyQuest Monster Game - Starting up...")
-    
-    # Change to PyInstaller extraction directory if running as bundled app
-    if getattr(sys, 'frozen', False):
-        # Running as compiled executable - change to extracted resource directory
-        try:
-            os.chdir(sys._MEIPASS)
-            print(f"Running as executable, using temp directory: {sys._MEIPASS}")
-        except Exception as e:
-            print(f"Warning: Could not change to extracted directory: {e}")
     
     # Setup logging first
     setup_logging()

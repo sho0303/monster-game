@@ -17,19 +17,15 @@ class Audio:
         self.sound_cache = {}  # Cache for sound effects
         self.music_volume = 0.5  # Background music volume (0.0 to 1.0)
         self.sfx_volume = 0.8    # Sound effects volume (0.0 to 1.0)
-        self.last_sound_time = {}  # Track last play time for each sound
-        self.sound_cooldown_ms = 50  # Minimum time between same sound plays
         
         self._initialize_mixer()
     
     def _initialize_mixer(self):
-        """Initialize pygame mixer with optimal settings to prevent crackling"""
+        """Initialize pygame mixer with optimal settings"""
         try:
-            # Use optimal settings for clear audio without distortion
-            # Higher frequency for better quality, larger buffer for stability
-            mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=4096)
+            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
             mixer.init()
-            mixer.set_num_channels(8)  # Allow more simultaneous sounds but not too many
+            mixer.set_num_channels(8)  # Allow multiple sound effects simultaneously
             self.initialized = True
         except Exception as e:
             print(f"Warning: Could not initialize audio system: {e}")
@@ -106,16 +102,6 @@ class Audio:
         if not self.initialized:
             return False
             
-        # Prevent rapid-fire same sound to avoid audio buffer overrun
-        import time
-        current_time = int(time.time() * 1000)  # Current time in milliseconds
-        if sound_file in self.last_sound_time:
-            time_since_last = current_time - self.last_sound_time[sound_file]
-            if time_since_last < self.sound_cooldown_ms:
-                return False  # Skip this play to prevent overrun
-        
-        self.last_sound_time[sound_file] = current_time
-            
         try:
             sound_path = f'./sounds/{sound_file}'
             if not Path(sound_path).exists():
@@ -132,14 +118,19 @@ class Audio:
             # Set volume and play
             volume_level = volume if volume is not None else self.sfx_volume
             sound.set_volume(volume_level)
+            channel = sound.play()
             
-            # For attack sounds with duration limits, use pygame's built-in fadeout
-            if max_duration_ms is not None and max_duration_ms > 0:
-                # Play with automatic fadeout after max_duration_ms
-                channel = sound.play(maxtime=max_duration_ms, fade_ms=200)
-            else:
-                # Play normally without duration limit
-                channel = sound.play()
+            # Limit duration if max_duration_ms is set (only for attack sounds)
+            if channel and max_duration_ms is not None and max_duration_ms > 0:
+                # Use a timer to stop the sound after max_duration_ms
+                import threading
+
+                def stop_after_delay():
+                    import time
+                    time.sleep(max_duration_ms / 1000.0)
+                    if channel.get_busy():
+                        channel.fadeout(100)  # 100ms fadeout
+                threading.Thread(target=stop_after_delay, daemon=True).start()
             
             return True
             
@@ -217,32 +208,3 @@ class Audio:
         else:
             restored_volume = getattr(self, '_saved_volume', 0.5)
             self.set_music_volume(restored_volume)
-    
-    def reset_audio(self):
-        """Reset audio system to fix crackling/distortion issues"""
-        try:
-            # Stop all sounds
-            mixer.stop()
-            if self.background_music_playing:
-                mixer.music.stop()
-            
-            # Clear sound cache and cooldown tracking to free memory
-            self.sound_cache.clear()
-            self.last_sound_time.clear()
-            
-            # Reinitialize mixer with optimal settings
-            mixer.quit()
-            mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=4096)
-            mixer.init()
-            mixer.set_num_channels(8)
-            
-            # Reset state
-            self.background_music_playing = False
-            self.current_background_music = None
-            
-            print("🔊 Audio system reset with improved settings")
-            return True
-            
-        except Exception as e:
-            print(f"Warning: Could not reset audio system: {e}")
-            return False

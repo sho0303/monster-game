@@ -27,20 +27,6 @@ class MonsterEncounterGUI:
         # Unpack monster type and data
         monster_type, monster = monster_result
         
-        # Check for elite bounty encounter (10% chance if bounty active)
-        hero = self.gui.game_state.hero
-        elite_monster = self.gui.bounty_manager.check_for_elite_encounter(
-            hero, monster_type
-        )
-        
-        # 10% chance to spawn elite if bounty is active
-        if elite_monster and random.random() < 0.10:
-            monster = elite_monster
-            monster_type = f"Elite {monster_type}"
-            is_elite = True
-        else:
-            is_elite = False
-        
         # Store monster data for Dragon boss detection
         self.current_monster_data = monster
         
@@ -50,6 +36,7 @@ class MonsterEncounterGUI:
         self.gui.clear_text()
         
         # Display hero and monster images side by side in top frame
+        hero = self.gui.game_state.hero
         self._display_hero_vs_monster_images(hero, monster)
         
         # Show biome-specific encounter message
@@ -70,23 +57,11 @@ class MonsterEncounterGUI:
         emoji = biome_emojis.get(current_biome, '🌍')
         encounter_desc = biome_encounters.get(current_biome, 'appears before you')
         
-        # Special elite encounter message
-        if is_elite:
-            encounter_parts = [
-                (f"\n⚡ {emoji} ", "#ffffff"),
-                ("ELITE ENCOUNTER!", "#ff4444"),
-                (f" {emoji} ⚡\n", "#ffffff"),
-                ("A powerful ", "#ffaa00"),
-                (monster['name'], "#ff4444"),
-                (f" {encounter_desc}!\n", "#ffaa00"),
-                ("💀 This beast is far stronger than normal! 💀", "#ff8888")
-            ]
-        else:
-            encounter_parts = [
-                (f"\n{emoji} A ", "#ffffff"),
-                (monster['name'], "#ffaa00"),
-                (f" {encounter_desc}! {emoji}\n", "#ffffff")
-            ]
+        encounter_parts = [
+            (f"\n{emoji} A ", "#ffffff"),
+            (monster['name'], "#ffaa00"),
+            (f" {encounter_desc}! {emoji}\n", "#ffffff")
+        ]
         self.gui._print_colored_parts(encounter_parts)
         
         # Show current quest summary before the fight
@@ -294,9 +269,7 @@ class MonsterEncounterGUI:
         hero = self.gui.game_state.hero
         
         # Check for quest completion using monster type (not display name)
-        completed_quests = self.gui.quest_manager.check_quest_completion(
-            hero, monster_type
-        )
+        completed_quests = self.gui.quest_manager.check_quest_completion(hero, monster_type)
         
         if completed_quests:
             for quest in completed_quests:
@@ -304,18 +277,6 @@ class MonsterEncounterGUI:
             
             # Clean up completed quests
             self.gui.quest_manager.clear_completed_quests(hero)
-        
-        # Check for bounty progress
-        progressed_bounties = self.gui.bounty_manager.check_bounty_progress(
-            hero, monster_type
-        )
-        
-        if progressed_bounties:
-            for bounty in progressed_bounties:
-                self._display_bounty_progress(bounty)
-        
-        # Check for side quest completion
-        self._check_side_quest_completion(monster_type)
     
     def _display_quest_completion(self, quest):
         """Display quest completion message and XP progress"""
@@ -359,24 +320,6 @@ class MonsterEncounterGUI:
             (f"({xp_needed_to_level - xp_after} XP to Level {current_level + 1})", "#888888")
         ]
         self.gui._print_colored_parts(xp_progress_parts)
-    
-    def _display_bounty_progress(self, bounty):
-        """Display bounty progress notification"""
-        if bounty.completed:
-            bounty_parts = [
-                ("\n🎯 Bounty Progress: ", "#ffaa00"),
-                (bounty.description, "#ffffff"),
-                (" - ", "#888888"),
-                ("COMPLETED! ✅", "#00ff00")
-            ]
-        else:
-            progress_text = f"{bounty.current_count}/{bounty.target_count}"
-            bounty_parts = [
-                ("\n🎯 Bounty Progress: ", "#ffaa00"),
-                (bounty.description, "#ffffff"),
-                (f" ({progress_text})", "#8844ff")
-            ]
-        self.gui._print_colored_parts(bounty_parts)
     
     def _attempt_run_away(self, monster):
         """Attempt to run away with 50% chance of monster attack"""
@@ -747,78 +690,3 @@ class MonsterEncounterGUI:
         
         # No level-appropriate monsters found in this biome
         return None
-    
-    def _check_side_quest_completion(self, defeated_monster_type):
-        """Check if any side quests were completed by defeating this monster"""
-        hero = self.gui.game_state.hero
-        
-        # Get active side quests
-        side_quests = hero.get('side_quests', [])
-        active_side_quests = [q for q in side_quests if not q.get('completed', False)]
-        
-        current_biome = getattr(self.gui, 'current_biome', 'grassland')
-        
-        for quest in active_side_quests:
-            # Check if this quest can be completed in the current biome
-            if quest['target_biome'] == current_biome:
-                # Simple completion logic - any monster defeated in the target biome completes the quest
-                # This is a simplified version - could be made more specific later
-                self._complete_side_quest(quest)
-                break  # Only complete one side quest per battle
-    
-    def _complete_side_quest(self, quest):
-        """Complete a side quest and award rewards"""
-        hero = self.gui.game_state.hero
-        
-        # Mark quest as completed
-        quest['completed'] = True
-        
-        # Award gold reward
-        hero['gold'] += quest['reward_gold']
-        
-        # Display completion message
-        self.gui.print_text("\n" + "=" * 60)
-        self.gui.print_text("🎉 SIDE QUEST COMPLETED! 🎉")
-        self.gui.print_text("=" * 60)
-        
-        completion_parts = [
-            ("📜 Quest: ", "#ffffff"),
-            (quest['name'], "#ffaa00")
-        ]
-        self.gui._print_colored_parts(completion_parts)
-        
-        self.gui.print_text(f"✅ {quest['description']}")
-        
-        reward_parts = [
-            ("💰 Reward: ", "#ffffff"),
-            (f"+{quest['reward_gold']} gold", "#ffdd00")
-        ]
-        self.gui._print_colored_parts(reward_parts)
-        
-        total_parts = [
-            ("💳 Total Gold: ", "#ffffff"),
-            (f"{hero['gold']}", "#ffdd00")
-        ]
-        self.gui._print_colored_parts(total_parts)
-        
-        self.gui.print_text(f"\n🙏 {quest['npc'].title()} will be grateful")
-        self.gui.print_text("for your help when you return to the tavern!")
-        
-        # Award bonus XP for side quest completion
-        bonus_xp = quest['reward_gold'] // 10  # 10% of gold reward as XP
-        hero['xp'] += bonus_xp
-        
-        if bonus_xp > 0:
-            xp_parts = [
-                ("⭐ Bonus XP: ", "#ffffff"),
-                (f"+{bonus_xp}", "#00ff88")
-            ]
-            self.gui._print_colored_parts(xp_parts)
-        
-        # Track side quest completion for achievements
-        if hasattr(self.gui, 'achievement_manager'):
-            self.gui.achievement_manager.track_side_quest_completion()
-            # Track gold earned
-            self.gui.achievement_manager.track_gold_earned(quest['reward_gold'])
-        
-        self.gui.print_text("=" * 60)
