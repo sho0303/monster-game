@@ -839,6 +839,10 @@ class GameGUI:
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
         
+        # Initialize achievement system
+        from gui_achievements import AchievementManager
+        self.achievement_manager = AchievementManager(self)
+        
         # Start hero selection
         self.select_hero()
     
@@ -1083,11 +1087,13 @@ class GameGUI:
             elif choice == 4:
                 self.show_quests()
             elif choice == 5:
-                self.teleport_to_random_biome()
+                self.show_achievements()
             elif choice == 6:
+                self.teleport_to_random_biome()
+            elif choice == 7:
                 self.save_load_manager.show_save_interface()
         
-        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
+        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🏆 Achievements", "🌀 Teleport", "💾 Save Game"], on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""
@@ -1357,6 +1363,294 @@ class GameGUI:
         buttons.append("🔙 Back")
         
         self.set_buttons(buttons, on_drop_choice)
+
+    def show_achievements(self):
+        """Display achievement interface"""
+        self.clear_text()
+        
+        self.print_text("🏆 ACHIEVEMENTS & COLLECTIONS 🏆")
+        self.print_text("=" * 60)
+        
+        # Show overall completion stats
+        completion_pct = self.achievement_manager.get_completion_percentage()
+        completion_parts = [
+            ("📊 Overall Progress: ", "#ffffff"),
+            (f"{completion_pct:.1f}%", "#ffaa00"),
+            (" complete", "#ffffff")
+        ]
+        self._print_colored_parts(completion_parts)
+        
+        completed_achievements = self.achievement_manager.get_completed_achievements()
+        total_visible = len(self.achievement_manager.get_visible_achievements())
+        
+        progress_parts = [
+            ("🏅 Achievements Unlocked: ", "#ffffff"),
+            (f"{len(completed_achievements)}/{total_visible}", "#ffdd00")
+        ]
+        self._print_colored_parts(progress_parts)
+        
+        self.print_text("\n" + "-" * 60)
+        
+        # Show achievements by category
+        categories = ["combat", "exploration", "collection", "progression", "special"]
+        category_names = {
+            "combat": "⚔️ Combat Mastery",
+            "exploration": "🗺️ World Explorer", 
+            "collection": "📚 Monster Hunter",
+            "progression": "⭐ Character Growth",
+            "special": "🎭 Special Accomplishments"
+        }
+        
+        for category in categories:
+            achievements = self.achievement_manager.get_achievements_by_category(category)
+            visible_achievements = [ach for ach in achievements if not ach.hidden or ach.unlocked]
+            
+            if visible_achievements:
+                self.print_text(f"\n{category_names[category]}")
+                self.print_text("-" * 30)
+                
+                for ach in visible_achievements[:3]:  # Show first 3 in each category
+                    status_icon = "✅" if ach.completed else "⏳"
+                    progress_text = ""
+                    
+                    if not ach.completed:
+                        if ach.target_value > 1:
+                            progress_text = f" ({ach.current_progress}/{ach.target_value})"
+                        else:
+                            progress_text = f" (In Progress)"
+                    
+                    self.print_text(f"{status_icon} {ach.name}{progress_text}")
+                    self.print_text(f"   {ach.description}")
+                    
+                    if ach.completed and ach.reward_type != "title":
+                        reward_text = ""
+                        if ach.reward_type == "gold":
+                            reward_text = f"💰 Reward: {ach.reward_value} gold"
+                        elif ach.reward_type == "stat_bonus":
+                            reward_text = f"⭐ Reward: +{ach.reward_value} stat bonus"
+                        
+                        if reward_text:
+                            reward_parts = [("   ", "#ffffff"), (reward_text, "#ffdd00")]
+                            self._print_colored_parts(reward_parts)
+        
+        # Show recent achievements
+        recent_completed = [ach for ach in completed_achievements if ach.completed_at]
+        if recent_completed:
+            # Sort by completion date, most recent first
+            recent_completed.sort(key=lambda x: x.completed_at, reverse=True)
+            
+            self.print_text(f"\n🎉 Recent Achievements")
+            self.print_text("-" * 20)
+            
+            for ach in recent_completed[:3]:  # Show 3 most recent
+                self.print_text(f"✨ {ach.name}")
+        
+        # Menu options
+        def on_achievement_choice(choice):
+            if choice == 1:
+                self.show_achievement_details()
+            elif choice == 2:
+                self.show_monster_collection()
+            elif choice == 3:
+                self.show_player_statistics()
+            elif choice == 4:
+                self.main_menu()
+        
+        buttons = [
+            "📋 View All Details",
+            "👹 Monster Collection", 
+            "📊 Statistics",
+            "🔙 Back to Menu"
+        ]
+        
+        self.set_buttons(buttons, on_achievement_choice)
+    
+    def show_achievement_details(self):
+        """Show detailed achievement list"""
+        self.clear_text()
+        
+        self.print_text("🏆 DETAILED ACHIEVEMENTS")
+        self.print_text("=" * 50)
+        
+        visible_achievements = self.achievement_manager.get_visible_achievements()
+        
+        for i, ach in enumerate(visible_achievements, 1):
+            status = "✅ COMPLETED" if ach.completed else "⏳ In Progress"
+            status_color = "#00ff88" if ach.completed else "#ffaa00"
+            
+            self.print_text(f"\n{i}. {ach.name}")
+            
+            status_parts = [
+                ("   Status: ", "#ffffff"),
+                (status, status_color)
+            ]
+            self._print_colored_parts(status_parts)
+            
+            self.print_text(f"   Description: {ach.description}")
+            
+            if not ach.completed and ach.target_value > 1:
+                progress_parts = [
+                    ("   Progress: ", "#ffffff"),
+                    (f"{ach.current_progress}/{ach.target_value}", "#ffaa00"),
+                    (f" ({(ach.current_progress/ach.target_value)*100:.1f}%)", "#888888")
+                ]
+                self._print_colored_parts(progress_parts)
+            
+            # Show reward
+            if ach.reward_type == "gold":
+                reward_text = f"💰 {ach.reward_value} gold"
+            elif ach.reward_type == "title":
+                reward_text = f"🎖️ Title: '{ach.name}'"
+            elif ach.reward_type == "stat_bonus":
+                reward_text = f"⭐ +{ach.reward_value} permanent stat bonus"
+            else:
+                reward_text = "🎁 Special reward"
+            
+            reward_parts = [
+                ("   Reward: ", "#ffffff"),
+                (reward_text, "#ffdd00")
+            ]
+            self._print_colored_parts(reward_parts)
+        
+        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
+    
+    def show_monster_collection(self):
+        """Show monster collection progress"""
+        self.clear_text()
+        
+        self.print_text("👹 MONSTER COLLECTION")
+        self.print_text("=" * 50)
+        
+        monsters_killed = self.achievement_manager.player_stats['monsters_killed']
+        
+        if not monsters_killed:
+            self.print_text("No monsters defeated yet!")
+            self.print_text("Go forth and battle to start your collection!")
+        else:
+            total_kills = sum(monsters_killed.values())
+            unique_monsters = len(monsters_killed)
+            
+            collection_parts = [
+                ("📊 Total Kills: ", "#ffffff"),
+                (str(total_kills), "#ffaa00"),
+                (" | Unique Types: ", "#ffffff"),
+                (str(unique_monsters), "#ffdd00")
+            ]
+            self._print_colored_parts(collection_parts)
+            
+            self.print_text("\n📚 Defeated Monsters:")
+            self.print_text("-" * 25)
+            
+            # Sort by kill count, highest first
+            sorted_monsters = sorted(monsters_killed.items(), key=lambda x: x[1], reverse=True)
+            
+            for monster_name, kill_count in sorted_monsters:
+                kill_parts = [
+                    ("👹 ", "#ffffff"),
+                    (monster_name, "#ffaa00"),
+                    (f": {kill_count}", "#ffdd00"),
+                    (" kills" if kill_count != 1 else " kill", "#ffffff")
+                ]
+                self._print_colored_parts(kill_parts)
+        
+        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
+    
+    def show_player_statistics(self):
+        """Show comprehensive player statistics"""
+        self.clear_text()
+        
+        self.print_text("📊 PLAYER STATISTICS")
+        self.print_text("=" * 50)
+        
+        stats = self.achievement_manager.player_stats
+        hero = self.game_state.hero
+        
+        # Combat Stats
+        self.print_text("⚔️ Combat Statistics")
+        self.print_text("-" * 20)
+        
+        total_monsters = sum(stats['monsters_killed'].values()) if stats['monsters_killed'] else 0
+        win_rate = 0
+        if stats['combats_won'] + stats['combats_lost'] > 0:
+            win_rate = (stats['combats_won'] / (stats['combats_won'] + stats['combats_lost'])) * 100
+        
+        combat_stats = [
+            ("Total Monsters Defeated: ", str(total_monsters)),
+            ("Combats Won: ", str(stats['combats_won'])),
+            ("Combats Lost: ", str(stats['combats_lost'])),
+            ("Win Rate: ", f"{win_rate:.1f}%"),
+            ("Deaths: ", str(stats['deaths']))
+        ]
+        
+        for label, value in combat_stats:
+            stat_parts = [
+                (label, "#ffffff"),
+                (value, "#ffaa00")
+            ]
+            self._print_colored_parts(stat_parts)
+        
+        # Exploration Stats
+        self.print_text("\n🗺️ Exploration Statistics")
+        self.print_text("-" * 25)
+        
+        biomes_count = len(stats['biomes_visited'])
+        secret_discovered = "Yes" if stats['secret_dungeon_discovered'] else "No"
+        
+        exploration_stats = [
+            ("Biomes Discovered: ", f"{biomes_count}/5"),
+            ("Secret Dungeon Found: ", secret_discovered),
+            ("Teleportations Used: ", "N/A")  # Could track this
+        ]
+        
+        for label, value in exploration_stats:
+            stat_parts = [
+                (label, "#ffffff"),
+                (value, "#ffaa00")  
+            ]
+            self._print_colored_parts(stat_parts)
+        
+        # Progress Stats
+        self.print_text("\n⭐ Progress Statistics")
+        self.print_text("-" * 22)
+        
+        total_quests = stats['quests_completed'] + stats['side_quests_completed'] + stats['bounties_completed']
+        
+        progress_stats = [
+            ("Current Level: ", str(hero.get('level', 1))),
+            ("Total Quests Completed: ", str(total_quests)),
+            ("Side Quests Completed: ", str(stats['side_quests_completed'])),
+            ("Bounties Completed: ", str(stats['bounties_completed'])),
+            ("Total Gold Earned: ", str(stats['gold_earned_total']))
+        ]
+        
+        for label, value in progress_stats:
+            stat_parts = [
+                (label, "#ffffff"),
+                (value, "#ffaa00")
+            ]
+            self._print_colored_parts(stat_parts)
+        
+        # Social Stats  
+        self.print_text("\n🎭 Social Statistics")
+        self.print_text("-" * 20)
+        
+        npcs_met = len(stats['tavern_npcs_met'])
+        
+        social_stats = [
+            ("Beers Consumed: ", str(stats['beers_consumed'])),
+            ("Tavern NPCs Met: ", f"{npcs_met}/6"),
+            ("Fountain Uses: ", str(stats['fountain_uses'])),
+            ("Blacksmith Visits: ", str(stats['blacksmith_visits']))
+        ]
+        
+        for label, value in social_stats:
+            stat_parts = [
+                (label, "#ffffff"),
+                (value, "#ffaa00")
+            ]
+            self._print_colored_parts(stat_parts)
+        
+        self.set_buttons(["🔙 Back to Achievements"], lambda choice: self.show_achievements())
 
     def game_over(self):
         """Handle game over when hero has 0 lives left"""

@@ -134,6 +134,13 @@ class BackgroundManager:
             # Track previous biome before changing - but only if we're actually changing biomes
             if self.current_biome != biome_name:
                 self.last_biome = self.current_biome
+                
+                # Track biome visit for achievements
+                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
+                    self.gui.achievement_manager.track_biome_visit(biome_name)
+                    # Check for secret dungeon discovery
+                    if biome_name == 'secret_dungeon':
+                        self.gui.achievement_manager.track_secret_dungeon_discovery()
             # If current_biome == biome_name, keep the existing last_biome
             
             self.current_biome = biome_name
@@ -143,6 +150,10 @@ class BackgroundManager:
             # Default to grassland - only update last_biome if we're changing
             if self.current_biome != 'grassland':
                 self.last_biome = self.current_biome
+                
+                # Track biome visit for achievements
+                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
+                    self.gui.achievement_manager.track_biome_visit('grassland')
             # If already grassland, keep the existing last_biome
             
             self.current_biome = 'grassland'

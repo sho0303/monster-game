@@ -374,6 +374,11 @@ class BountyManager:
                 hero['bounty_items'] = []
             hero['bounty_items'].append(bounty.reward_item)
 
+        # Track bounty completion for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            self.gui.achievement_manager.track_bounty_completion()
+            self.gui.achievement_manager.track_gold_earned(bounty.reward_gold)
+
         # Remove bounty from hero's list
         hero['bounties'] = [
             b for b in hero['bounties']

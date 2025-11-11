@@ -228,6 +228,10 @@ class TownGUI:
             hero['beers_consumed'] = 0
         hero['beers_consumed'] += 1
         
+        # Track beer consumption for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            self.gui.achievement_manager.track_beer_consumption()
+        
         # Secret dungeon discovery (15% chance after 3+ beers)
         if (hero['beers_consumed'] >= 3 and 
             not hero.get('secret_dungeon_discovered', False) and 
@@ -688,6 +692,11 @@ class TownGUI:
                 'completed': False,
                 'npc': quest_info['npc']
             })
+            
+            # Track NPC encounter for achievements
+            if hasattr(self.gui, 'achievement_manager'):
+                npc_name = quest_id  # Use quest_id as NPC identifier
+                self.gui.achievement_manager.track_npc_encounter(npc_name)
         
         self.gui.print_text(f"\n✨ The quest has been added to your quest log!")
         self.gui.print_text(f"💡 TIP: Travel to the {target_biome} biome and")
@@ -796,6 +805,10 @@ class TownGUI:
         self.gui.print_text("⚒️ Entering the blacksmith...")
         self.gui.print_text("You hear the ring of hammer on anvil.")
         
+        # Track blacksmith visit for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            self.gui.achievement_manager.track_blacksmith_visit()
+        
         # Use blacksmith system
         self.gui.blacksmith.open()
     
@@ -813,6 +826,11 @@ class TownGUI:
         
         # Small HP restoration
         hero = self.gui.game_state.hero
+        
+        # Track fountain visit for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            self.gui.achievement_manager.track_fountain_use()
+        
         if hero['hp'] < hero['maxhp']:
             heal_amount = min(3, hero['maxhp'] - hero['hp'])  # Heal up to 3 HP
             hero['hp'] += heal_amount
