@@ -922,17 +922,13 @@ class TownGUI:
             self.gui.print_text("The fountain's magic has no effect.")
         
         self.gui.print_text("\nYou feel refreshed by the peaceful atmosphere.")
+        self.gui.print_text("Returning to town in a moment...")
         
-        # Unlock interface immediately so user can see normal buttons
+        # Unlock interface immediately to prevent button lockup
         self.gui.unlock_interface()
         
-        # Show return button instead of automatic return
-        def on_fountain_choice(choice):
-            if choice == 1:
-                self.enter_town()
-        
-        fountain_buttons = ["🏘️ Return to Town"]
-        self.gui.set_buttons(fountain_buttons, on_fountain_choice)
+        # Automatically return to town after 3 seconds
+        self.gui.root.after(3000, self.enter_town)
     
     def _leave_town(self):
         """Leave town and return to main menu"""
