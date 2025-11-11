@@ -405,6 +405,11 @@ class AchievementManager:
         if new_level >= 10:
             self.update_progress("veteran", new_level - 9)
     
+    def track_fountain_use(self):
+        """Track fountain uses for achievements"""
+        self.player_stats['fountain_uses'] += 1
+        # Currently no specific fountain achievements, but tracking for future use
+    
     def get_achievements_by_category(self, category: str) -> List[Achievement]:
         """Get all achievements in a category"""
         return [ach for ach in self.achievements.values() if ach.category == category]
