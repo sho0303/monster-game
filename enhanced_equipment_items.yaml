@@ -1,0 +1,66 @@
+# Enhanced Weapons and Armor for Equipment System
+# Add these items to store.yaml for more customization options
+
+Enhanced_Weapons:
+  - name: Dragonslayer Blade
+    attack: 45
+    cost: 800
+    class: Warrior
+    ascii_art: art/strong_sword.png
+    description: A legendary sword forged from dragon scales
+  
+  - name: Arcane Devastator
+    attack: 50
+    cost: 900
+    class: Magician
+    ascii_art: art/magic_wand.png
+    description: Staff imbued with ancient magical energies
+  
+  - name: Shadow Strike Katana
+    attack: 42
+    cost: 750
+    class: Ninja
+    ascii_art: art/lightsaber.png
+    description: Blade that cuts through both flesh and shadow
+  
+  - name: Celestial Hammer
+    attack: 55
+    cost: 1000
+    class: Warrior
+    ascii_art: art/strong_sword.png
+    description: Blessed weapon of divine power
+
+Enhanced_Armor:
+  - name: Dragonhide Plate
+    cost: 800
+    defense: 50
+    class: Warrior
+    ascii_art: art/gold_plate_mail.png
+    description: Armor crafted from ancient dragon hide
+  
+  - name: Archmage Robes
+    cost: 700
+    defense: 35
+    class: Magician
+    ascii_art: art/wizard_robe.png
+    description: Robes woven with protective enchantments
+  
+  - name: Shadowweave Suit
+    cost: 650
+    defense: 40
+    class: Ninja
+    ascii_art: art/magic_shinobi_jacket.png
+    description: Flexible armor that bends light and shadow
+  
+  - name: Divine Guardian Plate
+    cost: 950
+    defense: 60
+    class: Warrior
+    ascii_art: art/gold_plate_mail.png
+    description: Holy armor blessed by celestial beings
+
+# Instructions for integration:
+# 1. Add the Enhanced_Weapons section items to the Weapons section in store.yaml
+# 2. Add the Enhanced_Armor section items to the Armour section in store.yaml
+# 3. These provide higher-tier equipment perfect for customization
+# 4. Players can then upgrade and enchant these premium items

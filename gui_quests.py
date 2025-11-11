@@ -6,10 +6,12 @@ import random
 
 class Quest:
     """Represents a single quest"""
-    def __init__(self, quest_type, target, reward_xp, description):
+    def __init__(self, quest_type, target, reward_xp, description, reward_gold=0, reward_item=None):
         self.quest_type = quest_type  # 'kill_monster', etc.
         self.target = target  # monster name
         self.reward_xp = reward_xp
+        self.reward_gold = reward_gold  # Gold reward
+        self.reward_item = reward_item  # Equipment reward (dict with name, attack, defense, etc.)
         self.description = description
         self.completed = False
         self.status = 'active'  # 'active', 'completed'
@@ -25,6 +27,8 @@ class Quest:
             'quest_type': self.quest_type,
             'target': self.target,
             'reward_xp': self.reward_xp,
+            'reward_gold': getattr(self, 'reward_gold', 0),
+            'reward_item': getattr(self, 'reward_item', None),
             'description': self.description,
             'completed': self.completed,
             'status': self.status,
@@ -40,7 +44,9 @@ class Quest:
             quest_dict['quest_type'],
             quest_dict['target'],
             quest_dict['reward_xp'],
-            quest_dict['description']
+            quest_dict['description'],
+            quest_dict.get('reward_gold', 0),
+            quest_dict.get('reward_item', None)
         )
         quest.completed = quest_dict.get('completed', False)
         quest.status = quest_dict.get('status', 'active')
@@ -67,6 +73,38 @@ class QuestManager:
         
         # Cross-biome mission chance (forces exploration)
         self.CROSS_BIOME_MISSION_CHANCE = 0.6  # 60% chance for cross-biome quest
+        
+        # Quest Equipment Rewards by level tier
+        self.quest_rewards = {
+            'novice': [  # Levels 1-3
+                {'name': 'Rusty Sword', 'attack': 12, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Basic Edge'},
+                {'name': 'Training Bow', 'attack': 10, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Steady Aim'},
+                {'name': 'Apprentice Wand', 'attack': 14, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Magic Spark'},
+                {'name': 'Cloth Armor', 'defense': 8, 'class': 'All', 'type': 'armor', 'enchantment': 'Basic Protection'},
+                {'name': 'Simple Ring', 'attack': 1, 'defense': 2, 'class': 'All', 'type': 'accessory', 'enchantment': 'Minor Boost'},
+            ],
+            'adept': [  # Levels 4-6
+                {'name': 'Steel Blade', 'attack': 20, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Sharp Edge'},
+                {'name': 'Composite Bow', 'attack': 18, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Piercing Shot'},
+                {'name': 'Journeyman Staff', 'attack': 22, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Mana Focus'},
+                {'name': 'Reinforced Leather', 'defense': 15, 'class': 'All', 'type': 'armor', 'enchantment': 'Sturdy Guard'},
+                {'name': 'Veteran\'s Badge', 'attack': 3, 'defense': 4, 'class': 'All', 'type': 'accessory', 'enchantment': 'Combat Experience'},
+            ],
+            'expert': [  # Levels 7-9
+                {'name': 'Masterwork Sword', 'attack': 30, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Perfect Balance'},
+                {'name': 'Elven Longbow', 'attack': 28, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'True Shot'},
+                {'name': 'Master\'s Rod', 'attack': 32, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Spell Mastery'},
+                {'name': 'Chainmail Vest', 'defense': 22, 'class': 'All', 'type': 'armor', 'enchantment': 'Metal Ward'},
+                {'name': 'Expert\'s Medallion', 'attack': 5, 'defense': 6, 'class': 'All', 'type': 'accessory', 'enchantment': 'Skill Boost'},
+            ],
+            'master': [  # Levels 10+
+                {'name': 'Legendary Claymore', 'attack': 40, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Heroic Might'},
+                {'name': 'Shadowstrike Bow', 'attack': 38, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Shadow Arrow'},
+                {'name': 'Archmage\'s Scepter', 'attack': 42, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Ultimate Power'},
+                {'name': 'Plate Armor', 'defense': 30, 'class': 'All', 'type': 'armor', 'enchantment': 'Fortress'},
+                {'name': 'Master\'s Crown', 'attack': 8, 'defense': 10, 'class': 'All', 'type': 'accessory', 'enchantment': 'Supreme Authority'},
+            ]
+        }
         
     def initialize_hero_quests(self, hero):
         """Initialize quest list in hero object if not present"""
@@ -223,12 +261,28 @@ class QuestManager:
         if cross_biome_bonus > 1.0:
             quest_description += f" (+{int((cross_biome_bonus-1)*100)}% XP bonus for exploration!)"
         
+        # Generate equipment and gold rewards
+        hero_class = self.gui.game_state.hero.get('class', 'Warrior')
+        reward_item, reward_gold = self.select_quest_reward(hero_class, hero_level)
+        
+        # Add reward info to description
+        reward_desc = f"\nRewards: {final_xp} XP"
+        if reward_gold > 0:
+            reward_desc += f", {reward_gold} gold"
+        if reward_item:
+            reward_desc += f", {reward_item['name']}"
+            if reward_item.get('enchantment'):
+                reward_desc += f" ({reward_item['enchantment']})"
+        quest_description += reward_desc
+        
         # Create enhanced quest object with biome info
         quest = Quest(
             quest_type='kill_monster',
             target=monster_name,
             reward_xp=final_xp,
-            description=quest_description
+            description=quest_description,
+            reward_gold=reward_gold,
+            reward_item=reward_item
         )
         
         # Add biome info to quest for tracking
@@ -264,6 +318,23 @@ class QuestManager:
                 
                 # Give XP reward
                 hero['xp'] += quest.reward_xp
+                
+                # Give gold reward
+                if hasattr(quest, 'reward_gold') and quest.reward_gold > 0:
+                    hero['gold'] = hero.get('gold', 0) + quest.reward_gold
+                
+                # Give equipment reward
+                if hasattr(quest, 'reward_item') and quest.reward_item:
+                    # Add to inventory or equipment system
+                    if not hasattr(hero, 'inventory'):
+                        hero['inventory'] = []
+                    
+                    # Create equipment entry
+                    equipment_entry = quest.reward_item.copy()
+                    equipment_entry['source'] = 'quest_reward'
+                    equipment_entry['cost'] = 0  # Quest rewards are free
+                    
+                    hero['inventory'].append(equipment_entry)
                 
                 # Track quest completion by level (for quest limits)
                 current_level = str(hero.get('level', 1))
@@ -312,3 +383,36 @@ class QuestManager:
         """Remove completed quests from hero's quest list"""
         self.initialize_hero_quests(hero)
         hero['quests'] = [q for q in hero['quests'] if not q.get('completed', False)]
+    
+    def get_hero_reward_tier(self, hero_level):
+        """Determine reward tier based on hero level"""
+        if hero_level <= 3:
+            return 'novice'
+        elif hero_level <= 6:
+            return 'adept'
+        elif hero_level <= 9:
+            return 'expert'
+        else:
+            return 'master'
+    
+    def select_quest_reward(self, hero_class, hero_level, include_gold=True):
+        """Select appropriate equipment reward for quest completion"""
+        reward_tier = self.get_hero_reward_tier(hero_level)
+        available_rewards = self.quest_rewards[reward_tier]
+        
+        # Filter rewards by hero class
+        class_rewards = [r for r in available_rewards if r['class'] == hero_class or r['class'] == 'All']
+        
+        if not class_rewards:
+            return None, 0
+        
+        # Select random equipment
+        equipment = random.choice(class_rewards).copy()
+        
+        # Calculate gold reward based on level
+        gold_reward = 0
+        if include_gold:
+            base_gold = 15 + (hero_level * 5)  # 20-70+ gold based on level
+            gold_reward = random.randint(int(base_gold * 0.8), int(base_gold * 1.2))
+        
+        return equipment, gold_reward

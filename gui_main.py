@@ -19,6 +19,7 @@ from gui_bounty import BountyManager
 from gui_save_load import SaveLoadManager
 from gui_town import TownGUI
 from gui_image_manager import ImageManager
+from gui_equipment import EquipmentManager
 from gui_background_manager import BackgroundManager
 
 
@@ -851,6 +852,7 @@ class GameGUI:
         self.bounty_manager = BountyManager(self)
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
+        self.equipment_manager = EquipmentManager(self)
         
         # Initialize achievement system
         from gui_achievements import AchievementManager
@@ -979,11 +981,15 @@ class GameGUI:
         self.print_text("⚔️  Hero Stats ⚔️")
         self.print_text("=" * 60)
         
-        for key, value in self.game_state.hero.items():
-            # Skip displaying quests in hero stats - they have their own section
-            if key == 'quests':
+        # Display only user-friendly hero stats, skip internal data
+        display_fields = ['name', 'class', 'level', 'xp', 'hp', 'maxhp', 'attack', 'defense', 'gold', 'lives_left', 'age', 'weapon', 'armour', 'item', 'items']
+        
+        for key in display_fields:
+            if key not in self.game_state.hero:
                 continue
-            elif key == 'xp':
+            value = self.game_state.hero[key]
+            
+            if key == 'xp':
                 # Special handling for XP with colored values
                 xp_text = f"  {key}: "
                 xp_current = str(value)
@@ -1069,17 +1075,44 @@ class GameGUI:
         self._print_colored_parts(location_parts)
         self.print_text("")
         
-        # Display active quests
+        # Display active quests with location hints
         active_quests = self.quest_manager.get_active_quests(self.game_state.hero)
         if active_quests:
             self.print_text("\n📜 Active Quests:")
             for i, quest in enumerate(active_quests[:3], 1):  # Show max 3 quests
+                # Check if quest target is available in current biome
+                target_monster = quest.target
+                quest_biome = None
+                location_hint = ""
+                
+                if target_monster in self.game_state.monsters:
+                    monster_data = self.game_state.monsters[target_monster]
+                    quest_biome = monster_data.get('biome', 'grassland')
+                    current_biome = self.background_manager.current_biome
+                    
+                    if quest_biome == current_biome or (quest_biome == 'secret_dungeon' and current_biome == 'dungeon'):
+                        location_hint = " 🎯"  # Target here
+                    elif quest_biome == 'secret_dungeon':
+                        location_hint = " 🕳️"  # Secret dungeon
+                    else:
+                        biome_emojis = {'grassland': '🌱', 'desert': '🏜️', 'ocean': '🌊', 'dungeon': '🏰'}
+                        location_hint = f" {biome_emojis.get(quest_biome, '📍')}"
+                
                 quest_parts = [
                     (f"  {i}. ", "#ffffff"),
                     (quest.description, "#ffaa00"),
+                    (location_hint, "#88ddff"),
                     (f" ({quest.reward_xp} XP)", "#8844ff")
                 ]
                 self._print_colored_parts(quest_parts)
+                
+                # Add helpful hint for secret dungeon quests
+                if quest_biome == 'secret_dungeon':
+                    hint_parts = [
+                        ("      💡 Hint: ", "#ffffff"),
+                        ("Use 'Quests' menu for detailed location info", "#aaaaaa")
+                    ]
+                    self._print_colored_parts(hint_parts)
         else:
             quest_parts = [
                 ("📜 No active quests - visit ", "#ffffff"),
@@ -1087,26 +1120,113 @@ class GameGUI:
                 (" to get started!", "#ffffff")
             ]
             self._print_colored_parts(quest_parts)
+
+        # Display active bounties
+        if hasattr(self, 'bounty_manager'):
+            active_bounties = self.bounty_manager.get_active_bounties(self.game_state.hero)
+            if active_bounties:
+                self.print_text("\n🎯 Active Bounties:")
+                for i, bounty in enumerate(active_bounties[:3], 1):  # Show max 3 bounties
+                    progress = bounty.current_count
+                    target = bounty.target_count
+                    is_completed = bounty.completed or progress >= target
+                    color = "#00ff88" if is_completed else "#ffdd44"
+                    
+                    # Get biome information for bounty target
+                    biome_hint = ""
+                    try:
+                        # First try to extract from description
+                        desc_lower = bounty.description.lower()
+                        if "grasslands" in desc_lower or "grassland" in desc_lower:
+                            biome_hint = " [Grassland]"
+                        elif "desert" in desc_lower:
+                            biome_hint = " [Desert]"
+                        elif "dungeon" in desc_lower:
+                            biome_hint = " [Dungeon]"
+                        elif "ocean" in desc_lower:
+                            biome_hint = " [Ocean]"
+                        else:
+                            # Fallback: look up monster biome from game data
+                            target_name = bounty.target.replace("Elite ", "")  # Remove Elite prefix
+                            monsters = self.game_state.monsters
+                            if target_name in monsters:
+                                monster_biome = monsters[target_name].get('biome', 'grassland')
+                                biome_display = {
+                                    'grassland': '[Grassland]',
+                                    'desert': '[Desert]',
+                                    'dungeon': '[Dungeon]',
+                                    'ocean': '[Ocean]'
+                                }
+                                biome_hint = f" {biome_display.get(monster_biome, '[Unknown]')}"
+                    except:
+                        biome_hint = ""  # If anything fails, just show without biome
+                    
+                    # Add completion status to description
+                    completion_status = " ✅ COMPLETED" if is_completed else ""
+                    
+                    if bounty.bounty_type == 'hunt':
+                        bounty_desc = f"Hunt {bounty.target} ({bounty.difficulty}){biome_hint}{completion_status}"
+                    elif bounty.bounty_type == 'collector':
+                        bounty_desc = f"Kill {progress}/{target} {bounty.target} ({bounty.difficulty}){biome_hint}{completion_status}"
+                    elif bounty.bounty_type == 'elite_boss':
+                        bounty_desc = f"Elite Boss: {bounty.target} ({bounty.difficulty}){biome_hint}{completion_status}"
+                    else:
+                        bounty_desc = f"{bounty.target} ({bounty.difficulty}){biome_hint}{completion_status}"
+                    
+                    # Build reward description
+                    reward_desc = f"{bounty.reward_gold}g"
+                    if bounty.reward_item:
+                        item_name = bounty.reward_item.get('name', 'Special Item') if isinstance(bounty.reward_item, dict) else str(bounty.reward_item)
+                        reward_desc += f", {item_name}"
+                    
+                    # Add claim instruction for completed bounties
+                    reward_suffix = " - Go to Tavern to Claim!" if is_completed else ""
+                    
+                    bounty_parts = [
+                        (f"  {i}. ", "#ffffff"),
+                        (bounty_desc, color),
+                        (f" (Reward: {reward_desc}){reward_suffix}", "#ff8844" if not is_completed else "#00ff88")
+                    ]
+                    self._print_colored_parts(bounty_parts)
             
         self.print_text("\nWhat would you like to do?")
         
-        def on_menu_select(choice):
-            if choice == 1:
-                self.town.enter_town()
-            elif choice == 2:
-                self.monster_encounter.start()
-            elif choice == 3:
-                self.inventory.use_item()
-            elif choice == 4:
-                self.show_quests()
-            elif choice == 5:
-                self.show_achievements()
-            elif choice == 6:
-                self.teleport_to_random_biome()
-            elif choice == 7:
-                self.save_load_manager.show_save_interface()
+        # Build button list based on available features
+        buttons = ["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests"]
+        button_actions = [
+            lambda: self.town.enter_town(),
+            lambda: self.monster_encounter.start(),
+            lambda: self.inventory.use_item(),
+            lambda: self.show_quests()
+        ]
         
-        self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🏆 Achievements", "🌀 Teleport", "💾 Save Game"], on_menu_select)
+        # Add Quest Help if there are active quests
+        active_quests = self.quest_manager.get_active_quests(self.game_state.hero)
+        if active_quests:
+            buttons.append("❓ Quest Help")
+            button_actions.append(lambda: self.show_quest_help())
+            
+        buttons.append("🏆 Achievements")
+        button_actions.append(lambda: self.show_achievements())
+        
+        # Only show Drop Bounty button if there are active bounties
+        if hasattr(self, 'bounty_manager'):
+            active_bounties = self.bounty_manager.get_active_bounties(self.game_state.hero)
+            if active_bounties:
+                buttons.append("🗑️ Drop Bounty")
+                button_actions.append(lambda: self.show_drop_bounty_menu())
+                
+        buttons.extend(["🌀 Teleport", "💾 Save Game"])
+        button_actions.extend([
+            lambda: self.teleport_to_random_biome(),
+            lambda: self.save_load_manager.show_save_interface()
+        ])
+        
+        def on_menu_select(choice):
+            if 1 <= choice <= len(button_actions):
+                button_actions[choice - 1]()
+        
+        self.set_buttons(buttons, on_menu_select)
 
     def show_quests(self):
         """Display quest interface"""
@@ -1157,8 +1277,103 @@ class GameGUI:
         
         self.print_text("\n" + "-" * 50)
         
-        # Display main quests
+        # Display main quests with detailed information
         active_quests = self.quest_manager.get_active_quests(hero)
+        
+        if active_quests:
+            self.print_text("🎯 ACTIVE KILL QUESTS:")
+            for i, quest in enumerate(active_quests, 1):
+                quest_parts = [
+                    (f"\n{i}. ", "#ffffff"),
+                    (quest.description, "#ffaa00")
+                ]
+                self._print_colored_parts(quest_parts)
+                
+                # Show detailed quest information
+                target_monster = quest.target
+                reward_xp = quest.reward_xp
+                
+                # Get monster information if available
+                monsters = self.game_state.monsters
+                if target_monster in monsters:
+                    monster_data = monsters[target_monster]
+                    monster_level = monster_data.get('level', 1)
+                    monster_biome = monster_data.get('biome', 'grassland')
+                    monster_hp = monster_data.get('hp', 10)
+                    monster_attack = monster_data.get('attack', 5)
+                    
+                    # Display detailed monster info
+                    detail_parts = [
+                        ("   🎯 Target: ", "#ffffff"),
+                        (f"{target_monster}", "#ff8844"),
+                        (f" (Level {monster_level})", "#ffaa00")
+                    ]
+                    self._print_colored_parts(detail_parts)
+                    
+                    stats_parts = [
+                        ("   📊 Stats: ", "#ffffff"),
+                        (f"{monster_hp} HP", "#ff6666"),
+                        (", ", "#ffffff"),
+                        (f"{monster_attack} ATK", "#ff4444")
+                    ]
+                    self._print_colored_parts(stats_parts)
+                    
+                    # Show biome with special handling for secret dungeon
+                    if monster_biome == 'secret_dungeon':
+                        location_parts = [
+                            ("   🗺️ Location: ", "#ffffff"),
+                            ("🕳️ Secret Dungeon", "#9966ff"),
+                            (" (Use Town → Teleport → Secret Areas)", "#aaaaaa")
+                        ]
+                    else:
+                        biome_display = {
+                            'grassland': '🌱 Grassland',
+                            'desert': '🏜️ Desert', 
+                            'ocean': '🌊 Ocean',
+                            'dungeon': '🏰 Dungeon'
+                        }
+                        location_parts = [
+                            ("   🗺️ Location: ", "#ffffff"),
+                            (biome_display.get(monster_biome, f"📍 {monster_biome.title()}"), "#88ddff")
+                        ]
+                    self._print_colored_parts(location_parts)
+                    
+                    # Show current biome status
+                    current_biome = self.background_manager.current_biome
+                    if current_biome == monster_biome or (monster_biome == 'secret_dungeon' and current_biome == 'dungeon'):
+                        status_parts = [
+                            ("   ✅ Status: ", "#ffffff"),
+                            ("You are in the correct location!", "#00ff88")
+                        ]
+                    else:
+                        if monster_biome == 'secret_dungeon':
+                            status_parts = [
+                                ("   ❓ Status: ", "#ffffff"),
+                                ("Go to Town → Teleport → Secret Areas to reach Secret Dungeon", "#ffaa44")
+                            ]
+                        else:
+                            status_parts = [
+                                ("   📍 Status: ", "#ffffff"),
+                                (f"Travel to {monster_biome.title()} (Press B to cycle biomes or T to teleport)", "#ffaa44")
+                            ]
+                    self._print_colored_parts(status_parts)
+                else:
+                    # Fallback for unknown monsters
+                    detail_parts = [
+                        ("   🎯 Target: ", "#ffffff"),
+                        (f"{target_monster}", "#ff8844"),
+                        (" (Monster data not found)", "#ff6666")
+                    ]
+                    self._print_colored_parts(detail_parts)
+                
+                # Show XP reward
+                reward_parts = [
+                    ("   💎 Reward: ", "#ffffff"),
+                    (f"{reward_xp} XP", "#8844ff")
+                ]
+                self._print_colored_parts(reward_parts)
+            
+            self.print_text("\n" + "-" * 50)
         
         # Display side quests from tavern encounters
         side_quests = hero.get('side_quests', [])
@@ -1320,62 +1535,371 @@ class GameGUI:
             self.set_buttons(buttons, on_quest_menu_choice)
 
     def show_drop_quest_menu(self):
-        """Display quest dropping interface"""
+        """Display enhanced quest dropping interface with low-level filtering"""
         self.clear_text()
         
         hero = self.game_state.hero
         active_quests = self.quest_manager.get_active_quests(hero)
+        hero_level = hero.get('level', 1)
         
-        self.print_text("🗑️ DROP QUEST 🗑️\n")
+        self.print_text("🗑️ QUEST MANAGEMENT 🗑️\n")
         
         if not active_quests:
             self.print_text("No active quests to drop.")
             self.root.after(1500, self.show_quests)
             return
         
-        self.print_text("Select a quest to drop:\n")
+        # Categorize quests by level
+        low_level_quests = []
+        current_level_quests = []
         
-        # Display active quests with numbers
-        for i, quest in enumerate(active_quests, 1):
-            quest_parts = [
-                (f"{i}. ", "#ffffff"),
-                (quest.description, "#ff6666"),  # Red color to indicate dropping
-                (f" (Reward: {quest.reward_xp} XP)", "#ffdd00")
-            ]
-            self._print_colored_parts(quest_parts)
+        for quest in active_quests:
+            quest_level = getattr(quest, 'hero_level_when_created', 1)
+            if quest_level < hero_level - 1:  # 2+ levels below current
+                low_level_quests.append(quest)
+            else:
+                current_level_quests.append(quest)
+        
+        # Display categorized quests
+        if low_level_quests:
+            self.print_text("⬇️ LOW-LEVEL QUESTS (Recommended to drop):")
+            for i, quest in enumerate(low_level_quests, 1):
+                quest_level = getattr(quest, 'hero_level_when_created', 1)
+                quest_parts = [
+                    (f"{i}. ", "#ffffff"),
+                    (quest.description, "#ff6666"),  # Red for low-level
+                    (f" (Lv.{quest_level} quest)", "#888888")
+                ]
+                self._print_colored_parts(quest_parts)
+        
+        if current_level_quests:
+            start_num = len(low_level_quests) + 1
+            self.print_text("\n📋 CURRENT-LEVEL QUESTS:")
+            for i, quest in enumerate(current_level_quests, start_num):
+                quest_level = getattr(quest, 'hero_level_when_created', 1)
+                quest_parts = [
+                    (f"{i}. ", "#ffffff"),
+                    (quest.description, "#ffaa00"),  # Orange for current level
+                    (f" (Lv.{quest_level} quest, {quest.reward_xp} XP)", "#ffdd00")
+                ]
+                self._print_colored_parts(quest_parts)
         
         self.print_text("\n⚠️ Warning: Dropped quests cannot be recovered!")
         
-        def on_drop_choice(choice):
-            if choice <= len(active_quests):
-                # Drop the selected quest (choice is 1-indexed)
-                quest_to_drop = active_quests[choice - 1]
-                if self.quest_manager.drop_quest(hero, choice - 1):
-                    drop_parts = [
-                        ("🗑️ Dropped quest: ", "#ff6666"),
-                        (quest_to_drop.description, "#ffffff")
-                    ]
-                    self._print_colored_parts(drop_parts)
-                    self.print_text("Quest removed from your journal.")
-                    self.root.after(2000, self.show_quests)
-                else:
-                    self.print_text("❌ Failed to drop quest.")
-                    self.root.after(1500, self.show_quests)
-            else:
-                # Back button
-                self.show_quests()
-        
-        # Create buttons for each quest plus back button
+        # Create enhanced button options
         buttons = []
-        for i, quest in enumerate(active_quests, 1):
-            # Truncate long quest descriptions for button text
-            short_desc = quest.description
-            if len(short_desc) > 25:
-                short_desc = short_desc[:22] + "..."
-            buttons.append(f"🗑️ {short_desc}")
+        callbacks = []
+        
+        # Individual quest drop buttons
+        for i in range(1, len(active_quests) + 1):
+            buttons.append(f"{i}. Drop Quest")
+            callbacks.append(lambda choice=i: self._drop_single_quest(choice - 1))
+        
+        # Bulk operations if there are low-level quests
+        if low_level_quests:
+            buttons.append("🗑️ Drop All Low-Level")
+            callbacks.append(lambda: self._drop_low_level_quests(low_level_quests))
+        
+        buttons.append("❌ Cancel")
+        callbacks.append(lambda: self.show_quests())
+        
+        def on_drop_choice(choice):
+            if choice <= len(callbacks):
+                callbacks[choice - 1]()
+        
+        self.set_buttons(buttons, on_drop_choice)
+
+    def _drop_single_quest(self, quest_index):
+        """Drop a single quest by index"""
+        hero = self.game_state.hero
+        active_quests = self.quest_manager.get_active_quests(hero)
+        
+        if 0 <= quest_index < len(active_quests):
+            quest_to_drop = active_quests[quest_index]
+            if self.quest_manager.drop_quest(hero, quest_index):
+                drop_parts = [
+                    ("🗑️ Dropped quest: ", "#ff6666"),
+                    (quest_to_drop.description, "#ffffff")
+                ]
+                self._print_colored_parts(drop_parts)
+                self.print_text("Quest removed from your journal.")
+                self.root.after(2000, self.show_quests)
+            else:
+                self.print_text("❌ Failed to drop quest.")
+                self.root.after(1500, self.show_quests)
+        else:
+            self.show_quests()
+
+    def _drop_low_level_quests(self, low_level_quests):
+        """Drop all low-level quests at once"""
+        hero = self.game_state.hero
+        hero_level = hero.get('level', 1)
+        
+        dropped_count = 0
+        quest_descriptions = []
+        
+        # Drop all low-level quests (iterate in reverse to maintain indices)
+        active_quests = self.quest_manager.get_active_quests(hero)
+        for i in range(len(active_quests) - 1, -1, -1):
+            quest = active_quests[i]
+            quest_level = getattr(quest, 'hero_level_when_created', 1)
+            if quest_level < hero_level - 1:  # 2+ levels below current
+                if self.quest_manager.drop_quest(hero, i):
+                    dropped_count += 1
+                    quest_descriptions.append(quest.description)
+        
+        if dropped_count > 0:
+            self.print_text(f"🗑️ Dropped {dropped_count} low-level quest{'s' if dropped_count > 1 else ''}:")
+            for desc in quest_descriptions:
+                self.print_text(f"  • {desc}", color='#ff6666')
+            self.print_text(f"\nFreed up {dropped_count} quest slot{'s' if dropped_count > 1 else ''}!")
+        else:
+            self.print_text("❌ No low-level quests to drop.")
+        
+        self.root.after(3000, self.show_quests)
+
+    def show_drop_bounty_menu(self):
+        """Display bounty dropping interface similar to quest dropping"""
+        self.clear_text()
+        
+        hero = self.game_state.hero
+        active_bounties = []
+        if hasattr(self, 'bounty_manager'):
+            active_bounties = self.bounty_manager.get_active_bounties(hero)
+        
+        self.print_text("🗑️ BOUNTY MANAGEMENT 🗑️")
+        self.print_text("=" * 50 + "\n")
+        
+        if not active_bounties:
+            self.print_text("No active bounties to drop.")
+            self.root.after(1500, self.main_menu)
+            return
+        
+        hero_level = hero.get('level', 1)
+        
+        # Categorize bounties by appropriateness
+        inappropriate_bounties = []
+        current_bounties = []
+        
+        for i, bounty in enumerate(active_bounties):
+            # Check if bounty target is level-appropriate (within ±2 levels)
+            target_name = bounty.target.replace("Elite ", "")
+            if target_name in self.game_state.monsters:
+                monster_level = self.game_state.monsters[target_name].get('level', 1)
+                if abs(monster_level - hero_level) > 2:
+                    inappropriate_bounties.append((i, bounty, monster_level))
+                else:
+                    current_bounties.append((i, bounty, monster_level))
+            else:
+                current_bounties.append((i, bounty, 1))  # Default to level 1 if unknown
+        
+        # Show active bounties
+        self.print_text("Active Bounties:\n")
+        for i, bounty in enumerate(active_bounties):
+            difficulty_colors = {
+                'Bronze': '#cd7f32',
+                'Silver': '#c0c0c0', 
+                'Gold': '#ffd700'
+            }
+            color = difficulty_colors.get(bounty.difficulty, '#ffffff')
+            
+            # Get biome info
+            biome_hint = ""
+            target_name = bounty.target.replace("Elite ", "")
+            if target_name in self.game_state.monsters:
+                monster_biome = self.game_state.monsters[target_name].get('biome', 'grassland')
+                biome_display = {
+                    'grassland': '[Grassland]',
+                    'desert': '[Desert]',
+                    'dungeon': '[Dungeon]',
+                    'ocean': '[Ocean]'
+                }
+                biome_hint = f" {biome_display.get(monster_biome, '[Unknown]')}"
+                monster_level = self.game_state.monsters[target_name].get('level', 1)
+                level_diff = abs(monster_level - hero_level)
+                if level_diff > 2:
+                    biome_hint += f" ❌ Lv.{monster_level}"
+                else:
+                    biome_hint += f" ✅ Lv.{monster_level}"
+            
+            bounty_parts = [
+                (f"  {i+1}. ", "#ffffff"),
+                (f"{bounty.target} ({bounty.difficulty})", color),
+                (biome_hint, "#ffaa00")
+            ]
+            self._print_colored_parts(bounty_parts)
+        
+        if inappropriate_bounties:
+            self.print_text(f"\n⚠️ {len(inappropriate_bounties)} bounty/bounties are level-inappropriate (±2 level difference)")
+        
+        self.print_text("\n⚠️ Warning: Dropped bounties cannot be recovered!")
+        
+        def on_drop_choice(choice):
+            if choice <= len(active_bounties):
+                self._drop_single_bounty(choice - 1)
+            elif choice == len(active_bounties) + 1 and inappropriate_bounties:
+                self._drop_inappropriate_bounties(inappropriate_bounties)
+            elif choice == len(active_bounties) + (2 if inappropriate_bounties else 1):
+                self.main_menu()
+        
+        buttons = []
+        
+        # Individual bounty drop buttons
+        for i in range(len(active_bounties)):
+            buttons.append(f"{i+1}. Drop Bounty")
+        
+        # Bulk drop inappropriate bounties if any exist
+        if inappropriate_bounties:
+            buttons.append(f"🗑️ Drop All Level-Inappropriate ({len(inappropriate_bounties)})")
+        
+        # Back button
         buttons.append("🔙 Back")
         
         self.set_buttons(buttons, on_drop_choice)
+
+    def _drop_single_bounty(self, bounty_index):
+        """Drop a single bounty by index"""
+        hero = self.game_state.hero
+        if hasattr(self, 'bounty_manager'):
+            active_bounties = self.bounty_manager.get_active_bounties(hero)
+            
+            if 0 <= bounty_index < len(active_bounties):
+                bounty_to_drop = active_bounties[bounty_index]
+                if self.bounty_manager.drop_bounty(hero, bounty_index):
+                    drop_parts = [
+                        ("🗑️ Dropped bounty: ", "#ff6666"),
+                        (f"{bounty_to_drop.target} ({bounty_to_drop.difficulty})", "#ffffff")
+                    ]
+                    self._print_colored_parts(drop_parts)
+                    self.print_text("You can get new bounties at the tavern bounty board.")
+                    self.root.after(2000, self.main_menu)
+                else:
+                    self.print_text("❌ Failed to drop bounty.")
+                    self.root.after(1500, self.main_menu)
+            else:
+                self.print_text("❌ Invalid bounty selection.")
+                self.root.after(1500, self.main_menu)
+
+    def _drop_inappropriate_bounties(self, inappropriate_bounties):
+        """Drop all level-inappropriate bounties at once"""
+        hero = self.game_state.hero
+        if not hasattr(self, 'bounty_manager'):
+            return
+            
+        dropped_count = 0
+        dropped_names = []
+        
+        # Sort by index in reverse order to maintain indices during removal
+        inappropriate_bounties.sort(key=lambda x: x[0], reverse=True)
+        
+        for bounty_index, bounty, monster_level in inappropriate_bounties:
+            if self.bounty_manager.drop_bounty(hero, bounty_index):
+                dropped_count += 1
+                dropped_names.append(f"{bounty.target} (Lv.{monster_level})")
+        
+        if dropped_count > 0:
+            self.print_text(f"🗑️ Dropped {dropped_count} inappropriate bounty/bounties:")
+            for name in dropped_names:
+                self.print_text(f"  • {name}")
+            self.print_text(f"\nFreed up {dropped_count} bounty slot{'s' if dropped_count > 1 else ''}!")
+            self.print_text("You can get new level-appropriate bounties at the tavern.")
+        
+        self.print_text(f"\n✅ {dropped_count} bounty/bounties dropped successfully!")
+        
+        # Return to main menu after brief pause
+        self.root.after(2000, self.main_menu)
+
+    def show_quest_help(self):
+        """Show quick quest help and navigation guidance"""
+        self.clear_text()
+        
+        hero = self.game_state.hero
+        active_quests = self.quest_manager.get_active_quests(hero)
+        current_biome = self.background_manager.current_biome
+        
+        self.print_text("❓ QUEST HELP & NAVIGATION ❓")
+        self.print_text("=" * 50)
+        
+        if not active_quests:
+            self.print_text("\n🚫 No active quests.")
+            self.print_text("Go to the Quests menu to accept new quests!")
+            self.root.after(2000, self.main_menu)
+            return
+        
+        self.print_text(f"\n📍 You are currently in: {current_biome.title()}")
+        self.print_text("\n🎯 Your Active Quests & Where to Go:")
+        
+        navigation_needed = []
+        
+        for i, quest in enumerate(active_quests, 1):
+            target_monster = quest.target
+            
+            if target_monster in self.game_state.monsters:
+                monster_data = self.game_state.monsters[target_monster]
+                quest_biome = monster_data.get('biome', 'grassland')
+                monster_level = monster_data.get('level', 1)
+                
+                self.print_text(f"\n{i}. {target_monster} (Lv.{monster_level})")
+                
+                if quest_biome == current_biome:
+                    status_parts = [
+                        ("   ✅ Status: ", "#ffffff"),
+                        ("READY TO HUNT! Use 'Fight Monster' button", "#00ff88")
+                    ]
+                    self._print_colored_parts(status_parts)
+                elif quest_biome == 'secret_dungeon':
+                    if current_biome == 'dungeon':
+                        status_parts = [
+                            ("   🕳️ Status: ", "#ffffff"),
+                            ("You're in the dungeon! Look for secret areas or deeper levels", "#ffaa44")
+                        ]
+                    else:
+                        status_parts = [
+                            ("   🕳️ Location: ", "#ffffff"),
+                            ("Secret Dungeon - Go to Town → Teleport → Secret Areas", "#ff8844")
+                        ]
+                        navigation_needed.append(("Secret Dungeon", "🕳️", "Town → Teleport → Secret Areas"))
+                    self._print_colored_parts(status_parts)
+                else:
+                    biome_names = {
+                        'grassland': 'Grassland 🌱',
+                        'desert': 'Desert 🏜️',
+                        'ocean': 'Ocean 🌊',
+                        'dungeon': 'Dungeon 🏰'
+                    }
+                    target_name = biome_names.get(quest_biome, quest_biome.title())
+                    
+                    status_parts = [
+                        ("   📍 Location: ", "#ffffff"),
+                        (target_name, "#ffaa44")
+                    ]
+                    self._print_colored_parts(status_parts)
+                    
+                    navigation_needed.append((quest_biome, target_name.split()[1], f"Press 'B' to cycle biomes or 'T' to teleport"))
+        
+        # Show navigation instructions
+        if navigation_needed:
+            self.print_text(f"\n🗺️ HOW TO GET THERE:")
+            for biome, emoji, instruction in set(navigation_needed):  # Remove duplicates
+                nav_parts = [
+                    (f"   {emoji} ", "#ffffff"),
+                    (instruction, "#88ddff")
+                ]
+                self._print_colored_parts(nav_parts)
+        
+        # Show keyboard shortcuts
+        self.print_text(f"\n⌨️ QUICK NAVIGATION:")
+        self.print_text("   🅱️ Press 'B' key - Cycle through biomes")
+        self.print_text("   🎲 Press 'T' key - Random teleport")
+        self.print_text("   🏘️ Press '1' key - Go to Town (for special areas)")
+        
+        def on_help_choice(choice):
+            if choice == 1:
+                self.main_menu()
+            elif choice == 2:
+                self.show_quests()  # Show full quest details
+        
+        self.set_buttons(["🔙 Back to Main Menu", "📜 View Full Quest Details"], on_help_choice)
 
     def show_achievements(self):
         """Display achievement interface"""

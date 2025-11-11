@@ -1,0 +1,175 @@
+# Crafting Materials (dropped by monsters)
+Materials:
+  # Basic Materials (Common drops)
+  - name: Iron Ore
+    rarity: common
+    description: Raw iron ore, useful for basic weapons and armor
+    dropped_by: [Wild Boar, Goblin Thief, Cyclops]
+    sell_value: 5
+    
+  - name: Leather Hide
+    rarity: common
+    description: Tough leather from defeated creatures
+    dropped_by: [Wild Boar, Carnivorous Bunny Rabbit]
+    sell_value: 3
+    
+  - name: Monster Bone
+    rarity: common
+    description: Strong bones from various monsters
+    dropped_by: [Goblin Thief, Spider Queen, Wild Boar]
+    sell_value: 2
+    
+  # Uncommon Materials
+  - name: Steel Ingot
+    rarity: uncommon
+    description: Refined steel, perfect for advanced equipment
+    dropped_by: [Cyclops, Bandit Leader, Golem]
+    sell_value: 15
+    
+  - name: Magic Crystal
+    rarity: uncommon
+    description: Crystallized magic energy
+    dropped_by: [Sorcerer, Demon, Lich]
+    sell_value: 20
+    
+  - name: Dragon Scale
+    rarity: uncommon
+    description: Tough scales from draconic creatures
+    dropped_by: [Wyvern, SeaSerpent]
+    sell_value: 25
+    
+  # Rare Materials
+  - name: Mithril Ore
+    rarity: rare
+    description: Legendary lightweight metal
+    dropped_by: [Dragon, Ancient Shadow, Forgotten Guardian]
+    sell_value: 50
+    
+  - name: Phoenix Feather
+    rarity: rare
+    description: Feather imbued with fire magic
+    dropped_by: [Dragon, Demon]
+    sell_value: 75
+    
+  - name: Void Essence
+    rarity: rare
+    description: Pure darkness materialized
+    dropped_by: [Ancient Shadow, Cursed Wraith, Lich]
+    sell_value: 60
+
+# Craftable Armor Pieces
+Armor_Pieces:
+  # Head Gear
+  Head:
+    - name: Iron Helmet
+      defense: 8
+      class: Warrior
+      materials: {Iron Ore: 3, Leather Hide: 1}
+      level_requirement: 3
+      
+    - name: Ninja Hood
+      defense: 5
+      attack: 2  # Bonus attack
+      class: Ninja
+      materials: {Leather Hide: 2, Monster Bone: 1}
+      level_requirement: 2
+      
+    - name: Wizard Cap
+      defense: 3
+      magic_power: 5  # New stat for spell effectiveness
+      class: Magician
+      materials: {Magic Crystal: 1, Leather Hide: 1}
+      level_requirement: 2
+      
+  # Chest Armor  
+  Chest:
+    - name: Steel Chestplate
+      defense: 15
+      class: Warrior
+      materials: {Steel Ingot: 2, Iron Ore: 4}
+      level_requirement: 5
+      
+    - name: Shadow Vest
+      defense: 8
+      attack: 3
+      class: Ninja
+      materials: {Leather Hide: 3, Void Essence: 1}
+      level_requirement: 6
+      
+    - name: Robes of Power
+      defense: 6
+      magic_power: 10
+      class: Magician
+      materials: {Magic Crystal: 2, Phoenix Feather: 1}
+      level_requirement: 7
+      
+  # Leg Armor
+  Legs:
+    - name: Iron Greaves
+      defense: 10
+      class: Warrior
+      materials: {Iron Ore: 2, Leather Hide: 2}
+      level_requirement: 3
+      
+    - name: Swift Leggings
+      defense: 6
+      speed: 5  # New stat for combat initiative
+      class: Ninja
+      materials: {Leather Hide: 2, Monster Bone: 2}
+      level_requirement: 4
+      
+  # Boots
+  Boots:
+    - name: Steel Boots
+      defense: 6
+      class: Warrior
+      materials: {Steel Ingot: 1, Iron Ore: 1}
+      level_requirement: 4
+      
+    - name: Boots of Silence
+      defense: 4
+      attack: 1
+      class: Ninja
+      materials: {Leather Hide: 2}
+      level_requirement: 2
+
+# Weapon Enhancements
+Weapon_Enhancements:
+  - name: Iron Reinforcement
+    description: Adds +5 attack to any weapon
+    attack_bonus: 5
+    materials: {Iron Ore: 2}
+    
+  - name: Steel Edge
+    description: Adds +10 attack to any weapon
+    attack_bonus: 10
+    materials: {Steel Ingot: 1, Iron Ore: 1}
+    
+  - name: Magic Infusion
+    description: Adds +8 attack and magic properties
+    attack_bonus: 8
+    magic_power: 3
+    materials: {Magic Crystal: 1}
+    
+  - name: Dragon Forging
+    description: Adds +15 attack and fire resistance
+    attack_bonus: 15
+    fire_resistance: 10
+    materials: {Dragon Scale: 1, Phoenix Feather: 1}
+
+# Special Crafted Items
+Special_Items:
+  - name: Portable Anvil
+    description: Allows weapon enhancement in the field (consumable)
+    type: tool
+    materials: {Steel Ingot: 3, Iron Ore: 5}
+    
+  - name: Material Pouch
+    description: Increases material storage capacity by 20 slots
+    type: upgrade
+    materials: {Leather Hide: 5, Magic Crystal: 1}
+    
+  - name: Lucky Charm
+    description: Increases rare material drop rate by 10%
+    type: accessory
+    materials: {Phoenix Feather: 1, Void Essence: 1}

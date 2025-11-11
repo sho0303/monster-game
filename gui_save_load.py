@@ -248,23 +248,25 @@ class SaveLoadManager:
     def _prepare_bounty_data(self):
         """Prepare bounty data for saving"""
         if not hasattr(self.gui, 'bounty_manager'):
-            return {'available': [], 'active': []}
+            return {'available': [], 'hero_bounties': []}
         
         bounty_manager = self.gui.bounty_manager
+        hero = self.gui.game_state.hero
         
-        # Serialize available bounties
+        # Serialize available bounties from bounty manager
         available_bounties = []
         for bounty in bounty_manager.available_bounties:
             available_bounties.append(bounty.to_dict())
         
-        # Serialize active bounties
-        active_bounties = []
-        for bounty in bounty_manager.active_bounties:
-            active_bounties.append(bounty.to_dict())
+        # Serialize hero's bounties (active and completed)
+        hero_bounties = []
+        if 'bounties' in hero:
+            for bounty_dict in hero['bounties']:
+                hero_bounties.append(bounty_dict)
         
         return {
             'available': available_bounties,
-            'active': active_bounties
+            'hero_bounties': hero_bounties
         }
     
     def _prepare_achievement_data(self):

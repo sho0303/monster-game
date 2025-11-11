@@ -65,24 +65,103 @@ class BountyManager:
         # Unique bounty rewards (not available in shop)
         self.bounty_rewards = {
             'Bronze': [
-                {'name': 'Hunter\'s Trophy', 'attack': 5, 'class': 'All'},
-                {'name': 'Bounty Medal', 'defense': 3, 'class': 'All'},
-                {'name': 'Lucky Charm', 'attack': 3,
-                 'defense': 2, 'class': 'All'},
+                # Warrior Weapons
+                {'name': 'Hunter\'s Blade', 'attack': 25, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Keen Edge'},
+                {'name': 'Iron Cleaver', 'attack': 23, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Crushing Blow'},
+                {'name': 'Battle Axe', 'attack': 27, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Berserker\'s Fury'},
+                {'name': 'Reinforced Mace', 'attack': 24, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Armor Break'},
+                # Ninja Weapons
+                {'name': 'Tracker\'s Bow', 'attack': 22, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Silent Shot'}, 
+                {'name': 'Twin Daggers', 'attack': 20, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Dual Strike'},
+                {'name': 'Shadow Blade', 'attack': 26, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Stealth Attack'},
+                {'name': 'Throwing Stars', 'attack': 21, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Multi-Hit'},
+                # Magician Weapons
+                {'name': 'Scout\'s Staff', 'attack': 28, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Mana Burn'},
+                {'name': 'Crystal Wand', 'attack': 25, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Spell Power'},
+                {'name': 'Elemental Orb', 'attack': 29, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Fire Burst'},
+                {'name': 'Arcane Rod', 'attack': 26, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Lightning Bolt'},
+                # Armor Sets
+                {'name': 'Hunter\'s Leather', 'defense': 18, 'class': 'All', 'type': 'armor', 'enchantment': 'Beast Ward'},
+                {'name': 'Scout\'s Cloak', 'defense': 15, 'class': 'Ninja', 'type': 'armor', 'enchantment': 'Evasion'},
+                {'name': 'Padded Mail', 'defense': 20, 'class': 'Warrior', 'type': 'armor', 'enchantment': 'Damage Resist'},
+                {'name': 'Apprentice Robes', 'defense': 12, 'class': 'Magician', 'type': 'armor', 'enchantment': 'Magic Shield'},
+                # Accessories  
+                {'name': 'Lucky Charm', 'attack': 3, 'defense': 2, 'class': 'All', 'type': 'accessory', 'enchantment': 'Fortune'},
+                {'name': 'Iron Ring', 'attack': 2, 'defense': 4, 'class': 'All', 'type': 'accessory', 'enchantment': 'Toughness'},
+                {'name': 'Swift Boots', 'attack': 4, 'defense': 1, 'class': 'All', 'type': 'accessory', 'enchantment': 'Speed'},
             ],
             'Silver': [
-                {'name': 'Elite Hunter Badge', 'attack': 10, 'class': 'All'},
-                {'name': 'Champion\'s Ring', 'defense': 8, 'class': 'All'},
-                {'name': 'Slayer\'s Pendant', 'attack': 7,
-                 'defense': 5, 'class': 'All'},
+                # Elite Warrior Weapons
+                {'name': 'Elite Slayer Sword', 'attack': 35, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Monster Slayer'},
+                {'name': 'Flamebrand Sword', 'attack': 33, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Fire Damage'},
+                {'name': 'Frost Hammer', 'attack': 37, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Ice Shatter'},
+                {'name': 'Thunder Axe', 'attack': 34, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Lightning Strike'},
+                # Elite Ninja Weapons
+                {'name': 'Shadow Strike Daggers', 'attack': 32, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Critical Mastery'},
+                {'name': 'Venom Blade', 'attack': 30, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Poison Edge'},
+                {'name': 'Wind Cutter', 'attack': 35, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Air Slash'},
+                {'name': 'Phantom Bow', 'attack': 31, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Ghost Shot'},
+                # Elite Magician Weapons
+                {'name': 'Arcane Destructor', 'attack': 38, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Spell Surge'},
+                {'name': 'Storm Staff', 'attack': 36, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Chain Lightning'},
+                {'name': 'Void Scepter', 'attack': 40, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Dark Magic'},
+                {'name': 'Crystal Focus', 'attack': 35, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Mana Overflow'},
+                # Elite Armor
+                {'name': 'Elite Guardian Mail', 'defense': 28, 'class': 'Warrior', 'type': 'armor', 'enchantment': 'Guardian\'s Will'},
+                {'name': 'Phantom Suit', 'defense': 24, 'class': 'Ninja', 'type': 'armor', 'enchantment': 'Shadow Form'},
+                {'name': 'Mystic Robes', 'defense': 22, 'class': 'Magician', 'type': 'armor', 'enchantment': 'Spell Reflection'},
+                {'name': 'Dragon Scale Vest', 'defense': 30, 'class': 'All', 'type': 'armor', 'enchantment': 'Fire Immunity'},
+                # Elite Accessories
+                {'name': 'Champion\'s Ring', 'attack': 5, 'defense': 8, 'class': 'All', 'type': 'accessory', 'enchantment': 'Battle Prowess'},
+                {'name': 'Mage\'s Amulet', 'attack': 8, 'defense': 4, 'class': 'Magician', 'type': 'accessory', 'enchantment': 'Arcane Power'},
+                {'name': 'Assassin\'s Mask', 'attack': 7, 'defense': 5, 'class': 'Ninja', 'type': 'accessory', 'enchantment': 'Stealth Mastery'},
             ],
             'Gold': [
-                {'name': 'Legendary Bounty Crown', 'attack': 15,
-                 'defense': 10, 'class': 'All'},
-                {'name': 'Master Hunter Amulet', 'attack': 20,
-                 'class': 'All'},
-                {'name': 'Titan\'s Bracer', 'defense': 15, 'class': 'All'},
+                # Legendary Warrior Weapons
+                {'name': 'Dragonbane Greatsword', 'attack': 50, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Dragon Slayer'},
+                {'name': 'Godslayer Blade', 'attack': 48, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Divine Strike'},
+                {'name': 'Eternal Warhammer', 'attack': 52, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Immortal Fury'},
+                {'name': 'Chaos Reaper', 'attack': 49, 'class': 'Warrior', 'type': 'weapon', 'enchantment': 'Chaos Storm'},
+                # Legendary Ninja Weapons
+                {'name': 'Void Assassin Katana', 'attack': 45, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Void Cut'},
+                {'name': 'Soul Stealer', 'attack': 43, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Life Drain'},
+                {'name': 'Time Ripper', 'attack': 47, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Time Slash'},
+                {'name': 'Shadow Lord\'s Edge', 'attack': 44, 'class': 'Ninja', 'type': 'weapon', 'enchantment': 'Shadow Army'},
+                # Legendary Magician Weapons
+                {'name': 'Reality Shatter Orb', 'attack': 55, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Reality Break'},
+                {'name': 'Cosmic Staff', 'attack': 53, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Star Fall'},
+                {'name': 'Apocalypse Rod', 'attack': 57, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'World End'},
+                {'name': 'Infinity Wand', 'attack': 54, 'class': 'Magician', 'type': 'weapon', 'enchantment': 'Limitless Power'},
+                # Legendary Armor
+                {'name': 'Titanforge Battleplate', 'defense': 40, 'class': 'Warrior', 'type': 'armor', 'enchantment': 'Titan\'s Strength'},
+                {'name': 'Shadowmeld Armor', 'defense': 35, 'class': 'Ninja', 'type': 'armor', 'enchantment': 'Perfect Stealth'},
+                {'name': 'Celestial Archmage Robes', 'defense': 32, 'class': 'Magician', 'type': 'armor', 'enchantment': 'Divine Magic'},
+                {'name': 'God-Emperor\'s Mail', 'defense': 45, 'class': 'All', 'type': 'armor', 'enchantment': 'Imperial Authority'},
+                # Legendary Accessories
+                {'name': 'Master Hunter Crown', 'attack': 10, 'defense': 15, 'class': 'All', 'type': 'accessory', 'enchantment': 'Apex Predator'},
+                {'name': 'Titan\'s Bracer', 'attack': 8, 'defense': 12, 'class': 'All', 'type': 'accessory', 'enchantment': 'Giant\'s Power'},
+                {'name': 'Phoenix Feather Cloak', 'attack': 12, 'defense': 10, 'class': 'All', 'type': 'accessory', 'enchantment': 'Resurrection'},
+                {'name': 'Demon Lord\'s Eye', 'attack': 15, 'defense': 8, 'class': 'All', 'type': 'accessory', 'enchantment': 'True Sight'},
             ]
+        }
+        
+        # Special Equipment Sets - unlock all pieces for set bonuses
+        self.equipment_sets = {
+            'Hunter': {
+                'pieces': ['Hunter\'s Blade', 'Hunter\'s Leather', 'Hunter\'s Boots', 'Hunter\'s Gloves'],
+                'set_bonus': {'attack': 5, 'defense': 5, 'special': 'Track monsters easier'},
+                'difficulty': 'Bronze'
+            },
+            'Elite Guardian': {
+                'pieces': ['Elite Slayer Sword', 'Elite Guardian Mail', 'Guardian Helm', 'Guardian Gauntlets'],
+                'set_bonus': {'attack': 10, 'defense': 10, 'special': 'Immune to critical hits'},
+                'difficulty': 'Silver'  
+            },
+            'Legendary Dragon Slayer': {
+                'pieces': ['Dragonbane Greatsword', 'Titanforge Battleplate', 'Dragon Scale Helm', 'Dragonhide Boots'],
+                'set_bonus': {'attack': 20, 'defense': 20, 'special': 'Dragon damage immunity'},
+                'difficulty': 'Gold'
+            }
         }
 
     def load_bounties(self, bounty_data):
@@ -96,10 +175,19 @@ class BountyManager:
             bounty = Bounty.from_dict(bounty_dict)
             self.available_bounties.append(bounty)
         
-        # Restore active bounties
+        # Restore active bounties (legacy support)
         for bounty_dict in bounty_data.get('active', []):
             bounty = Bounty.from_dict(bounty_dict)
             self.active_bounties.append(bounty)
+        
+        # Restore hero's bounties (new system)
+        hero = self.gui.game_state.hero
+        if 'hero_bounties' in bounty_data:
+            hero['bounties'] = bounty_data['hero_bounties']
+        else:
+            # Legacy fallback - if no hero_bounties, initialize empty
+            if 'bounties' not in hero:
+                hero['bounties'] = []
 
     def check_for_elite_encounter(self, hero, monster_name):
         """
@@ -177,20 +265,21 @@ class BountyManager:
         # Get level-appropriate monsters
         current_biome = getattr(self.gui, 'current_biome', 'grassland')
 
-        # Filter by level range and biome
+        # Filter by level range and biome - stricter level filtering
+        level_min = max(1, hero_level - 1)
+        level_max = hero_level + 1  # Reduced from +2 to +1
+        
         suitable_monsters = [
             (name, data) for name, data in monsters.items()
-            if (data['level'] <= hero_level + 2 and
-                data['level'] >= max(1, hero_level - 1) and
+            if (level_min <= data['level'] <= level_max and
                 data.get('biome', 'grassland') == current_biome)
         ]
 
         if not suitable_monsters:
-            # Fallback to any level-appropriate monster
+            # Fallback to any level-appropriate monster (still strict on level)
             suitable_monsters = [
                 (name, data) for name, data in monsters.items()
-                if (data['level'] <= hero_level + 2 and
-                    data['level'] >= max(1, hero_level - 1))
+                if level_min <= data['level'] <= level_max
             ]
 
         if not suitable_monsters:
@@ -218,12 +307,20 @@ class BountyManager:
 
     def _generate_hunt_bounty(self, target_name, target_data, difficulty):
         """Generate a hunt bounty (kill 1 specific monster)"""
-        # Reward multipliers
-        gold_mult = {'Bronze': 2, 'Silver': 3, 'Gold': 4}
+        # Reduced reward multipliers for better balance
+        gold_mult = {'Bronze': 1.5, 'Silver': 2.0, 'Gold': 2.5}
         base_gold = target_data.get('gold', 10)
 
-        reward_gold = base_gold * gold_mult[difficulty]
-        reward_item = random.choice(self.bounty_rewards[difficulty])
+        reward_gold = int(base_gold * gold_mult[difficulty])
+        
+        # Filter rewards by hero class
+        hero = self.gui.game_state.hero
+        hero_class = hero.get('class', 'Warrior')
+        suitable_rewards = [
+            reward for reward in self.bounty_rewards[difficulty]
+            if reward.get('class') == hero_class or reward.get('class') == 'All'
+        ]
+        reward_item = random.choice(suitable_rewards) if suitable_rewards else self.bounty_rewards[difficulty][0]
 
         biome = target_data.get('biome', 'grassland')
         descriptions = {
@@ -251,11 +348,27 @@ class BountyManager:
         count_mult = {'Bronze': 3, 'Silver': 5, 'Gold': 7}
         target_count = count_mult[difficulty]
 
-        gold_mult = {'Bronze': 1.5, 'Silver': 2, 'Gold': 2.5}
+        gold_mult = {'Bronze': 1.0, 'Silver': 1.3, 'Gold': 1.6}
         base_gold = target_data.get('gold', 10)
         reward_gold = int(base_gold * target_count * gold_mult[difficulty])
 
-        reward_item = random.choice(self.bounty_rewards[difficulty])
+        # Filter rewards by hero class
+        hero = self.gui.game_state.hero
+        hero_class = hero.get('class', 'Warrior')
+        suitable_rewards = [
+            reward for reward in self.bounty_rewards[difficulty]
+            if reward.get('class') == hero_class or reward.get('class') == 'All'
+        ]
+        reward_item = random.choice(suitable_rewards) if suitable_rewards else self.bounty_rewards[difficulty][0]
+
+        biome = target_data.get('biome', 'grassland')
+        biome_names = {
+            'grassland': 'grasslands',
+            'desert': 'desert',
+            'dungeon': 'dungeons', 
+            'ocean': 'ocean depths'
+        }
+        biome_text = biome_names.get(biome, 'unknown lands')
 
         return Bounty(
             bounty_type='collector',
@@ -264,18 +377,34 @@ class BountyManager:
             reward_gold=reward_gold,
             reward_item=reward_item,
             description=f"Collect bounty: Defeat {target_count} "
-                       f"{target_name}s",
+                       f"{target_name}s in the {biome_text}",
             difficulty=difficulty
         )
 
     def _generate_elite_boss_bounty(self, target_name,
                                      target_data, difficulty):
         """Generate elite boss bounty (tougher version of monster)"""
-        gold_mult = {'Bronze': 3, 'Silver': 4, 'Gold': 5}
+        gold_mult = {'Bronze': 2.0, 'Silver': 2.8, 'Gold': 3.5}
         base_gold = target_data.get('gold', 10)
-        reward_gold = base_gold * gold_mult[difficulty]
+        reward_gold = int(base_gold * gold_mult[difficulty])
 
-        reward_item = random.choice(self.bounty_rewards[difficulty])
+        # Filter rewards by hero class
+        hero = self.gui.game_state.hero
+        hero_class = hero.get('class', 'Warrior')
+        suitable_rewards = [
+            reward for reward in self.bounty_rewards[difficulty]
+            if reward.get('class') == hero_class or reward.get('class') == 'All'
+        ]
+        reward_item = random.choice(suitable_rewards) if suitable_rewards else self.bounty_rewards[difficulty][0]
+
+        biome = target_data.get('biome', 'grassland')
+        biome_names = {
+            'grassland': 'grasslands',
+            'desert': 'desert',
+            'dungeon': 'dungeons', 
+            'ocean': 'ocean depths'
+        }
+        biome_text = biome_names.get(biome, 'unknown lands')
 
         return Bounty(
             bounty_type='elite_boss',
@@ -283,7 +412,7 @@ class BountyManager:
             target_count=1,
             reward_gold=reward_gold,
             reward_item=reward_item,
-            description=f"Defeat the Elite {target_name} - "
+            description=f"Defeat the Elite {target_name} in the {biome_text} - "
                        f"A legendary {difficulty} ranked threat!",
             difficulty=difficulty
         )
@@ -298,11 +427,11 @@ class BountyManager:
         return [Bounty.from_dict(b) for b in available]
 
     def get_active_bounties(self, hero):
-        """Get all active bounties"""
+        """Get all active bounties (including completed ones awaiting reward claim)"""
         self.initialize_hero_bounties(hero)
         active = [
             b for b in hero['bounties']
-            if b.get('status') == 'active' and not b.get('completed', False)
+            if b.get('status') == 'active'  # Include completed bounties until claimed
         ]
         return [Bounty.from_dict(b) for b in active]
 
@@ -321,12 +450,16 @@ class BountyManager:
 
     def check_bounty_progress(self, hero, monster_killed):
         """Check if killing a monster progresses any active bounties"""
+        return self.check_bounty_progress_with_elite(hero, monster_killed, False)
+    
+    def check_bounty_progress_with_elite(self, hero, monster_killed, is_elite_encounter):
+        """Check if killing a monster progresses any active bounties, considering elite encounters"""
         active_bounties = self.get_active_bounties(hero)
         progressed = []
 
         for bounty in active_bounties:
             # Check for hunt and collector bounties
-            if bounty.target == monster_killed:
+            if bounty.target == monster_killed and bounty.bounty_type != 'elite_boss':
                 bounty.current_count += 1
 
                 # Update in hero's bounties list
@@ -343,20 +476,22 @@ class BountyManager:
 
                 progressed.append(bounty)
 
-            # Check for elite boss bounties
-            elif (bounty.bounty_type == 'elite_boss' and
-                  f"Elite {monster_killed}" == bounty.target):
-                bounty.current_count = 1
-                bounty.completed = True
+            # Check for elite boss bounties - only progress if this was an elite encounter
+            elif (bounty.bounty_type == 'elite_boss' and is_elite_encounter):
+                # For elite bounties, compare the bounty target directly with the monster killed
+                # (monster_killed should already be in "Elite MonsterName" format from combat system)
+                if bounty.target == monster_killed:
+                    bounty.current_count = 1
+                    bounty.completed = True
 
-                # Update in hero's bounties
-                for b in hero['bounties']:
-                    if (b['target'] == bounty.target and
-                        b['difficulty'] == bounty.difficulty):
-                        b['current_count'] = 1
-                        b['completed'] = True
+                    # Update in hero's bounties
+                    for b in hero['bounties']:
+                        if (b['target'] == bounty.target and
+                            b['difficulty'] == bounty.difficulty):
+                            b['current_count'] = 1
+                            b['completed'] = True
 
-                progressed.append(bounty)
+                    progressed.append(bounty)
 
         return progressed
 
@@ -368,11 +503,40 @@ class BountyManager:
         # Award gold
         hero['gold'] += bounty.reward_gold
 
-        # Award item if specified
+        # Award equipment if specified
         if bounty.reward_item:
-            if 'bounty_items' not in hero:
-                hero['bounty_items'] = []
-            hero['bounty_items'].append(bounty.reward_item)
+            reward = bounty.reward_item
+            reward_type = reward.get('type', 'accessory')
+            
+            if reward_type == 'weapon':
+                # Auto-equip weapon and update stats
+                old_weapon = hero.get('weapon', 'None')
+                hero['weapon'] = reward['name']
+                
+                # Store base attack if not already stored
+                if 'base_attack' not in hero:
+                    hero['base_attack'] = hero.get('attack', 5) - reward.get('attack', 0)
+                
+                # Update attack stat
+                hero['attack'] = hero['base_attack'] + reward.get('attack', 0)
+                
+            elif reward_type == 'armor':
+                # Auto-equip armor and update stats
+                old_armor = hero.get('armour', 'None') 
+                hero['armour'] = reward['name']
+                
+                # Store base defense if not already stored
+                if 'base_defense' not in hero:
+                    hero['base_defense'] = hero.get('defense', 5) - reward.get('defense', 0)
+                
+                # Update defense stat
+                hero['defense'] = hero['base_defense'] + reward.get('defense', 0)
+                
+            else:  # accessory
+                # Add to inventory for accessories
+                if 'bounty_accessories' not in hero:
+                    hero['bounty_accessories'] = []
+                hero['bounty_accessories'].append(reward)
 
         # Track bounty completion for achievements
         if hasattr(self.gui, 'achievement_manager'):
@@ -403,12 +567,24 @@ class BountyManager:
         available = self.get_available_bounties(hero)
         active = self.get_active_bounties(hero)
 
-        # Show active bounties
+        # Show active bounties (separate completed from in-progress)
         if active:
-            self.gui.print_text("📋 ACTIVE BOUNTIES:")
-            for i, bounty in enumerate(active, 1):
-                self._display_bounty(bounty, f"Active {i}")
-            self.gui.print_text("")
+            completed_bounties = [b for b in active if b.completed]
+            in_progress_bounties = [b for b in active if not b.completed]
+            
+            # Show completed bounties first (ready to claim)
+            if completed_bounties:
+                self.gui.print_text("🏆 COMPLETED BOUNTIES (Ready to Claim):")
+                for i, bounty in enumerate(completed_bounties, 1):
+                    self._display_bounty(bounty, f"✅ Completed {i}")
+                self.gui.print_text("")
+            
+            # Show in-progress bounties
+            if in_progress_bounties:
+                self.gui.print_text("📋 ACTIVE BOUNTIES (In Progress):")
+                for i, bounty in enumerate(in_progress_bounties, 1):
+                    self._display_bounty(bounty, f"Active {i}")
+                self.gui.print_text("")
 
         # Show available bounties
         if available:
@@ -427,7 +603,9 @@ class BountyManager:
             buttons.append("✅ Accept Bounty")
             callbacks.append(lambda: self._accept_bounty_menu())
 
-        if active:
+        # Only show claim rewards if there are completed bounties
+        completed_bounties = [b for b in active if b.completed] if active else []
+        if completed_bounties:
             buttons.append("🏆 Claim Rewards")
             callbacks.append(lambda: self._claim_rewards_menu())
 
@@ -459,11 +637,31 @@ class BountyManager:
             self.gui.print_text(f"   Progress:{progress}")
         elif bounty.bounty_type == 'elite_boss':
             self.gui.print_text("   Type: Elite Boss Fight")
+            self.gui.print_text("   ⚡ Tip: Elite monsters have 25% spawn chance when fighting regular monsters")
 
         self.gui.print_text(f"   💰 Reward: {bounty.reward_gold} gold")
         if bounty.reward_item:
-            item_name = bounty.reward_item.get('name', 'Unknown Item')
-            self.gui.print_text(f"   🎁 Item: {item_name}")
+            reward = bounty.reward_item
+            item_name = reward.get('name', 'Unknown Item')
+            reward_type = reward.get('type', 'accessory')
+            
+            # Show type-specific icons and stats
+            if reward_type == 'weapon':
+                attack = reward.get('attack', 0)
+                self.gui.print_text(f"   ⚔️ Weapon: {item_name} (+{attack} attack)")
+            elif reward_type == 'armor':
+                defense = reward.get('defense', 0)
+                self.gui.print_text(f"   🛡️ Armor: {item_name} (+{defense} defense)")
+            else:  # accessory
+                attack = reward.get('attack', 0)
+                defense = reward.get('defense', 0)
+                bonus_text = []
+                if attack > 0:
+                    bonus_text.append(f"+{attack} attack")
+                if defense > 0:
+                    bonus_text.append(f"+{defense} defense")
+                bonus_str = ", ".join(bonus_text) if bonus_text else "special powers"
+                self.gui.print_text(f"   💍 Accessory: {item_name} ({bonus_str})")
 
         if bounty.completed:
             self.gui.print_text("   ✅ COMPLETED - Ready to claim!")
@@ -512,30 +710,97 @@ class BountyManager:
             return
 
         self.gui.clear_text()
-        self.gui.print_text("\n🏆 CLAIM BOUNTY REWARDS:\n")
+        self.gui.print_text("\n🏆 SELECT BOUNTY TO CLAIM:\n")
 
-        for bounty in completed:
-            self._display_bounty(bounty, "Completed")
-            if self.claim_bounty_reward(hero, bounty):
-                self.gui.print_text(
-                    f"\n✅ Claimed {bounty.reward_gold} gold!"
-                )
-                if bounty.reward_item:
-                    item_name = bounty.reward_item.get('name', 'Item')
-                    self.gui.print_text(f"🎁 Received: {item_name}")
+        for i, bounty in enumerate(completed, 1):
+            self._display_bounty(bounty, f"Reward {i}")
 
-        self.gui.root.after(2000, self.show_bounty_board)
+        # Create selection buttons
+        buttons = [f"{i}. Claim Reward" for i in range(1, len(completed) + 1)]
+        if len(completed) > 1:
+            buttons.append("🎁 Claim All")
+        buttons.append("❌ Cancel")
+
+        def on_choice(choice):
+            if choice <= len(completed):
+                # Claim individual bounty
+                selected = completed[choice - 1]
+                if self.claim_bounty_reward(hero, selected):
+                    self.gui.print_text(
+                        f"\n✅ Claimed {selected.reward_gold} gold!"
+                    )
+                    if selected.reward_item:
+                        reward = selected.reward_item
+                        item_name = reward.get('name', 'Item')
+                        reward_type = reward.get('type', 'accessory')
+                        
+                        if reward_type == 'weapon':
+                            self.gui.print_text(f"⚔️ New weapon equipped: {item_name}")
+                        elif reward_type == 'armor':
+                            self.gui.print_text(f"🛡️ New armor equipped: {item_name}")
+                        else:
+                            self.gui.print_text(f"💍 Received accessory: {item_name}")
+                    self.gui.root.after(2000, self.show_bounty_board)
+            elif choice == len(completed) + 1 and len(completed) > 1:
+                # Claim all bounties
+                total_gold = 0
+                items_received = []
+                for bounty in completed:
+                    if self.claim_bounty_reward(hero, bounty):
+                        total_gold += bounty.reward_gold
+                        if bounty.reward_item:
+                            item_name = bounty.reward_item.get('name', 'Item')
+                            items_received.append(item_name)
+                
+                self.gui.print_text(f"\n✅ Claimed {total_gold} gold total!")
+                if items_received:
+                    self.gui.print_text(f"🎁 Items received: {', '.join(items_received)}")
+                self.gui.root.after(2000, self.show_bounty_board)
+            else:
+                # Cancel
+                self.show_bounty_board()
+
+        self.gui.set_buttons(buttons, on_choice)
 
     def _refresh_bounties(self):
         """Generate new bounties for the board"""
         hero = self.gui.game_state.hero
         self.initialize_hero_bounties(hero)
 
-        # Generate 3 new bounties (1 of each difficulty)
+        # Remove only available bounties, keep active/completed ones
+        hero['bounties'] = [b for b in hero['bounties'] if b.get('status') != 'available']
+
+        # Generate 3 new unique bounties (1 of each difficulty)
+        existing_targets = {b.get('target') for b in hero['bounties']}
+        
         for difficulty in ['Bronze', 'Silver', 'Gold']:
-            bounty = self.generate_bounty(difficulty)
-            if bounty:
-                hero['bounties'].append(bounty.to_dict())
+            attempts = 0
+            while attempts < 10:  # Prevent infinite loop
+                bounty = self.generate_bounty(difficulty)
+                if bounty and bounty.target not in existing_targets:
+                    hero['bounties'].append(bounty.to_dict())
+                    existing_targets.add(bounty.target)
+                    break
+                attempts += 1
 
         self.gui.print_text("\n🔄 Bounty board refreshed!")
+        self.gui.print_text("   New bounties available!")
         self.gui.root.after(1000, self.show_bounty_board)
+
+    def drop_bounty(self, hero, bounty_index):
+        """Drop (remove) an active bounty by index"""
+        self.initialize_hero_bounties(hero)
+        active_bounties = [b for b in hero['bounties'] if b.get('status') == 'active' and not b.get('completed', False)]
+        
+        if 0 <= bounty_index < len(active_bounties):
+            # Find the bounty to drop in the original list
+            bounty_to_drop = active_bounties[bounty_index]
+            # Remove it from the hero's bounties
+            hero['bounties'] = [b for b in hero['bounties'] if not (
+                b['target'] == bounty_to_drop['target'] and
+                b['difficulty'] == bounty_to_drop['difficulty'] and
+                b['bounty_type'] == bounty_to_drop['bounty_type'] and
+                b.get('status') == 'active'
+            )]
+            return True
+        return False

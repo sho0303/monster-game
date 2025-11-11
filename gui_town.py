@@ -37,8 +37,10 @@ class TownGUI:
             elif choice == 3:
                 self._visit_blacksmith()
             elif choice == 4:
-                self._visit_fountain()
+                self._visit_equipment_forge()
             elif choice == 5:
+                self._visit_fountain()
+            elif choice == 6:
                 self._leave_town()
         
         # Town menu options
@@ -46,6 +48,7 @@ class TownGUI:
             "🛒 Visit Shop", 
             "🍺 Visit Tavern", 
             "⚒️ Visit Blacksmith", 
+            "✨ Equipment Forge",
             "⛲ Town Fountain",
             "🚪 Leave Town"
         ]
@@ -103,24 +106,57 @@ class TownGUI:
         self.gui.unlock_interface()
     
     def _talk_to_bartender(self):
-        """Talk to the bartender who only sells beer"""
+        """Talk to the bartender who sells beer and may offer quests"""
         self.gui.clear_text()
         self.gui.lock_interface()
         
+        hero = self.gui.game_state.hero
+        beers_consumed = hero.get('beers_consumed', 0)
+        secret_dungeon_discovered = hero.get('secret_dungeon_discovered', False)
+        
         self.gui.print_text("🍻  BARTENDER BOB'S BEER EMPORIUM  🍻")
         self.gui.print_text("=" * 60)
-        self.gui.print_text("\nThe jovial bartender Bob beams at you.")
-        self.gui.print_text("'Welcome, friend! What can I get ya?'")
+        
+        # Different greetings based on beer consumption and quest status
+        if secret_dungeon_discovered:
+            self.gui.print_text("\nBartender Bob grins widely at you.")
+            self.gui.print_text("'Ah, my brave friend returns! How goes")
+            self.gui.print_text("your exploration of that secret place?'")
+        elif beers_consumed >= 5:
+            self.gui.print_text("\nBartender Bob's eyes sparkle with recognition.")
+            self.gui.print_text("'Well well, my loyal customer! You've certainly")
+            self.gui.print_text("developed a taste for my fine brews.'")
+            self.gui.print_text("\n💭 Bob leans closer conspiratorially...")
+        elif beers_consumed >= 3:
+            self.gui.print_text("\nBartender Bob's face lights up with familiarity.")
+            self.gui.print_text("'Ah, a regular! I'm starting to remember some...")
+            self.gui.print_text("interesting stories after a few drinks.'")
+        elif beers_consumed >= 1:
+            self.gui.print_text("\nBartender Bob nods with approval.")
+            self.gui.print_text("'Back for more, eh? Good choice!'")
+        else:
+            self.gui.print_text("\nThe jovial bartender Bob beams at you.")
+            self.gui.print_text("'Welcome, friend! What can I get ya?'")
+        
         self.gui.print_text("\nHe gestures proudly at his selection:")
         
         # Hero's current gold
-        hero = self.gui.game_state.hero
         gold_parts = [
             ("Your gold: ", "#ffffff"),
             (str(hero.get('gold', 0)), "#ffdd00"),
             (" 💰", "#ffdd00")
         ]
         self.gui._print_colored_parts(gold_parts)
+        
+        # Show beer consumption status
+        if beers_consumed > 0:
+            beer_parts = [
+                ("Beers enjoyed with Bob: ", "#ffffff"),
+                (str(beers_consumed), "#ffaa44"),
+                (" 🍺", "#ffaa44")
+            ]
+            self.gui._print_colored_parts(beer_parts)
+        
         self.gui.print_text("")
         
         # The "different" beer options (all cost 5 gold, all do the same thing)
@@ -138,19 +174,39 @@ class TownGUI:
         self.gui.print_text("'but each one restores 5 HP and gives you that'")
         self.gui.print_text("'warm fuzzy feeling! Pick your favorite!'")
         
-        def on_beer_choice(choice):
-            if choice <= 4:  # One of the beer options
-                self._buy_beer(choice)
-            else:  # Leave
-                self._visit_tavern()
-        
+        # Build button options based on current status
         beer_buttons = [
             "1. Buy Beer",
             "2. Buy Ale", 
             "3. Buy Lager",
-            "4. Buy Stout",
-            "🚪 Back to Tavern"
+            "4. Buy Stout"
         ]
+        
+        # Add quest-related options
+        button_count = 4
+        if secret_dungeon_discovered:
+            button_count += 1
+            beer_buttons.append(f"{button_count}. Ask about Secret Dungeon")
+        elif beers_consumed >= 3:
+            button_count += 1
+            beer_buttons.append(f"{button_count}. Ask for Stories 🗣️")
+        elif beers_consumed >= 1:
+            button_count += 1
+            beer_buttons.append(f"{button_count}. Chat with Bob 💬")
+        
+        beer_buttons.append("🚪 Back to Tavern")
+        
+        def on_beer_choice(choice):
+            if choice <= 4:  # One of the beer options
+                self._buy_beer(choice)
+            elif choice == 5 and not secret_dungeon_discovered and beers_consumed >= 3:
+                self._request_stories_from_bob()
+            elif choice == 5 and secret_dungeon_discovered:
+                self._ask_about_secret_dungeon()
+            elif choice == 5 and beers_consumed >= 1:
+                self._chat_with_bob()
+            else:  # Back to tavern (last option)
+                self._visit_tavern()
         
         self.gui.set_buttons(beer_buttons, on_beer_choice)
         self.gui.unlock_interface()
@@ -232,10 +288,12 @@ class TownGUI:
         if hasattr(self.gui, 'achievement_manager'):
             self.gui.achievement_manager.track_beer_consumption()
         
-        # Secret dungeon discovery (15% chance after 3+ beers)
+        # Secret dungeon discovery (30% chance after 3+ beers, 50% after 5+)
+        discovery_chance = 0.30 if hero['beers_consumed'] >= 3 else 0.50 if hero['beers_consumed'] >= 5 else 0.0
+        
         if (hero['beers_consumed'] >= 3 and 
             not hero.get('secret_dungeon_discovered', False) and 
-            random.random() < 0.15):
+            random.random() < discovery_chance):
             
             # Start the interactive secret dungeon discovery
             self._show_secret_dungeon_story()
@@ -443,6 +501,105 @@ class TownGUI:
         
         # Return to tavern
         self.gui.set_buttons(["🍺 Return to Tavern"], lambda choice: self._visit_tavern())
+
+    def _request_stories_from_bob(self):
+        """Explicitly ask Bob for stories when you've had enough beers"""
+        hero = self.gui.game_state.hero
+        import random
+        
+        self.gui.clear_text()
+        self.gui.print_text("🗣️  ASKING BOB FOR STORIES  🗣️")
+        self.gui.print_text("=" * 50)
+        
+        self.gui.print_text("\nYou lean forward with interest:")
+        self.gui.print_text("'Bob, you mentioned stories earlier...'")
+        self.gui.print_text("'I'd love to hear some tales from")
+        self.gui.print_text("an experienced barkeep like yourself.'")
+        
+        self.gui.print_text("\nBob's eyes twinkle as he sets down his rag:")
+        self.gui.print_text("'Ah, now that's what I like to hear!'")
+        self.gui.print_text("'A good story deserves a good listener.'")
+        
+        # Much higher chance for quest when explicitly requested (60% vs 15%)
+        if not hero.get('secret_dungeon_discovered', False) and random.random() < 0.60:
+            self.gui.print_text("\n💭 'You know... I've got just the tale...'")
+            self.gui.root.after(2000, self._show_secret_dungeon_story)
+        else:
+            # General tavern story if no secret quest triggers
+            self._tell_general_story()
+    
+    def _chat_with_bob(self):
+        """General chat option for players with some beer consumption"""
+        hero = self.gui.game_state.hero
+        beers_consumed = hero.get('beers_consumed', 0)
+        
+        self.gui.clear_text()
+        self.gui.print_text("💬  CHATTING WITH BOB  💬")
+        self.gui.print_text("=" * 40)
+        
+        chat_responses = [
+            {
+                'prompt': "You ask Bob about the local area.",
+                'response': "'This old town's seen a lot of adventurers come\nand go,' Bob chuckles. 'Most head straight for\nthe grasslands, but the wise ones know there's\nmuch more to explore out there.'"
+            },
+            {
+                'prompt': "You inquire about other patrons.",
+                'response': "'Oh, we get all sorts in here!' Bob grins.\n'Warriors, wizards, rogues... and the occasional\ndragon in disguise!' He winks. 'Though that\nlast one might've been the beer talking.'"
+            },
+            {
+                'prompt': "You ask about Bob's brewing.",
+                'response': "'Been perfecting these recipes for decades!'\nBob puffs up with pride. 'Each brew has its own\nstory... speaking of which, the more you drink,\nthe more stories I seem to remember!'"
+            }
+        ]
+        
+        import random
+        chat = random.choice(chat_responses)
+        
+        self.gui.print_text(f"\n{chat['prompt']}")
+        self.gui.print_text(f"\n{chat['response']}")
+        
+        if beers_consumed >= 3:
+            self.gui.print_text("\n💡 Bob taps his temple knowingly:")
+            self.gui.print_text("'Keep coming back for drinks, friend.'")
+            self.gui.print_text("'I've got some REAL interesting stories")
+            self.gui.print_text("for my most loyal customers...'")
+        
+        self.gui.set_buttons(["🍺 Continue Drinking", "🚪 Return to Tavern"], 
+                           lambda choice: self._talk_to_bartender() if choice == 1 else self._visit_tavern())
+    
+    def _tell_general_story(self):
+        """Tell a general tavern story when secret quest doesn't trigger"""
+        import random
+        
+        stories = [
+            {
+                'title': "The Merchant's Tale",
+                'story': "'Once had a merchant in here, claimed he'd found\na secret passage beneath the old ruins...' Bob\nshakes his head. 'Never saw him again after that.\nProbably just tall tales, but you never know...'"
+            },
+            {
+                'title': "The Mysterious Warrior", 
+                'story': "'Strange warrior came through last month, all\ncloaked and mysterious-like. Ordered nothing but\nwater, paid in gold coins older than this tavern.\nMakes you wonder what secrets this town holds...'"
+            },
+            {
+                'title': "The Night of the Storm",
+                'story': "'During the great storm last year, swore I saw\nsomething glowing beneath the floorboards. When\nmorning came, everything was normal... but sometimes\nI still hear whispers on quiet nights like this.'"
+            }
+        ]
+        
+        story = random.choice(stories)
+        
+        self.gui.print_text(f"\n📖  {story['title']}  📖")
+        self.gui.print_text("-" * 30)
+        self.gui.print_text(f"\n{story['story']}")
+        
+        self.gui.print_text("\n💭 'Ah, the stories these old walls could tell!'")
+        self.gui.print_text("Bob chuckles and returns to polishing mugs.")
+        
+        self.gui.print_text("\n🍺 Maybe another drink will loosen his")
+        self.gui.print_text("tongue for more interesting tales...")
+        
+        self.gui.set_buttons(["🍺 Order Another Drink", "🚪 Return to Tavern"],
+                           lambda choice: self._talk_to_bartender() if choice == 1 else self._visit_tavern())
     
     def _check_for_tavern_encounter(self):
         """Check if player encounters an NPC with a side quest (25% chance)"""
@@ -879,6 +1036,25 @@ class TownGUI:
         
         # Use blacksmith system
         self.gui.blacksmith.open()
+    
+
+    
+    def _visit_equipment_forge(self):
+        """Visit the equipment customization forge"""
+        self.gui.clear_text()
+        self.gui.print_text("✨ Entering the Equipment Forge...")
+        self.gui.print_text("Ancient enchantment energies fill the air.")
+        
+        # Short delay for immersion
+        self.gui.root.after(800, self._enter_equipment_forge)
+    
+    def _enter_equipment_forge(self):
+        """Enter the equipment forge interface"""
+        if hasattr(self.gui, 'equipment_manager'):
+            self.gui.equipment_manager.show_equipment_menu()
+        else:
+            self.gui.print_text("❌ Equipment forge not available.")
+            self.gui.root.after(1500, self.enter_town)
     
     def _visit_fountain(self):
         """Visit the town fountain"""

@@ -86,6 +86,31 @@ class CombatGUI:
                 if hero['hp'] <= 0:
                     self.gui.achievement_manager.track_death()
         
+        # Track bounty progress if monster was defeated
+        if result == 'won' and hasattr(self.gui, 'bounty_manager'):
+            monster_name = monster.get('name', 'Unknown')
+            is_elite = getattr(self, 'is_elite_encounter', False)
+            
+            # For elite encounters, use the elite name for bounty progress tracking
+            tracking_name = f"Elite {monster_name}" if is_elite else monster_name
+            
+            # For elite encounters, check elite boss bounties; for regular encounters, check regular bounties
+            if hasattr(self.gui.bounty_manager, 'check_bounty_progress_with_elite'):
+                progressed_bounties = self.gui.bounty_manager.check_bounty_progress_with_elite(hero, tracking_name, is_elite)
+            else:
+                progressed_bounties = self.gui.bounty_manager.check_bounty_progress(hero, tracking_name)
+            
+            # Show bounty progress messages
+            for bounty in progressed_bounties:
+                if bounty.completed:
+                    self.gui.print_text(f"🎯 Bounty Completed: {bounty.target}! Return to town to claim reward!", color='gold')
+                    # Track bounty completion for achievements
+                    if hasattr(self.gui, 'achievement_manager'):
+                        self.gui.achievement_manager.track_bounty_completion()
+                else:
+                    progress_text = f"🎯 Bounty Progress: {bounty.target} ({bounty.current_count}/{bounty.target_count})"
+                    self.gui.print_text(progress_text, color='yellow')
+        
         # Check if this is a final boss victory for special animation
         monster_data = getattr(self, 'current_monster_data', {})
         is_final_boss_victory = (result == 'won' and 

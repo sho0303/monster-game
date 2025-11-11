@@ -33,16 +33,17 @@ class MonsterEncounterGUI:
             hero, monster_type
         )
         
-        # 10% chance to spawn elite if bounty is active
-        if elite_monster and random.random() < 0.10:
+        # 25% chance to spawn elite if bounty is active (increased from 10%)
+        if elite_monster and random.random() < 0.25:
             monster = elite_monster
             monster_type = f"Elite {monster_type}"
             is_elite = True
         else:
             is_elite = False
         
-        # Store monster data for Dragon boss detection
+        # Store monster data and elite flag for combat
         self.current_monster_data = monster
+        self.is_elite_encounter = is_elite
         
         # Keep the current biome background for immersive encounters
         # (Don't change the background - use whatever biome the player is in)
@@ -89,8 +90,8 @@ class MonsterEncounterGUI:
             ]
         self.gui._print_colored_parts(encounter_parts)
         
-        # Show current quest summary before the fight
-        self._display_quest_summary(monster_type)
+        # Show current quest and bounty summary before the fight
+        self._display_objective_summary(monster_type)
         
         # Display hero and monster stats side by side
         self._display_vs_stats(hero, monster)
@@ -185,6 +186,9 @@ class MonsterEncounterGUI:
         # Create callback for after the fight is complete
         after_fight_callback = self._create_after_fight_callback(monster, monster_type)
         
+        # Pass elite flag to combat system for bounty tracking
+        self.gui.combat.is_elite_encounter = getattr(self, 'is_elite_encounter', False)
+        
         # Start the combat
         self.gui.combat.fight(self.gui.game_state.hero, monster, after_fight_callback)
     
@@ -274,7 +278,7 @@ class MonsterEncounterGUI:
         hero['hp'] = hero['maxhp']
     
     def _award_victory_rewards(self, monster):
-        """Award gold and XP for defeating monster"""
+        """Award gold, XP, and crafting materials for defeating monster"""
         hero = self.gui.game_state.hero
         
         # Victory message with colored gold reward
@@ -285,9 +289,37 @@ class MonsterEncounterGUI:
         ]
         self.gui._print_colored_parts(victory_parts)
         
-        # Award rewards
+        # Award basic rewards
         hero['gold'] += monster['gold']
         hero['xp'] += monster.get('xp', 1)  # Default 1 XP if not specified
+        
+        # Roll for crafting material drops
+        if hasattr(self.gui, 'crafting_manager'):
+            monster_name = monster.get('name', 'Unknown')
+            material_drops = self.gui.crafting_manager.roll_material_drop(monster_name)
+            
+            if material_drops:
+                self.gui.crafting_manager.add_materials(hero, material_drops)
+                
+                # Display material drops
+                self.gui.print_text("\n📦 Materials found:")
+                for material_name, quantity in material_drops:
+                    # Get material rarity for color coding
+                    material = self.gui.crafting_manager.materials.get(material_name)
+                    rarity_colors = {
+                        'common': '#a0a0a0',
+                        'uncommon': '#4a9eff', 
+                        'rare': '#ff6b35'
+                    }
+                    rarity = material.rarity if material else 'common'
+                    color = rarity_colors.get(rarity, '#ffffff')
+                    
+                    material_parts = [
+                        ("  • ", "#ffffff"),
+                        (f"{material_name} x{quantity}", color),
+                        (f" ({rarity})", color)
+                    ]
+                    self.gui._print_colored_parts(material_parts)
     
     def _process_quest_completion(self, monster_type):
         """Process quest completion and display results"""
@@ -654,10 +686,17 @@ class MonsterEncounterGUI:
         self.gui.print_text(f"\n🏆 Victory Rewards: {monster.get('gold', 0)} gold, {monster.get('xp', 0)} XP")
         self.gui.print_text("=" * 60 + "\n")
 
-    def _display_quest_summary(self, current_monster_type=None):
-        """Display current active quests at the start of encounter"""
-        active_quests = self.gui.quest_manager.get_active_quests(self.gui.game_state.hero)
+    def _display_objective_summary(self, current_monster_type=None):
+        """Display current active quests and bounties at the start of encounter"""
+        hero = self.gui.game_state.hero
+        active_quests = self.gui.quest_manager.get_active_quests(hero)
         
+        # Get active bounties if bounty manager exists
+        active_bounties = []
+        if hasattr(self.gui, 'bounty_manager'):
+            active_bounties = self.gui.bounty_manager.get_active_bounties(hero)
+        
+        # Display active quests
         if active_quests:
             # Show quest summary header
             quest_header_parts = [
@@ -720,6 +759,85 @@ class MonsterEncounterGUI:
                 (" - Visit Quests menu for objectives!", "#888888")
             ]
             self.gui._print_colored_parts(no_quest_parts)
+        
+        # Display active bounties
+        if active_bounties:
+            # Show bounty summary header
+            bounty_header_parts = [
+                ("\n🎯 ", "#ffffff"),
+                ("Active Bounties", "#ff8844"),
+                (" (", "#ffffff"),
+                (f"{len(active_bounties)}", "#88ff88"),
+                ("):", "#ffffff")
+            ]
+            self.gui._print_colored_parts(bounty_header_parts)
+            
+            # Show each active bounty with progress indicators
+            for i, bounty in enumerate(active_bounties, 1):
+                # Check if this bounty matches the current monster
+                target_monster = bounty.target.replace("Elite ", "")  # Remove Elite prefix for matching
+                is_matching_bounty = (current_monster_type and target_monster == current_monster_type)
+                
+                # Get progress info
+                progress = bounty.current_count
+                target_count = bounty.target_count
+                
+                # Determine bounty status and color
+                if bounty.completed:
+                    status_color = "#00ff00"  # Green for completed
+                    status_text = "COMPLETED!"
+                elif is_matching_bounty:
+                    status_color = "#ffaa00"  # Orange for matching
+                    status_text = "THIS FIGHT!"
+                else:
+                    status_color = "#cccccc"  # Gray for non-matching
+                    status_text = ""
+                
+                # Create bounty display
+                if bounty.bounty_type == 'hunt':
+                    bounty_desc = f"Hunt {bounty.target} ({bounty.difficulty})"
+                elif bounty.bounty_type == 'collector':
+                    bounty_desc = f"Kill {progress}/{target_count} {bounty.target} ({bounty.difficulty})"
+                elif bounty.bounty_type == 'elite_boss':
+                    bounty_desc = f"Elite Boss: {bounty.target} ({bounty.difficulty})"
+                    if is_matching_bounty and not getattr(self, 'is_elite_encounter', False):
+                        status_text = "Need Elite!"
+                        status_color = "#ff6666"
+                else:
+                    bounty_desc = f"{bounty.target} ({bounty.difficulty})"
+                
+                # Build reward description
+                reward_desc = f"{bounty.reward_gold}g"
+                if bounty.reward_item:
+                    item_name = bounty.reward_item.get('name', 'Special Item') if isinstance(bounty.reward_item, dict) else str(bounty.reward_item)
+                    reward_desc += f", {item_name}"
+                
+                if is_matching_bounty or bounty.completed:
+                    # Highlight matching or completed bounty
+                    bounty_parts = [
+                        (f"  ⭐ ", "#ff8844"),
+                        (bounty_desc, "#00ff88" if bounty.completed else "#ffaa00"),
+                        (" → ", "#ff8844"),
+                        (reward_desc, "#ffdd00"),
+                        (f" ⭐ {status_text}", status_color)
+                    ]
+                else:
+                    # Normal bounty display
+                    bounty_parts = [
+                        (f"  • ", "#888888"),
+                        (bounty_desc, "#cccccc"),
+                        (" → ", "#888888"),
+                        (reward_desc, "#ffdd00")
+                    ]
+                self.gui._print_colored_parts(bounty_parts)
+        elif hasattr(self.gui, 'bounty_manager'):
+            # No active bounties message
+            no_bounty_parts = [
+                ("\n🎯 ", "#ffffff"),
+                ("No active bounties", "#888888"),
+                (" - Visit Tavern → Bounty Board!", "#888888")
+            ]
+            self.gui._print_colored_parts(no_bounty_parts)
 
     def _select_random_monster(self):
         """Select random monster based on current biome from YAML biome field"""

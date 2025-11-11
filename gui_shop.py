@@ -55,26 +55,26 @@ class ShopGUI:
                 self.gui.print_text(f"{i}. {category}")
             
             self.gui.print_text("\n" + "=" * 60)
-            self.gui.print_text("Tip: Use the '🏠 Main Menu' button to exit shop")
+            self.gui.print_text("Tip: Use the '🏠 Back to Town' button to exit shop")
             
             def on_category_select(choice):
                 if choice <= len(categories):
                     self.current_category = categories[choice - 1]
                     self._show_items()
                 elif choice == len(categories) + 1:
-                    # Main menu button is always the last button
-                    self.gui.main_menu()
+                    # Back to town button is always the last button
+                    self.gui.town.enter_town()
             
             # Set buttons for categories - add all categories plus main menu button
             button_labels = []
             for category in categories:
                 button_labels.append(category)
-            button_labels.append("🏠 Main Menu")
+            button_labels.append("🏠 Back to Town")
             
             self.gui.set_buttons(button_labels, on_category_select)
         else:
             self.gui.print_text("❌ Store is empty!")
-            self.gui.root.after(2000, self.gui.main_menu)
+            self.gui.root.after(2000, self.gui.town.enter_town)
     
     def _show_items(self):
         """Display items in selected category"""
@@ -208,6 +208,12 @@ class ShopGUI:
             if 'base_attack' not in hero:
                 hero['base_attack'] = hero.get('attack', 5)
             
+            # Initialize equipment data for enhancements
+            if 'equipment_data' not in hero:
+                hero['equipment_data'] = {}
+            # Clear old weapon data when buying new weapon
+            hero['equipment_data']['weapon'] = {}
+            
             # Set new weapon and recalculate attack
             hero['weapon'] = item['name']
             old_attack = hero.get('attack', 0)
@@ -215,6 +221,7 @@ class ShopGUI:
             
             self.gui.print_text(f"⚔️  Equipped {item['name']}! (was: {old_weapon})")
             self.gui.print_text(f"⚔️  Attack: {old_attack} → {hero['attack']}")
+            self.gui.print_text(f"✨ Visit the Equipment Forge to enhance it!")
             
         elif self.current_category == 'Armour':
             # Check if player already owns this specific armor
@@ -237,6 +244,12 @@ class ShopGUI:
             if 'base_defense' not in hero:
                 hero['base_defense'] = hero.get('defense', 5)
             
+            # Initialize equipment data for enhancements
+            if 'equipment_data' not in hero:
+                hero['equipment_data'] = {}
+            # Clear old armor data when buying new armor
+            hero['equipment_data']['armor'] = {}
+            
             # Set new armour and recalculate defense
             hero['armour'] = item['name']
             old_defense = hero.get('defense', 0)
@@ -244,6 +257,7 @@ class ShopGUI:
             
             self.gui.print_text(f"🛡️  Equipped {item['name']}! (was: {old_armour})")
             self.gui.print_text(f"🛡️  Defense: {old_defense} → {hero['defense']}")
+            self.gui.print_text(f"✨ Visit the Equipment Forge to enhance it!")
             
         elif self.current_category == 'Items':
             # Add to inventory (new multi-item system)
