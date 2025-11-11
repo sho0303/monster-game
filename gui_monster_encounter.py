@@ -313,6 +313,9 @@ class MonsterEncounterGUI:
         if progressed_bounties:
             for bounty in progressed_bounties:
                 self._display_bounty_progress(bounty)
+        
+        # Check for side quest completion
+        self._check_side_quest_completion(monster_type)
     
     def _display_quest_completion(self, quest):
         """Display quest completion message and XP progress"""
@@ -744,3 +747,72 @@ class MonsterEncounterGUI:
         
         # No level-appropriate monsters found in this biome
         return None
+    
+    def _check_side_quest_completion(self, defeated_monster_type):
+        """Check if any side quests were completed by defeating this monster"""
+        hero = self.gui.game_state.hero
+        
+        # Get active side quests
+        side_quests = hero.get('side_quests', [])
+        active_side_quests = [q for q in side_quests if not q.get('completed', False)]
+        
+        current_biome = getattr(self.gui, 'current_biome', 'grassland')
+        
+        for quest in active_side_quests:
+            # Check if this quest can be completed in the current biome
+            if quest['target_biome'] == current_biome:
+                # Simple completion logic - any monster defeated in the target biome completes the quest
+                # This is a simplified version - could be made more specific later
+                self._complete_side_quest(quest)
+                break  # Only complete one side quest per battle
+    
+    def _complete_side_quest(self, quest):
+        """Complete a side quest and award rewards"""
+        hero = self.gui.game_state.hero
+        
+        # Mark quest as completed
+        quest['completed'] = True
+        
+        # Award gold reward
+        hero['gold'] += quest['reward_gold']
+        
+        # Display completion message
+        self.gui.print_text("\n" + "=" * 60)
+        self.gui.print_text("🎉 SIDE QUEST COMPLETED! 🎉")
+        self.gui.print_text("=" * 60)
+        
+        completion_parts = [
+            ("📜 Quest: ", "#ffffff"),
+            (quest['name'], "#ffaa00")
+        ]
+        self.gui._print_colored_parts(completion_parts)
+        
+        self.gui.print_text(f"✅ {quest['description']}")
+        
+        reward_parts = [
+            ("💰 Reward: ", "#ffffff"),
+            (f"+{quest['reward_gold']} gold", "#ffdd00")
+        ]
+        self.gui._print_colored_parts(reward_parts)
+        
+        total_parts = [
+            ("💳 Total Gold: ", "#ffffff"),
+            (f"{hero['gold']}", "#ffdd00")
+        ]
+        self.gui._print_colored_parts(total_parts)
+        
+        self.gui.print_text(f"\n🙏 {quest['npc'].title()} will be grateful")
+        self.gui.print_text("for your help when you return to the tavern!")
+        
+        # Award bonus XP for side quest completion
+        bonus_xp = quest['reward_gold'] // 10  # 10% of gold reward as XP
+        hero['xp'] += bonus_xp
+        
+        if bonus_xp > 0:
+            xp_parts = [
+                ("⭐ Bonus XP: ", "#ffffff"),
+                (f"+{bonus_xp}", "#00ff88")
+            ]
+            self.gui._print_colored_parts(xp_parts)
+        
+        self.gui.print_text("=" * 60)

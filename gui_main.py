@@ -1138,9 +1138,23 @@ class GameGUI:
         
         self.print_text("\n" + "-" * 50)
         
+        # Display main quests
         active_quests = self.quest_manager.get_active_quests(hero)
         
-        if not active_quests:
+        # Display side quests from tavern encounters
+        side_quests = hero.get('side_quests', [])
+        active_side_quests = [q for q in side_quests if not q.get('completed', False)]
+        
+        if active_side_quests:
+            self.print_text("🎭 ACTIVE SIDE QUESTS:")
+            for i, quest in enumerate(active_side_quests, 1):
+                self.print_text(f"\n{i}. {quest['name']}")
+                self.print_text(f"   📍 {quest['description']}")
+                self.print_text(f"   💰 Reward: {quest['reward_gold']} gold")
+                self.print_text(f"   🗺️ Area: {quest['target_biome'].title()}")
+            self.print_text("\n" + "-" * 50)
+        
+        if not active_quests and not active_side_quests:
             self.print_text("No active quests.\n")
             
             # Offer to generate a new quest

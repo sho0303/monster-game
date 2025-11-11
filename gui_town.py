@@ -70,6 +70,12 @@ class TownGUI:
         
         self.gui.print_text("🍺  THE PRANCING PONY TAVERN  🍺")
         self.gui.print_text("=" * 60)
+        
+        # Check for random NPC encounters (25% chance)
+        if self._check_for_tavern_encounter():
+            return  # NPC encounter takes over the interface
+        
+        # Normal tavern entry
         self.gui.print_text("\nYou enter the warm, cozy tavern.")
         self.gui.print_text("The smell of roasted meat and ale fills the air.")
         self.gui.print_text("Adventurers gather around wooden tables,")
@@ -433,6 +439,356 @@ class TownGUI:
         
         # Return to tavern
         self.gui.set_buttons(["🍺 Return to Tavern"], lambda choice: self._visit_tavern())
+    
+    def _check_for_tavern_encounter(self):
+        """Check if player encounters an NPC with a side quest (25% chance)"""
+        import random
+        
+        # 25% chance for an NPC encounter
+        if random.random() < 0.25:
+            # Select a random NPC encounter
+            encounters = [
+                self._encounter_merchant_caravan,
+                self._encounter_desperate_farmer,
+                self._encounter_mysterious_scholar,
+                self._encounter_traveling_minstrel,
+                self._encounter_worried_mother,
+                self._encounter_grizzled_veteran
+            ]
+            
+            encounter = random.choice(encounters)
+            encounter()
+            return True
+        
+        return False
+    
+    def _encounter_merchant_caravan(self):
+        """Encounter with a merchant whose caravan was attacked"""
+        self.gui.print_text("\n🚛 TAVERN ENCOUNTER: DESPERATE MERCHANT")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nAs you enter, a well-dressed merchant")
+        self.gui.print_text("frantically approaches you from a corner table.")
+        
+        self.gui.print_text("\n💰 Merchant: 'Adventurer! Thank the gods!'")
+        self.gui.print_text("'My caravan was attacked by bandits on the")
+        self.gui.print_text("road from Millhaven. They stole a precious")
+        self.gui.print_text("shipment of rare gems worth 500 gold!'")
+        
+        self.gui.print_text("\n😰 'I saw them flee toward the desert.")
+        self.gui.print_text("If you can recover even half my goods,")
+        self.gui.print_text("I'll pay you 200 gold as a reward!'")
+        
+        self.gui.print_text("\n💎 SIDE QUEST: Recover stolen gems from bandits")
+        self.gui.print_text("   Reward: 200 gold + experience")
+        self.gui.print_text("   Location: Desert biome")
+        
+        self._show_side_quest_choice("merchant_caravan", 200, "desert")
+    
+    def _encounter_desperate_farmer(self):
+        """Encounter with a farmer whose crops are being destroyed"""
+        self.gui.print_text("\n🌾 TAVERN ENCOUNTER: DESPERATE FARMER")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nA dirt-covered farmer rushes up to you")
+        self.gui.print_text("as soon as you step through the door.")
+        
+        self.gui.print_text("\n🚜 Farmer: 'Please, you look like a capable")
+        self.gui.print_text("fighter! Giant boars have been ravaging")
+        self.gui.print_text("my fields for weeks. My family will starve")
+        self.gui.print_text("if I can't harvest my crops!'")
+        
+        self.gui.print_text("\n🐗 'I can't pay much, but I'll give you")
+        self.gui.print_text("150 gold and some of my best vegetables")
+        self.gui.print_text("if you can clear out those beasts!'")
+        
+        self.gui.print_text("\n🌾 SIDE QUEST: Eliminate crop-destroying boars")
+        self.gui.print_text("   Reward: 150 gold + food items")
+        self.gui.print_text("   Location: Grassland biome")
+        
+        self._show_side_quest_choice("desperate_farmer", 150, "grassland")
+    
+    def _encounter_mysterious_scholar(self):
+        """Encounter with a scholar seeking ancient artifacts"""
+        self.gui.print_text("\n📚 TAVERN ENCOUNTER: MYSTERIOUS SCHOLAR")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nA hooded figure in scholarly robes")
+        self.gui.print_text("beckons you over to a dimly lit table.")
+        
+        self.gui.print_text("\n🔍 Scholar: 'I sense great potential in you...")
+        self.gui.print_text("I seek ancient relics lost in the deepest")
+        self.gui.print_text("dungeons. Dangerous work, but the knowledge")
+        self.gui.print_text("contained within is invaluable.'")
+        
+        self.gui.print_text("\n⚡ 'Retrieve an ancient tome from the")
+        self.gui.print_text("dungeon depths, and I shall reward you")
+        self.gui.print_text("with 300 gold and... other secrets.'")
+        
+        self.gui.print_text("\n📜 SIDE QUEST: Recover ancient tome")
+        self.gui.print_text("   Reward: 300 gold + magical knowledge")
+        self.gui.print_text("   Location: Dungeon biome")
+        
+        self._show_side_quest_choice("mysterious_scholar", 300, "dungeon")
+    
+    def _encounter_traveling_minstrel(self):
+        """Encounter with a minstrel who lost his instrument"""
+        self.gui.print_text("\n🎵 TAVERN ENCOUNTER: TRAVELING MINSTREL")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nA colorfully dressed minstrel sits sadly")
+        self.gui.print_text("in the corner, nursing a mug of ale.")
+        
+        self.gui.print_text("\n🎭 Minstrel: 'Ah, a fellow wanderer!")
+        self.gui.print_text("Perhaps you can help an artist in need.")
+        self.gui.print_text("My precious lute was stolen by sea raiders")
+        self.gui.print_text("near the coastal waters!'")
+        
+        self.gui.print_text("\n🎶 'Without it, I cannot perform for my")
+        self.gui.print_text("living. Recover my instrument, and I'll")
+        self.gui.print_text("compose a ballad of your deeds AND pay")
+        self.gui.print_text("you 180 gold from my performance earnings!'")
+        
+        self.gui.print_text("\n🎵 SIDE QUEST: Recover the stolen lute")
+        self.gui.print_text("   Reward: 180 gold + fame bonus")
+        self.gui.print_text("   Location: Ocean biome")
+        
+        self._show_side_quest_choice("traveling_minstrel", 180, "ocean")
+    
+    def _encounter_worried_mother(self):
+        """Encounter with a mother whose child is missing"""
+        self.gui.print_text("\n👩‍👧 TAVERN ENCOUNTER: WORRIED MOTHER")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nA tearful woman approaches you desperately")
+        self.gui.print_text("as you enter the tavern.")
+        
+        self.gui.print_text("\n😢 Mother: 'Hero, please! My young son")
+        self.gui.print_text("went exploring near the old ruins and")
+        self.gui.print_text("hasn't returned. The monsters there...")
+        self.gui.print_text("I fear the worst!'")
+        
+        self.gui.print_text("\n💝 'He's all I have left. I don't have")
+        self.gui.print_text("much gold, but I'll give you everything")
+        self.gui.print_text("I own - 250 gold - if you bring him")
+        self.gui.print_text("home safely!'")
+        
+        self.gui.print_text("\n👨‍👩‍👧‍👦 SIDE QUEST: Rescue the missing child")
+        self.gui.print_text("   Reward: 250 gold + heartfelt gratitude")
+        self.gui.print_text("   Location: Dungeon biome")
+        
+        self._show_side_quest_choice("worried_mother", 250, "dungeon")
+    
+    def _encounter_grizzled_veteran(self):
+        """Encounter with a veteran warrior seeking revenge"""
+        self.gui.print_text("\n⚔️ TAVERN ENCOUNTER: GRIZZLED VETERAN")
+        self.gui.print_text("=" * 60)
+        
+        self.gui.print_text("\nAn old warrior with battle scars looks")
+        self.gui.print_text("up from his drink as you approach the bar.")
+        
+        self.gui.print_text("\n🛡️ Veteran: 'You've got the look of a")
+        self.gui.print_text("real fighter. I've been tracking a")
+        self.gui.print_text("particular beast that cost me my leg")
+        self.gui.print_text("and my adventuring days.'")
+        
+        self.gui.print_text("\n⚡ 'A massive desert wyrm lurks in the")
+        self.gui.print_text("sandy wastes. Kill it for me, and I'll")
+        self.gui.print_text("give you my finest weapon AND 400 gold.")
+        self.gui.print_text("Consider it... professional courtesy.'")
+        
+        self.gui.print_text("\n🐲 SIDE QUEST: Slay the desert wyrm")
+        self.gui.print_text("   Reward: 400 gold + legendary weapon")
+        self.gui.print_text("   Location: Desert biome")
+        
+        self._show_side_quest_choice("grizzled_veteran", 400, "desert")
+    
+    def _show_side_quest_choice(self, quest_id, reward_gold, target_biome):
+        """Show options for accepting or declining a side quest"""
+        
+        button_labels = [
+            "⚔️ Accept the Quest",
+            "🤔 Ask for More Details",
+            "😐 Politely Decline"
+        ]
+        
+        def on_side_quest_choice(choice):
+            if choice == 1:
+                self._accept_side_quest(quest_id, reward_gold, target_biome)
+            elif choice == 2:
+                self._ask_side_quest_details(quest_id, reward_gold, target_biome)
+            elif choice == 3:
+                self._decline_side_quest()
+        
+        self.gui.set_buttons(button_labels, on_side_quest_choice)
+    
+    def _accept_side_quest(self, quest_id, reward_gold, target_biome):
+        """Accept a side quest and add it to the quest log"""
+        hero = self.gui.game_state.hero
+        
+        self.gui.clear_text()
+        self.gui.set_background_image('art/tavern_background.png')
+        
+        self.gui.print_text("✅ SIDE QUEST ACCEPTED!")
+        self.gui.print_text("=" * 40)
+        
+        quest_details = {
+            "merchant_caravan": {
+                "name": "Recover Stolen Gems",
+                "description": "Find bandits in the desert and recover stolen gems",
+                "npc": "the grateful merchant"
+            },
+            "desperate_farmer": {
+                "name": "Clear the Fields", 
+                "description": "Eliminate boars destroying the farmer's crops",
+                "npc": "the relieved farmer"
+            },
+            "mysterious_scholar": {
+                "name": "Ancient Tome Quest",
+                "description": "Retrieve an ancient tome from dungeon depths",
+                "npc": "the mysterious scholar"
+            },
+            "traveling_minstrel": {
+                "name": "The Lost Lute",
+                "description": "Recover the minstrel's stolen lute from sea raiders",
+                "npc": "the grateful minstrel"
+            },
+            "worried_mother": {
+                "name": "Rescue Mission",
+                "description": "Find and rescue the missing child from ruins",
+                "npc": "the tearful mother"
+            },
+            "grizzled_veteran": {
+                "name": "Desert Revenge",
+                "description": "Slay the desert wyrm that maimed the veteran",
+                "npc": "the grizzled veteran"
+            }
+        }
+        
+        quest_info = quest_details[quest_id]
+        
+        self.gui.print_text(f"\n📜 Quest: {quest_info['name']}")
+        self.gui.print_text(f"📍 Objective: {quest_info['description']}")
+        self.gui.print_text(f"🏆 Reward: {reward_gold} gold")
+        self.gui.print_text(f"🗺️ Location: {target_biome.title()} biome")
+        
+        # Add quest to hero's side quests (if not already tracked)
+        if 'side_quests' not in hero:
+            hero['side_quests'] = []
+        
+        # Check if quest already exists
+        existing = [q for q in hero['side_quests'] if q['id'] == quest_id]
+        if not existing:
+            hero['side_quests'].append({
+                'id': quest_id,
+                'name': quest_info['name'],
+                'description': quest_info['description'],
+                'reward_gold': reward_gold,
+                'target_biome': target_biome,
+                'completed': False,
+                'npc': quest_info['npc']
+            })
+        
+        self.gui.print_text(f"\n✨ The quest has been added to your quest log!")
+        self.gui.print_text(f"💡 TIP: Travel to the {target_biome} biome and")
+        self.gui.print_text("complete battles to make progress!")
+        
+        self.gui.print_text(f"\n{quest_info['npc'].title()} nods gratefully")
+        self.gui.print_text("and returns to their table.")
+        
+        # Continue with normal tavern
+        self.gui.set_buttons(["🍺 Continue into Tavern"], lambda choice: self._show_normal_tavern())
+    
+    def _ask_side_quest_details(self, quest_id, reward_gold, target_biome):
+        """Ask for more details about the side quest"""
+        self.gui.clear_text()
+        self.gui.set_background_image('art/tavern_background.png')
+        
+        self.gui.print_text("🤔 ASKING FOR MORE DETAILS")
+        self.gui.print_text("=" * 40)
+        
+        details = {
+            "merchant_caravan": "The merchant explains the bandits were led by a fierce warrior and had about 6 members. They're likely camped near an oasis.",
+            "desperate_farmer": "The farmer mentions the boars are unusually large and aggressive - probably 3-4 giant boars led by a massive alpha.",
+            "mysterious_scholar": "The scholar hints that the tome contains ancient magic spells, but warns of powerful guardians protecting it.",
+            "traveling_minstrel": "The minstrel describes his lute as having magical properties that enhance performance, stolen by notorious sea pirates.",
+            "worried_mother": "The mother tearfully explains her son is only 12 and went missing 2 days ago near the old temple ruins.",
+            "grizzled_veteran": "The veteran shows his prosthetic leg and describes a massive wyrm with venomous fangs and armored scales."
+        }
+        
+        self.gui.print_text(f"\n{details[quest_id]}")
+        
+        self.gui.print_text(f"\n💰 The reward of {reward_gold} gold is")
+        self.gui.print_text("guaranteed upon successful completion.")
+        
+        self.gui.print_text("\n❓ Do you want to take on this quest?")
+        
+        # Show choice again
+        button_labels = [
+            "⚔️ Yes, I Accept!",
+            "😐 No, Too Risky"
+        ]
+        
+        def on_detailed_choice(choice):
+            if choice == 1:
+                self._accept_side_quest(quest_id, reward_gold, target_biome)
+            else:
+                self._decline_side_quest()
+        
+        self.gui.set_buttons(button_labels, on_detailed_choice)
+    
+    def _decline_side_quest(self):
+        """Decline the side quest and continue to normal tavern"""
+        self.gui.clear_text()
+        self.gui.set_background_image('art/tavern_background.png')
+        
+        self.gui.print_text("😐 QUEST DECLINED")
+        self.gui.print_text("=" * 30)
+        
+        self.gui.print_text("\nYou politely decline the quest.")
+        self.gui.print_text("The NPC looks disappointed but")
+        self.gui.print_text("understands your decision.")
+        
+        self.gui.print_text("\n💭 'Perhaps another adventurer")
+        self.gui.print_text("will be able to help...'")
+        
+        self.gui.print_text("\nThey return to their table, and you")
+        self.gui.print_text("continue into the main tavern area.")
+        
+        # Continue with normal tavern
+        self.gui.set_buttons(["🍺 Continue into Tavern"], lambda choice: self._show_normal_tavern())
+    
+    def _show_normal_tavern(self):
+        """Show the normal tavern interface after an NPC encounter"""
+        self.gui.clear_text()
+        self.gui.set_background_image('art/tavern_background.png')
+        
+        self.gui.print_text("🍺  THE PRANCING PONY TAVERN  🍺")
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\nYou enter the main area of the tavern.")
+        self.gui.print_text("The smell of roasted meat and ale fills the air.")
+        self.gui.print_text("Adventurers gather around wooden tables,")
+        self.gui.print_text("sharing tales of their exploits.")
+        self.gui.print_text("\nA large wooden board on the wall displays")
+        self.gui.print_text("various bounty notices offering rewards.")
+        self.gui.print_text("\nBehind the bar, a cheerful bartender polishes mugs")
+        self.gui.print_text("and grins at you expectantly.")
+        
+        def on_tavern_choice(choice):
+            if choice == 1:
+                self.gui.bounty_manager.show_bounty_board()
+            elif choice == 2:
+                self._talk_to_bartender()
+            elif choice == 3:
+                self.enter_town()
+        
+        tavern_buttons = [
+            "📋 Check Bounty Board",
+            "🍺 Talk to Bartender", 
+            "🚪 Leave Tavern"
+        ]
+        
+        self.gui.set_buttons(tavern_buttons, on_tavern_choice)
     
     def _visit_blacksmith(self):
         """Visit the blacksmith"""
