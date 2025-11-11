@@ -271,6 +271,10 @@ class QuestManager:
                     hero['quests_completed_by_level'][current_level] = 0
                 hero['quests_completed_by_level'][current_level] += 1
                 
+                # Track quest completion for achievements
+                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
+                    self.gui.achievement_manager.track_quest_completion()
+                
                 return True
         
         return False

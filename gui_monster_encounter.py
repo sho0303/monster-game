@@ -815,4 +815,10 @@ class MonsterEncounterGUI:
             ]
             self.gui._print_colored_parts(xp_parts)
         
+        # Track side quest completion for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            self.gui.achievement_manager.track_side_quest_completion()
+            # Track gold earned
+            self.gui.achievement_manager.track_gold_earned(quest['reward_gold'])
+        
         self.gui.print_text("=" * 60)

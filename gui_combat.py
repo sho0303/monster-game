@@ -73,6 +73,19 @@ class CombatGUI:
         
         result = 'won' if hero['hp'] > 0 else 'lost'
         
+        # Track combat results for achievements
+        if hasattr(self.gui, 'achievement_manager'):
+            if result == 'won':
+                self.gui.achievement_manager.track_combat_win()
+                # Track specific monster kill
+                monster_name = monster.get('name', 'Unknown')
+                self.gui.achievement_manager.track_monster_kill(monster_name)
+            else:
+                self.gui.achievement_manager.track_combat_loss()
+                # Check if this was death (hp <= 0)
+                if hero['hp'] <= 0:
+                    self.gui.achievement_manager.track_death()
+        
         # Check if this is a final boss victory for special animation
         monster_data = getattr(self, 'current_monster_data', {})
         is_final_boss_victory = (result == 'won' and 

@@ -112,6 +112,7 @@ class SaveLoadManager:
                     'last_biome': getattr(self.gui, 'last_biome', 'grassland')
                 },
                 'bounties': self._prepare_bounty_data(),
+                'achievements': self._prepare_achievement_data(),
                 'save_metadata': {
                     'save_date': datetime.now().isoformat(),
                     'game_version': '1.0',
@@ -163,6 +164,7 @@ class SaveLoadManager:
                 'current_biome': game_state.get('current_biome', 'grassland'),
                 'last_biome': game_state.get('last_biome', 'grassland'),
                 'bounties': bounty_data,
+                'achievements': save_data.get('achievements', {'achievements': [], 'player_stats': {}}),
                 'save_metadata': save_metadata
             }
         except Exception as e:
@@ -263,6 +265,36 @@ class SaveLoadManager:
         return {
             'available': available_bounties,
             'active': active_bounties
+        }
+    
+    def _prepare_achievement_data(self):
+        """Prepare achievement data for saving"""
+        if not hasattr(self.gui, 'achievement_manager'):
+            return {'achievements': [], 'player_stats': {}}
+        
+        achievement_manager = self.gui.achievement_manager
+        
+        # Serialize achievements
+        achievements_data = []
+        for achievement in achievement_manager.achievements:
+            achievements_data.append({
+                'id': achievement.id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'category': achievement.category,
+                'target_value': achievement.target_value,
+                'current_progress': achievement.current_progress,
+                'completed': achievement.completed,
+                'completed_at': achievement.completed_at,
+                'hidden': achievement.hidden,
+                'unlocked': achievement.unlocked,
+                'reward_type': achievement.reward_type,
+                'reward_value': achievement.reward_value
+            })
+        
+        return {
+            'achievements': achievements_data,
+            'player_stats': achievement_manager.player_stats
         }
     
     def _validate_hero_data(self, hero_data):
@@ -460,6 +492,10 @@ class SaveLoadManager:
                     # Restore bounty data
                     if hasattr(self.gui, 'bounty_manager') and 'bounties' in result:
                         self.gui.bounty_manager.load_bounties(result['bounties'])
+                    
+                    # Restore achievement data
+                    if hasattr(self.gui, 'achievement_manager') and 'achievements' in result:
+                        self.gui.achievement_manager.load_achievements(result['achievements'])
                     
                     # Show success message
                     load_parts = [
