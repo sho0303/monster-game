@@ -130,6 +130,7 @@ class GameGUI:
             audio_manager=self.audio,
             print_text_callback=self.print_text,
             lock_interface_callback=self.lock_interface,
+            unlock_interface_callback=self.unlock_interface,
             clear_text_callback=self.clear_text,
             main_menu_callback=self.main_menu
         )
@@ -626,7 +627,19 @@ class GameGUI:
         if hasattr(self, 'game_state') and self.game_state and hasattr(self.game_state, 'hero'):
             hero_available_biomes = self.quest_manager.get_available_biomes_for_hero(self.game_state.hero)
         
+        # Store current biome before teleporting
+        old_biome = self.background_manager.current_biome
+        
+        # Perform teleportation
         self.background_manager.teleport_to_random_biome(hero_available_biomes=hero_available_biomes)
+        
+        # Track biome visit for achievements (only if biome actually changed)
+        new_biome = self.background_manager.current_biome
+        if hasattr(self, 'achievement_manager') and old_biome != new_biome:
+            self.achievement_manager.track_biome_visit(new_biome)
+            # Check for secret dungeon discovery
+            if new_biome == 'secret_dungeon':
+                self.achievement_manager.track_secret_dungeon_discovery()
 
     def _navigate_buttons(self, direction):
         """Legacy navigation - now uses grid navigation"""

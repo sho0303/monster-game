@@ -24,7 +24,7 @@ class BackgroundManager:
     """
     
     def __init__(self, image_canvas, audio_manager=None, print_text_callback=None, 
-                 lock_interface_callback=None, clear_text_callback=None, main_menu_callback=None):
+                 lock_interface_callback=None, unlock_interface_callback=None, clear_text_callback=None, main_menu_callback=None):
         """
         Initialize the Background Manager.
         
@@ -33,6 +33,7 @@ class BackgroundManager:
             audio_manager: Audio manager for sound effects (optional)
             print_text_callback: Function to call for text output (optional)
             lock_interface_callback: Function to lock UI during operations (optional)
+            unlock_interface_callback: Function to unlock UI after operations (optional)
             clear_text_callback: Function to clear text display (optional)
             main_menu_callback: Function to return to main menu (optional)
         """
@@ -40,6 +41,7 @@ class BackgroundManager:
         self.audio = audio_manager
         self.print_text = print_text_callback or self._default_print_text
         self.lock_interface = lock_interface_callback or self._default_lock_interface
+        self.unlock_interface = unlock_interface_callback or self._default_unlock_interface
         self.clear_text = clear_text_callback or self._default_clear_text
         self.main_menu = main_menu_callback or self._default_main_menu
         
@@ -90,6 +92,10 @@ class BackgroundManager:
         """Default interface lock function if none provided"""
         pass
     
+    def _default_unlock_interface(self):
+        """Default interface unlock function if none provided"""
+        pass
+    
     def _default_clear_text(self):
         """Default clear text function if none provided"""
         pass
@@ -134,13 +140,6 @@ class BackgroundManager:
             # Track previous biome before changing - but only if we're actually changing biomes
             if self.current_biome != biome_name:
                 self.last_biome = self.current_biome
-                
-                # Track biome visit for achievements
-                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
-                    self.gui.achievement_manager.track_biome_visit(biome_name)
-                    # Check for secret dungeon discovery
-                    if biome_name == 'secret_dungeon':
-                        self.gui.achievement_manager.track_secret_dungeon_discovery()
             # If current_biome == biome_name, keep the existing last_biome
             
             self.current_biome = biome_name
@@ -150,10 +149,6 @@ class BackgroundManager:
             # Default to grassland - only update last_biome if we're changing
             if self.current_biome != 'grassland':
                 self.last_biome = self.current_biome
-                
-                # Track biome visit for achievements
-                if hasattr(self, 'gui') and hasattr(self.gui, 'achievement_manager'):
-                    self.gui.achievement_manager.track_biome_visit('grassland')
             # If already grassland, keep the existing last_biome
             
             self.current_biome = 'grassland'
@@ -315,6 +310,9 @@ class BackgroundManager:
             self.print_text(f"{emoji} ═══════════════════════════════════════════════ {emoji}")
             self.print_text(f"\n{description}")
             self.print_text(f"\n📍 Current location: {new_biome.title()}")
+            
+            # Unlock interface before returning to main menu
+            self.unlock_interface()
             
             # Return to main menu after showing result
             if self.main_menu:

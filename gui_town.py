@@ -610,6 +610,9 @@ class TownGUI:
     def _show_side_quest_choice(self, quest_id, reward_gold, target_biome):
         """Show options for accepting or declining a side quest"""
         
+        # Unlock interface for NPC interaction
+        self.gui.unlock_interface()
+        
         button_labels = [
             "⚔️ Accept the Quest",
             "🤔 Ask for More Details",
@@ -696,7 +699,7 @@ class TownGUI:
             # Track NPC encounter for achievements
             if hasattr(self.gui, 'achievement_manager'):
                 npc_name = quest_id  # Use quest_id as NPC identifier
-                self.gui.achievement_manager.track_npc_encounter(npc_name)
+                self.gui.achievement_manager.track_tavern_npc_encounter(npc_name)
         
         self.gui.print_text(f"\n✨ The quest has been added to your quest log!")
         self.gui.print_text(f"💡 TIP: Travel to the {target_biome} biome and")
@@ -771,6 +774,9 @@ class TownGUI:
         """Show the normal tavern interface after an NPC encounter"""
         self.gui.clear_text()
         self.gui.set_background_image('art/tavern_background.png')
+        
+        # Ensure interface is unlocked when entering normal tavern
+        self.gui.unlock_interface()
         
         self.gui.print_text("🍺  THE PRANCING PONY TAVERN  🍺")
         self.gui.print_text("=" * 60)
