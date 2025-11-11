@@ -10,3 +10,4 @@ Shadow Wraith:
   art: art/wraith_monster.png
   attack_sound: wraith-attack.mp3
   biome: dungeon
+  attack_art: art/wraith_monster_attack.png

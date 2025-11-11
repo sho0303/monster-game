@@ -10,3 +10,4 @@ Enchanted Mermaid:
   art: art/mermaid_monster.png
   attack_sound: mermaid-attack.mp3
   biome: ocean
+  attack_art: art/mermaid_monster_attack.png

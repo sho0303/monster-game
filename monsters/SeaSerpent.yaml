@@ -10,3 +10,4 @@ Sea Serpent:
   art: art/sea_serpent_monster.png
   attack_sound: serpent-attack.mp3
   biome: ocean
+  attack_art: art/sea_serpent_monster_attack.png

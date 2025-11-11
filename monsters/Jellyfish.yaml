@@ -10,3 +10,4 @@ Jellyfish Swarm:
   art: art/jellyfish_monster.png
   attack_sound: jellyfish-attack.mp3
   biome: ocean
+  attack_art: art/jellyfish_monster_attack.png

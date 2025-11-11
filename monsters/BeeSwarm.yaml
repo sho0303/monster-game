@@ -10,3 +10,4 @@ Angry Bee Swarm:
   art: art/bee_swarm_monster.png
   attack_sound: bee-attack.mp3
   biome: grassland
+  attack_art: art/bee_swarm_monster_attack.png

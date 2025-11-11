@@ -10,3 +10,4 @@ DickMobius.yaml:
   art: art/whale_monster.png
   attack_sound: whale-attack.mp3
   biome: ocean
+  attack_art: art/whale_monster_attack.png

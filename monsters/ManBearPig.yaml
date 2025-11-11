@@ -10,3 +10,4 @@ ManBearPig:
   art: art/manbearpig_monster.png
   attack_sound: pig-attack.mp3
   biome: dungeon
+  attack_art: art/manbearpig_attack.png

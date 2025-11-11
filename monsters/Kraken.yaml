@@ -10,3 +10,4 @@ Kraken:
   art: art/kraken_monster.png
   attack_sound: kraken-attack.mp3
   biome: ocean
+  attack_art: art/kraken_monster_attack.png

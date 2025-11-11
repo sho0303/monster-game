@@ -10,3 +10,4 @@ Stone Golem:
   art: art/golem_monster.png
   attack_sound: golem-attack.mp3
   biome: dungeon
+  attack_art: art/golem_monster_attack.png

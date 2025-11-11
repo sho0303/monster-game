@@ -304,30 +304,30 @@ class CombatGUI:
         attack_sound = self._get_monster_attack_sound(monster)
         self.gui.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
         
-        # Special handling for Dragon boss attack image
-        monster_data = getattr(self, 'current_monster_data', {})
-        if (monster_data.get('finalboss', False) and 
-            'dragon_endboss' in self.current_monster_image.lower()):
+        # Check for attack_art key first (preferred method)
+        if 'attack_art' in monster and monster['attack_art']:
+            attack_image_path = monster['attack_art']
+        # Special handling for Dragon boss attack image (legacy)
+        elif (getattr(self, 'current_monster_data', {}).get('finalboss', False) and 
+              'dragon_endboss' in self.current_monster_image.lower()):
             attack_image_path = "art/dragon_endboss_attack.png"
+        # Use the art field to derive attack image path (fallback for backwards compatibility)
+        elif 'art' in monster and monster['art']:
+            base_art_path = monster['art']
+            # Try the direct replacement first (e.g., monster.png -> monster_attack.png)
+            attack_image_path = base_art_path.replace('.png', '_attack.png')
+            
+            # If that doesn't exist, try removing "_monster" from the path
+            import os
+            if not os.path.exists(attack_image_path):
+                # Try pattern like kraken_monster.png -> kraken_attack.png
+                alt_path = base_art_path.replace('_monster.png', '_attack.png')
+                if os.path.exists(alt_path):
+                    attack_image_path = alt_path
         else:
-            # Use the art field from monster data to derive attack image path
-            # This ensures we get the correct filename instead of using display name
-            if 'art' in monster and monster['art']:
-                base_art_path = monster['art']
-                # Try the direct replacement first (e.g., monster.png -> monster_attack.png)
-                attack_image_path = base_art_path.replace('.png', '_attack.png')
-                
-                # If that doesn't exist, try removing "_monster" from the path
-                import os
-                if not os.path.exists(attack_image_path):
-                    # Try pattern like kraken_monster.png -> kraken_attack.png
-                    alt_path = base_art_path.replace('_monster.png', '_attack.png')
-                    if os.path.exists(alt_path):
-                        attack_image_path = alt_path
-            else:
-                # Fallback to old method if no art field
-                monster_name = monster.get('name', 'Unknown').lower()
-                attack_image_path = f"art/{monster_name}_attack.png"
+            # Final fallback to old method if no art field
+            monster_name = monster.get('name', 'Unknown').lower()
+            attack_image_path = f"art/{monster_name}_attack.png"
         
         try:
             import os

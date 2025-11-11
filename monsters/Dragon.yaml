@@ -7,7 +7,8 @@ Dragon:
   gold: 100
   level: 10
   xp: 10
-  finalboss: True
+  finalboss: true
   art: art/dragon_endboss.png
   attack_sound: dragon-growl.mp3
   biome: dungeon
+  attack_art: art/dragon_endboss_attack.png

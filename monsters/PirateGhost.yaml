@@ -10,3 +10,4 @@ Pirate Ghost:
   art: art/pirate_ghost_monster.png
   attack_sound: ghost-attack.mp3
   biome: ocean
+  attack_art: art/pirate_ghost_monster_attack.png

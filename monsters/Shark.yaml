@@ -10,3 +10,4 @@ Shark Patrol:
   art: art/shark_monster.png
   attack_sound: shark-attack.mp3
   biome: ocean
+  attack_art: art/shark_monster_attack.png

@@ -10,3 +10,4 @@ Wild Boar:
   art: art/boar_monster.png
   attack_sound: boar-attack.mp3
   biome: grassland
+  attack_art: art/boar_monster_attack.png

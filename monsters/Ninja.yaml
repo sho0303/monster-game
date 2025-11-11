@@ -10,3 +10,4 @@ Zombie Ninja:
   art: art/ninja_monster.png
   attack_sound: ninja-attack.mp3
   biome: dungeon
+  attack_art: art/ninja_attack.png

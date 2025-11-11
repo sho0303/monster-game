@@ -8,5 +8,6 @@ Cyclops:
   level: 5
   xp: 5
   art: art/cyclops_monster.png
+  attack_art: art/cyclops_monster_attack.png
   attack_sound: cyclops-attack.mp3
   biome: desert

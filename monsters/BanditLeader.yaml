@@ -10,3 +10,4 @@ Bandit Leader:
   art: art/bandit_monster.png
   attack_sound: sword-clash.mp3
   biome: town
+  attack_art: art/bandit_monster_attack.png

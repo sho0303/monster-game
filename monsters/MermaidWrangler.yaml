@@ -10,3 +10,4 @@ Mermaid Wrangler:
   art: art/merman_king_monster.png
   attack_sound: mermaid-attack.mp3
   biome: ocean
+  attack_art: art/merman_king_monster_attack.png

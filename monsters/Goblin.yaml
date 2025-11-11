@@ -10,3 +10,4 @@ Goblin Thief:
   art: art/goblin_monster.png
   attack_sound: goblin-attack.mp3
   biome: grassland
+  attack_art: art/goblin_monster_attack.png

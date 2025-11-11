@@ -10,3 +10,4 @@ Sand Serpent:
   art: art/sand_serpent_monster.png
   attack_sound: serpent-attack.mp3
   biome: desert
+  attack_art: art/sand_serpent_monster_attack.png

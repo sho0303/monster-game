@@ -10,3 +10,4 @@ Demon:
   art: art/demon_monster.png
   attack_sound: demon-attack.mp3
   biome: dungeon
+  attack_art: art/demon_monster_attack.png

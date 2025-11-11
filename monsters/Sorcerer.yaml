@@ -10,3 +10,4 @@ Dark Sorcerer:
   art: art/sorcerer_monster.png
   attack_sound: sorcerer-attack.mp3
   biome: dungeon
+  attack_art: art/sorcerer_monster_attack.png

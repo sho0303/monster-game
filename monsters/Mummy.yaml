@@ -10,3 +10,4 @@ Mummy Guardian:
   art: art/mummy_monster.png
   attack_sound: mummy-attack.mp3
   biome: desert
+  attack_art: art/mummy_monster_attack.png
