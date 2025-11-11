@@ -17,6 +17,7 @@ from gui_monster_encounter import MonsterEncounterGUI
 from gui_quests import QuestManager
 from gui_save_load import SaveLoadManager
 from gui_town import TownGUI
+from gui_tavern import TavernGUI
 from gui_image_manager import ImageManager
 from gui_background_manager import BackgroundManager
 
@@ -185,6 +186,10 @@ class GameGUI:
     def set_town_background(self):
         """Set the town-specific background"""
         self.background_manager.set_town_background()
+    
+    def set_tavern_background(self):
+        """Set the tavern-specific background"""
+        self.background_manager.set_tavern_background()
     
     def _get_canvas_dimensions(self):
         """Get fixed canvas dimensions"""
@@ -815,6 +820,7 @@ class GameGUI:
         self.quest_manager = QuestManager(self)
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
+        self.tavern = TavernGUI(self)
         
         # Start hero selection
         self.select_hero()

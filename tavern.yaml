@@ -1,0 +1,7 @@
+Drinks:
+  - name: Beer
+    cost: 10
+    ascii_art: art/sudsy_beer.png
+  - name: Beer
+    cost: 10
+    ascii_art: art/sudsy_beer.png

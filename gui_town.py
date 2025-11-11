@@ -63,21 +63,13 @@ class TownGUI:
         self.gui.shop.open()
     
     def _visit_tavern(self):
-        """Visit the tavern (placeholder for future functionality)"""
+        """Visit the tavern"""
         self.gui.clear_text()
-        self.gui.lock_interface()
+        self.gui.print_text("🍺 Entering the tavern...")
+        self.gui.print_text("The friendly bartender welcomes you warmly.")
         
-        self.gui.print_text("🍺  THE PRANCING PONY TAVERN  🍺")
-        self.gui.print_text("=" * 60)
-        self.gui.print_text("\nYou enter the warm, cozy tavern.")
-        self.gui.print_text("The smell of roasted meat and ale fills the air.")
-        self.gui.print_text("Adventurers gather around wooden tables,")
-        self.gui.print_text("sharing tales of their exploits.")
-        self.gui.print_text("\n🚧 The tavern is under construction!")
-        self.gui.print_text("Come back soon for drinks, meals, and gossip.")
-        
-        # Return to town after 3 seconds
-        self.gui.root.after(3000, self.enter_town)
+        # Use tavern system
+        self.gui.tavern.open()
     
     def _visit_blacksmith(self):
         """Visit the blacksmith"""
