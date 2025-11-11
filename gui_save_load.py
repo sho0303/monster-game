@@ -274,9 +274,9 @@ class SaveLoadManager:
         
         achievement_manager = self.gui.achievement_manager
         
-        # Serialize achievements
+        # Serialize achievements - achievements is a dictionary, not a list
         achievements_data = []
-        for achievement in achievement_manager.achievements:
+        for achievement_id, achievement in achievement_manager.achievements.items():
             achievements_data.append({
                 'id': achievement.id,
                 'name': achievement.name,
