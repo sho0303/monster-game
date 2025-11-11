@@ -643,10 +643,12 @@ class TownGUI:
             
             # Return to normal tavern
             self.gui.unlock_interface()
-            def return_to_tavern():
-                self._show_normal_tavern()
             
-            self.gui.set_buttons([("🍺 Return to Tavern", return_to_tavern)])
+            def on_return_choice(choice):
+                if choice == 1:
+                    self._show_normal_tavern()
+            
+            self.gui.set_buttons(["🍺 Return to Tavern"], on_return_choice)
             return
         
         # Unlock interface for NPC interaction
