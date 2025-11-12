@@ -5,9 +5,9 @@ import tkinter as tk
 from tkinter import scrolledtext
 from PIL import Image, ImageTk
 from time import sleep
-import logging
 
 import config
+from logger_utils import get_logger
 from game_state import initialize_game_state
 from gui_audio import Audio
 from gui_combat import CombatGUI
@@ -22,6 +22,8 @@ from gui_tavern import TavernGUI
 from gui_image_manager import ImageManager
 from gui_background_manager import BackgroundManager
 from gui_achievements import AchievementManager
+
+logger = get_logger(__name__)
 
 
 class GameGUI:
@@ -44,7 +46,7 @@ class GameGUI:
             # Remove topmost after initial display
             self.root.after(config.VERY_SHORT_DELAY, lambda: self.root.attributes('-topmost', False))
         except Exception as e:
-            print(f"Warning: Could not configure window display: {e}")
+            logger.warning(f"Could not configure window display: {e}")
         
         # Enable keyboard shortcuts
         self.root.bind('<KeyPress>', self._handle_keypress)

@@ -6,6 +6,9 @@ import yaml
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
@@ -43,7 +46,7 @@ class SaveLoadManager:
                     f.write("- Play statistics\n\n")
                     f.write("Save files are in YAML format for easy reading and debugging.\n")
         except Exception as e:
-            print(f"Warning: Could not create saves directory: {e}")
+            logger.error(f"Could not create saves directory: {e}")
     
     def get_available_saves(self):
         """Get list of available save files"""
@@ -66,13 +69,13 @@ class SaveLoadManager:
                     }
                     save_files.append(save_info)
                 except Exception as e:
-                    print(f"Warning: Could not read save file {file_path}: {e}")
+                    logger.warning(f"Could not read save file {file_path}: {e}")
             
             # Sort by save date (most recent first)
             save_files.sort(key=lambda x: x['save_date'], reverse=True)
             return save_files
         except Exception as e:
-            print(f"Error getting save files: {e}")
+            logger.error(f"Error getting save files: {e}")
             return []
     
     def save_game(self, hero, current_biome=None, save_name=None):

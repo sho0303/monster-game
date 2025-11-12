@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 
 import config
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class Audio:
@@ -29,8 +32,9 @@ class Audio:
             mixer.init()
             mixer.set_num_channels(config.AUDIO_CHANNELS)
             self.initialized = True
+            logger.info("Audio system initialized successfully")
         except Exception as e:
-            print(f"Warning: Could not initialize audio system: {e}")
+            logger.error(f"Could not initialize audio system: {e}")
             self.initialized = False
     
     def play_background_music(self, music_file, loop=True, volume=None):
@@ -48,7 +52,7 @@ class Audio:
         try:
             music_path = f'./sounds/{music_file}'
             if not Path(music_path).exists():
-                print(f"Warning: Music file not found: {music_path}")
+                logger.error(f"Music file not found: {music_path}")
                 return False
             
             # Stop current background music if playing
@@ -65,10 +69,11 @@ class Audio:
             
             self.background_music_playing = True
             self.current_background_music = music_file
+            logger.info(f"Playing background music: {music_file} (volume={volume_level:.2f}, loop={loop})")
             return True
             
         except Exception as e:
-            print(f"Warning: Could not play background music: {e}")
+            logger.error(f"Could not play background music '{music_file}': {e}")
             return False
     
     def stop_background_music(self, fade_out_ms=1000):
@@ -89,8 +94,9 @@ class Audio:
             
             self.background_music_playing = False
             self.current_background_music = None
+            logger.debug(f"Background music stopped (fade_out={fade_out_ms}ms)")
         except Exception as e:
-            print(f"Warning: Could not stop background music: {e}")
+            logger.error(f"Could not stop background music: {e}")
     
     def play_sound_effect(self, sound_file, volume=None, max_duration_ms=None):
         """
@@ -107,13 +113,14 @@ class Audio:
         try:
             sound_path = f'./sounds/{sound_file}'
             if not Path(sound_path).exists():
-                print(f"Warning: Sound file not found: {sound_path}")
+                logger.error(f"Sound file not found: {sound_path}")
                 return False
             
             # Use cached sound or load new one
             if sound_file not in self.sound_cache:
                 sound = mixer.Sound(sound_path)
                 self.sound_cache[sound_file] = sound
+                logger.debug(f"Loaded sound effect into cache: {sound_file}")
             else:
                 sound = self.sound_cache[sound_file]
             
@@ -134,10 +141,11 @@ class Audio:
                         channel.fadeout(100)  # 100ms fadeout
                 threading.Thread(target=stop_after_delay, daemon=True).start()
             
+            logger.debug(f"Playing sound effect: {sound_file} (volume={volume_level:.2f})")
             return True
             
         except Exception as e:
-            print(f"Warning: Could not play sound effect: {e}")
+            logger.error(f"Could not play sound effect '{sound_file}': {e}")
             return False
     
     def play_sound(self, name):

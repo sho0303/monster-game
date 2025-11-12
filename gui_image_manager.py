@@ -9,6 +9,9 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 import config
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class ImageManager:
@@ -38,7 +41,7 @@ class ImageManager:
         
     def _default_print_text(self, text, color='#ff0000'):
         """Default print function if none provided"""
-        print(f"ImageManager: {text}")
+        logger.warning(f"ImageManager: {text}")
     
     def show_image(self, image_path):
         """Display a single image using canvas for proper background compositing"""
@@ -76,6 +79,7 @@ class ImageManager:
             self.add_canvas_image(image_path, center_x, center_y)
             
         except Exception as e:
+            logger.error(f"Could not load image '{image_path}': {e}")
             self.print_text(f"Could not load image: {e}")
     
     def show_images(self, image_paths, layout="auto"):
@@ -183,6 +187,7 @@ class ImageManager:
             return canvas_id
             
         except Exception as e:
+            logger.error(f"Failed to add canvas image '{image_path}': {e}")
             self.print_text(f"Failed to add canvas image {image_path}: {e}")
             return None
     

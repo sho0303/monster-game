@@ -1,5 +1,8 @@
 import os
 import yaml
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class GameState:
@@ -19,15 +22,15 @@ def yaml_file_to_dictionary(file, dict):
 
 
 def hero_status(hero):
-    print("\nHero stats:")
+    logger.info("Hero stats:")
     for key, value in hero.items():
         if key == 'xp':
-            print(f"{key}: {value}/{hero['level']*5}")
-        elif key == 'item' and value != None:
-            print(f"{key}: {value['name']}")
+            logger.info(f"{key}: {value}/{hero['level']*5}")
+        elif key == 'item' and value is not None:
+            logger.info(f"{key}: {value['name']}")
         else:
-            print(f"{key}: {value}")
-    print("\n")
+            logger.info(f"{key}: {value}")
+    logger.info("")
 
 
 def initialize_game_state():
@@ -46,7 +49,7 @@ def initialize_game_state():
     state.hero_defaults = state.heros
     i = 1
     for hero in state.heros:
-        print(f"{hero}: {i}")
+        logger.info(f"{hero}: {i}")
         state.choices[str(i)] = hero
         i += 1
         hero_status(state.heros[hero])

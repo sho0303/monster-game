@@ -10,6 +10,9 @@ from PIL import Image, ImageTk
 import random
 
 import config
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class BackgroundManager:
@@ -82,7 +85,7 @@ class BackgroundManager:
     
     def _default_print_text(self, text, color='#00ff00'):
         """Default print function if none provided"""
-        print(f"BackgroundManager: {text}")
+        logger.info(f"BackgroundManager: {text}")
     
     def _default_lock_interface(self):
         """Default interface lock function if none provided"""

@@ -4,6 +4,9 @@ import random
 from typing import Dict, Any
 
 import config
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def _join_repo_path(*parts):
@@ -68,7 +71,14 @@ def damage_calculator(attack: int, defense: int, attacker_level: int = 1, defend
     # Minimum damage scales with attacker level
     min_damage = max(1, (attacker_level + 1) // 2)
     
-    return max(min_damage, int(round(final_damage)))
+    result = max(min_damage, int(round(final_damage)))
+    
+    logger.debug(f"Damage calculation: attack={attack}, defense={defense}, "
+                 f"attacker_level={attacker_level}, defender_level={defender_level}, "
+                 f"variance={variance:.2f}, level_modifier={level_modifier:.2f}, "
+                 f"defense_reduction={defense_percentage:.2%}, final_damage={result}")
+    
+    return result
 
 
 def fight_round(hero: Dict[str, Any], monster: Dict[str, Any]) -> Dict[str, Any]:
@@ -103,14 +113,28 @@ def level_up(hero: Dict[str, Any], monster: Dict[str, Any]) -> bool:
 
     Returns True if the hero leveled up.
     """
-    hero['xp'] = hero.get('xp', 0) + monster.get('level', 0)
+    xp_gained = monster.get('level', 0)
+    hero['xp'] = hero.get('xp', 0) + xp_gained
     leveled = False
-    if hero['xp'] >= hero.get('level', 1) * config.XP_PER_LEVEL_MULTIPLIER:
-        hero['maxhp'] = hero.get('maxhp', 1) * 2
+    
+    xp_needed = hero.get('level', 1) * config.XP_PER_LEVEL_MULTIPLIER
+    
+    if hero['xp'] >= xp_needed:
+        old_level = hero.get('level', 1)
+        old_maxhp = hero.get('maxhp', 1)
+        
+        hero['maxhp'] = old_maxhp * 2
         hero['hp'] = hero['maxhp']
         hero['xp'] = 0
-        hero['level'] = hero.get('level', 1) + 1
+        hero['level'] = old_level + 1
         leveled = True
+        
+        logger.info(f"LEVEL UP! {hero.get('name', 'Hero')} advanced from level {old_level} to {hero['level']}. "
+                    f"Max HP increased from {old_maxhp} to {hero['maxhp']}.")
+    else:
+        logger.debug(f"{hero.get('name', 'Hero')} gained {xp_gained} XP. "
+                     f"Progress: {hero['xp']}/{xp_needed}")
+    
     return leveled
 
 
@@ -119,4 +143,4 @@ if __name__ == '__main__':
     heros = load_yaml_dir('heros')
     monsters = load_yaml_dir('monsters')
     store = load_store('store.yaml')
-    print(f"Loaded {len(heros)} heros, {len(monsters)} monsters, store categories: {len(store)}")
+    logger.info(f"Loaded {len(heros)} heros, {len(monsters)} monsters, store categories: {len(store)}")

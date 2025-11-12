@@ -4,32 +4,13 @@ Main entry point for the graphical user interface version with enhanced error ha
 """
 import sys
 import os
-import logging
 from pathlib import Path
 from datetime import datetime
+from logger_utils import setup_logging, get_logger
 
-def setup_logging():
-    """Setup logging system for debugging and error tracking"""
-    try:
-        log_dir = Path("logs")
-        log_dir.mkdir(exist_ok=True)
-        
-        log_filename = f"game_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        log_path = log_dir / log_filename
-        
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_path, encoding='utf-8'),
-                logging.StreamHandler(sys.stdout)
-            ]
-        )
-        logging.info("Logging system initialized")
-        return True
-    except Exception as e:
-        print(f"Warning: Could not setup logging: {e}")
-        return False
+# Initialize logging first
+log_file = setup_logging()
+logger = get_logger(__name__)
 
 def check_python_version():
     """Ensure Python version is compatible"""
@@ -45,7 +26,7 @@ def check_python_version():
         show_error("Python Version Error", error_msg)
         return False
     
-    logging.info(f"Python version check passed: {current_version[0]}.{current_version[1]}")
+    logger.info(f"Python version check passed: {current_version[0]}.{current_version[1]}")
     return True
 
 def check_dependencies():
@@ -62,10 +43,10 @@ def check_dependencies():
     for module, install_info in required_modules.items():
         try:
             __import__(module)
-            logging.info(f"Module '{module}' found")
+            logger.info(f"Module '{module}' found")
         except ImportError as e:
             missing_modules.append(install_info)
-            logging.error(f"Missing module: {module} - {e}")
+            logger.error(f"Missing module: {module} - {e}")
     
     if missing_modules:
         error_msg = (
@@ -79,7 +60,7 @@ def check_dependencies():
         show_error("Missing Dependencies", error_msg)
         return False
     
-    logging.info("All dependencies found")
+    logger.info("All dependencies found")
     return True
 
 def check_working_directory():
@@ -114,14 +95,14 @@ def check_working_directory():
         show_error("Missing Game Files", error_msg)
         return False
     
-    logging.info(f"Working directory check passed: {current_dir}")
+    logger.info(f"Working directory check passed: {current_dir}")
     return True
 
 def check_gui_main_module():
     """Check if gui_main module can be imported"""
     try:
         from gui_main import GameGUI
-        logging.info("gui_main module imported successfully")
+        logger.info("gui_main module imported successfully")
         return True
     except ImportError as e:
         error_msg = (
@@ -166,7 +147,7 @@ def initialize_game():
         import tkinter as tk
         from gui_main import GameGUI
         
-        logging.info("Creating main window...")
+        logger.info("Creating main window...")
         root = tk.Tk()
         
         # Bring window to foreground on Windows
@@ -179,14 +160,14 @@ def initialize_game():
             # Remove topmost after window is shown (so it doesn't stay always on top)
             root.after(100, lambda: root.wm_attributes("-topmost", 0))
             
-            logging.info("Window configured to appear in foreground")
+            logger.info("Window configured to appear in foreground")
         except Exception as e:
-            logging.warning(f"Could not configure window foreground behavior: {e}")
+            logger.warning(f"Could not configure window foreground behavior: {e}")
         
-        logging.info("Initializing game GUI...")
+        logger.info("Initializing game GUI...")
         game = GameGUI(root)
         
-        logging.info("Starting main loop...")
+        logger.info("Starting main loop...")
         root.mainloop()
         
     except Exception as e:
@@ -198,7 +179,7 @@ def initialize_game():
             "• Insufficient system resources\n\n"
             "Check the log file in the 'logs' folder for detailed information."
         )
-        logging.error(f"Game initialization failed: {e}", exc_info=True)
+        logger.error(f"Game initialization failed: {e}", exc_info=True)
         show_error("Game Startup Error", error_msg)
         return False
     
@@ -208,13 +189,10 @@ def main():
     """Main entry point with comprehensive startup checks"""
     print("PyQuest Monster Game - Starting up...")
     
-    # Setup logging first
-    setup_logging()
-    
     try:
-        logging.info("=== PyQuest Monster Game Startup ===")
-        logging.info(f"Python version: {sys.version}")
-        logging.info(f"Working directory: {Path.cwd()}")
+        logger.info("=== PyQuest Monster Game Startup ===")
+        logger.info(f"Python version: {sys.version}")
+        logger.info(f"Working directory: {Path.cwd()}")
         
         # Run all startup checks
         startup_checks = [
@@ -225,36 +203,36 @@ def main():
         ]
         
         for check_name, check_func in startup_checks:
-            logging.info(f"Checking: {check_name}")
+            logger.info(f"Checking: {check_name}")
             if not check_func():
-                logging.error(f"Startup check failed: {check_name}")
+                logger.error(f"Startup check failed: {check_name}")
                 return False
         
-        logging.info("All startup checks passed - initializing game")
+        logger.info("All startup checks passed - initializing game")
         
         # Initialize and run the game
         success = initialize_game()
         
         if success:
-            logging.info("Game session completed normally")
+            logger.info("Game session completed normally")
         else:
-            logging.error("Game session ended with errors")
+            logger.error("Game session ended with errors")
             
         return success
         
     except KeyboardInterrupt:
-        logging.info("Game interrupted by user (Ctrl+C)")
+        logger.info("Game interrupted by user (Ctrl+C)")
         print("\nGame interrupted by user")
         return True
         
     except Exception as e:
         error_msg = f"Critical error during startup: {e}"
-        logging.critical(error_msg, exc_info=True)
+        logger.critical(error_msg, exc_info=True)
         show_error("Critical Startup Error", error_msg)
         return False
     
     finally:
-        logging.info("=== PyQuest Monster Game Shutdown ===")
+        logger.info("=== PyQuest Monster Game Shutdown ===")
 
 if __name__ == '__main__':
     try:
