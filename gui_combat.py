@@ -112,14 +112,21 @@ class CombatGUI:
             if result == 'won':
                 self.image_display.show_image('art/you_won.png')
                 self.audio.play_sound_effect('win.mp3')
+                
+                # Unlock interface before calling callback (so next screen can set buttons)
+                self.interface_control.unlock_interface()
+                
+                self.fight_callback(result)
             else:
-                self.image_display.show_image('art/you_lost.png')
+                # Hero died - show death in combat display
+                # Play death sound immediately
                 self.audio.play_sound_effect('death.mp3')
-            
-            # Unlock interface before calling callback (so next screen can set buttons)
-            self.interface_control.unlock_interface()
-            
-            self.fight_callback(result)
+                
+                # Replace hero image with death image in combat display
+                self._show_hero_death_in_combat(hero)
+                
+                # Hold death scene for 3 seconds, then transition
+                self.timer.after(3000, lambda: self._complete_death_sequence(result))
     
     def _display_combat_images(self, hero, monster):
         """Display hero and monster images side by side for combat with Dragon boss special sizing"""
@@ -585,3 +592,34 @@ class CombatGUI:
         
         # Call the fight callback with victory result
         self.fight_callback('won')
+    
+    def _show_hero_death_in_combat(self, hero):
+        """Replace hero image with death image in combat display, keeping monster visible"""
+        try:
+            hero_class = hero.get('class', 'Warrior').lower()
+            death_image_path = f"art/{hero_class}_death.png"
+            
+            # Check if death image exists
+            import os
+            if not os.path.exists(death_image_path):
+                logger.debug(f"Death image not found: {death_image_path}, using generic")
+                death_image_path = 'art/you_lost.png'
+            
+            # Update the current hero image to the death image
+            self.current_hero_image = death_image_path
+            
+            # Redisplay combat images with hero now showing death pose
+            self._display_combat_images_with_sizing()
+            
+        except Exception as e:
+            logger.debug(f"Error loading death image in combat: {e}")
+            # Fallback to showing you_lost full screen
+            self.image_display.show_image('art/you_lost.png')
+    
+    def _complete_death_sequence(self, result):
+        """Complete the death sequence and return control"""
+        # Unlock interface before calling callback
+        self.interface_control.unlock_interface()
+        
+        # Call the fight callback with defeat result
+        self.fight_callback(result)

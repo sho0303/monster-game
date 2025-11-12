@@ -233,7 +233,7 @@ class GameGUI:
                 btn = tk.Button(
                     row_frame,
                     text=f"Option {i+1}",
-                    command=lambda idx=i+1: self.button_clicked(idx),
+                    command=lambda idx=i+1: self.current_action(idx) if self.current_action else None,
                     bg=config.COLOR_BUTTON_BG,
                     fg=config.COLOR_BUTTON_FG,
                     font=('Arial', 11, 'bold'),
@@ -488,18 +488,8 @@ class GameGUI:
     def clear_text(self):
         """Clear the text area"""
         self.text_area.config(state=tk.NORMAL)  # Temporarily enable for clearing
-        self.text_area.delete('1.0', tk.END)
+        self.text_area.delete(1.0, tk.END)
         self.text_area.config(state=tk.DISABLED)  # Disable again
-    
-    def button_clicked(self, button_num):
-        """Handle button clicks"""
-        # Prevent clicks when interface is locked
-        if not self.keyboard_enabled or not self.current_action:
-            return
-        
-        # Only execute if the button is actually enabled
-        if self._is_button_enabled(button_num):
-            self.current_action(button_num)
 
     def _handle_keypress(self, event):
         """Handle keyboard shortcuts"""
@@ -1306,9 +1296,6 @@ class GameGUI:
         self.clear_text()
         self.lock_interface()
         
-        # Show game over image
-        self.show_image('art/you_lost.png')
-        
         # Display game over message
         self.print_text("\n" + "=" * 60)
         self.print_text("💀  GAME OVER  💀")
@@ -1317,11 +1304,30 @@ class GameGUI:
         self.print_text("Thank you for playing MonsterGame!")
         self.print_text("=" * 60)
         
-        # Play game over sound
+        # Play game over sound and show hero death image immediately
         self.audio.play_sound_effect('death.mp3')
+        self._show_hero_death_game_over()
         
         # Close the game after 5 seconds
         self.root.after(5000, self._close_game)
+    
+    def _show_hero_death_game_over(self):
+        """Show hero-specific death image during game over"""
+        try:
+            hero_class = self.game_state.hero.get('class', 'Warrior').lower()
+            death_image_path = f"art/{hero_class}_death.png"
+            
+            # Try to load class-specific death image
+            import os
+            if os.path.exists(death_image_path):
+                self.show_image(death_image_path)
+            else:
+                # Fallback to generic you_lost image if class-specific doesn't exist
+                logger.info(f"Death image not found: {death_image_path}, using generic")
+                self.show_image('art/you_lost.png')
+        except Exception as e:
+            logger.warning(f"Error loading game over death image: {e}")
+            self.show_image('art/you_lost.png')
     
     def _close_game(self):
         """Close the game application"""
