@@ -5,6 +5,8 @@ Town GUI for the monster game - handles town menu and activities
 
 import tkinter as tk
 from tkinter import scrolledtext
+import random
+import os
 
 class TownGUI:
     """GUI for town activities and menu"""
@@ -19,6 +21,11 @@ class TownGUI:
         
         # Set town background
         self.gui.set_town_background()
+        
+        # 15% chance of goblin assault!
+        if random.random() < 0.15:
+            self._goblin_assault()
+            return
         
         # Show welcome message
         self.gui.print_text("🏘️  WELCOME TO TOWN  🏘️")
@@ -130,3 +137,213 @@ class TownGUI:
         
         # Return to main menu after 2 seconds
         self.gui.root.after(2000, self.gui.main_menu)
+    def _goblin_assault(self):
+        """Handle goblin assault on the town - 10% chance when entering town"""
+        self.gui.clear_text()
+        
+        # Display two goblin images side by side on the foreground
+        goblin_image_path = 'art/goblin_monster.png'
+        
+        # Check if goblin image exists
+        if os.path.exists(goblin_image_path):
+            # Display two goblins using the same method as monster encounters
+            self.gui.image_manager.show_images([goblin_image_path, goblin_image_path])
+        
+        # Show dramatic assault message
+        assault_parts = [
+            ("\n⚔️ ", "#ff0000"),
+            ("GOBLIN ASSAULT!", "#ff0000"),
+            (" ⚔️\n", "#ff0000")
+        ]
+        self.gui._print_colored_parts(assault_parts)
+        
+        self.gui.print_text("=" * 60)
+        
+        warning_parts = [
+            ("\n🚨 ", "#ffaa00"),
+            ("THE TOWN IS UNDER ATTACK!", "#ffaa00"),
+            (" 🚨\n", "#ffaa00")
+        ]
+        self.gui._print_colored_parts(warning_parts)
+        
+        self.gui.print_text("\nAs you approach the town gates, you hear screams!")
+        self.gui.print_text("Two goblins are terrorizing the townspeople,")
+        self.gui.print_text("smashing market stalls and causing chaos!")
+        self.gui.print_text("\nThe town guards are overwhelmed and need your help!")
+        
+        # Show choice buttons
+        def on_choice(choice):
+            if choice == 1:
+                self._fight_goblins()
+            else:
+                self._run_from_assault()
+        
+        self.gui.set_buttons(["⚔️ Save the Town", "🏃 Run"], on_choice)
+        self.gui.unlock_interface()
+    
+    def _fight_goblins(self):
+        """Fight two goblins back to back"""
+        self.gui.clear_text()
+        self.gui.lock_interface()
+        
+        # Create goblin monster from game data
+        if 'Goblin Thief' not in self.gui.game_state.monsters:
+            self.gui.print_text("Error: Goblin data not found!")
+            self.gui.root.after(2000, self.gui.main_menu)
+            return
+        
+        # Store that we're in a goblin assault (for tracking)
+        self.goblin_assault_active = True
+        self.goblins_defeated = 0
+        
+        # Start first goblin fight
+        self._start_goblin_fight(1)
+    
+    def _start_goblin_fight(self, goblin_number):
+        """Start fight with a specific goblin"""
+        self.gui.clear_text()
+        
+        # Create a copy of the goblin monster
+        goblin_template = self.gui.game_state.monsters['Goblin Thief']
+        goblin = {
+            'name': f'Goblin Raider #{goblin_number}',
+            'hp': goblin_template['hp'],
+            'maxhp': goblin_template['maxhp'],
+            'attack': goblin_template['attack'],
+            'defense': goblin_template['defense'],
+            'gold': goblin_template['gold'],
+            'level': goblin_template['level'],
+            'xp': goblin_template['xp'],
+            'art': goblin_template.get('art', 'art/goblin_monster.png'),
+            'attack_art': goblin_template.get('attack_art', 'art/goblin_monster_attack.png'),
+            'attack_sound': goblin_template.get('attack_sound', 'goblin-attack.mp3')
+        }
+        
+        # Show encounter message
+        encounter_parts = [
+            (f"\n⚔️ Facing ", "#ffffff"),
+            (goblin['name'], "#ffaa00"),
+            ("! ⚔️\n", "#ffffff")
+        ]
+        self.gui._print_colored_parts(encounter_parts)
+        
+        # Start combat
+        hero = self.gui.game_state.hero
+        
+        def on_goblin_defeat(won):
+            if won:
+                self._handle_goblin_victory(goblin_number)
+            else:
+                self._handle_goblin_defeat()
+        
+        self.gui.combat.fight(hero, goblin, on_goblin_defeat)
+    
+    def _handle_goblin_victory(self, goblin_number):
+        """Handle victory over a goblin"""
+        self.goblins_defeated += 1
+        
+        if self.goblins_defeated < 2:
+            # More goblins to fight
+            self.gui.clear_text()
+            self.gui.print_text(f"\n✅ Goblin Raider #{goblin_number} defeated!")
+            self.gui.print_text("\nBut there's still another goblin attacking the town!")
+            self.gui.print_text("Prepare yourself for the next fight!")
+            
+            # Start next goblin fight after short delay
+            self.gui.root.after(3000, lambda: self._start_goblin_fight(2))
+        else:
+            # All goblins defeated!
+            self._handle_assault_victory()
+    
+    def _handle_assault_victory(self):
+        """Handle complete victory over all goblins"""
+        self.goblin_assault_active = False
+        self.gui.clear_text()
+        
+        # Show victory message
+        victory_parts = [
+            ("\n🎉 ", "#00ff00"),
+            ("VICTORY!", "#00ff00"),
+            (" 🎉\n", "#00ff00")
+        ]
+        self.gui._print_colored_parts(victory_parts)
+        
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\nYou have defeated both goblins!")
+        self.gui.print_text("The townspeople cheer as the last goblin falls.")
+        self.gui.print_text("The town is safe once again!")
+        
+        # Award Town Savior achievement
+        if hasattr(self.gui, 'achievements') and self.gui.achievements:
+            if self.gui.achievements.update_progress('town_savior', 1):
+                achievement_parts = [
+                    ("\n🏆 Achievement Unlocked: ", "#ffdd00"),
+                    ("Town Savior", "#00ff00"),
+                    (" 🏆", "#ffdd00")
+                ]
+                self.gui._print_colored_parts(achievement_parts)
+        
+        # Mayor's reward
+        hero = self.gui.game_state.hero
+        reward_gold = 100
+        hero['gold'] += reward_gold
+        
+        self.gui.print_text("\n" + "=" * 60)
+        self.gui.print_text("\n👑 The Town Mayor approaches you:")
+        self.gui.print_text('"Hero! You saved our town from those vile goblins!"')
+        self.gui.print_text('"Please accept this reward as a token of our gratitude."')
+        
+        reward_parts = [
+            ("\n💰 Received ", "#00ff00"),
+            (f"{reward_gold} gold", "#ffdd00"),
+            (" from the Mayor! 💰", "#00ff00")
+        ]
+        self.gui._print_colored_parts(reward_parts)
+        
+        gold_parts = [
+            ("Total Gold: ", "#ffffff"),
+            (str(hero['gold']), "#ffdd00")
+        ]
+        self.gui._print_colored_parts(gold_parts)
+        
+        # Return to town menu after delay
+        self.gui.print_text("\n" + "=" * 60)
+        self.gui.print_text("\nThe town returns to normal...")
+        self.gui.root.after(5000, self.enter_town)
+    
+    def _handle_goblin_defeat(self):
+        """Handle defeat by goblins"""
+        self.goblin_assault_active = False
+        
+        # Normal death behavior applies (handled by combat system)
+        # Just return to main menu
+        self.gui.print_text("\n💀 The goblins have overwhelmed you...")
+        self.gui.print_text("You retreat from the town in shame.")
+        
+        self.gui.root.after(3000, self.gui.main_menu)
+    
+    def _run_from_assault(self):
+        """Run away from the goblin assault"""
+        self.gui.clear_text()
+        
+        run_parts = [
+            ("\n🏃 ", "#ffaa00"),
+            ("You flee from the town!", "#ffaa00"),
+            (" 🏃\n", "#ffaa00")
+        ]
+        self.gui._print_colored_parts(run_parts)
+        
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\nYou turn and run from the goblin assault.")
+        self.gui.print_text("The screams of the townspeople fade behind you.")
+        self.gui.print_text("Perhaps you'll return when you're stronger...")
+        
+        shame_parts = [
+            ("\n⚠️ ", "#888888"),
+            ("You feel ashamed for abandoning the town.", "#888888"),
+            (" ⚠️", "#888888")
+        ]
+        self.gui._print_colored_parts(shame_parts)
+        
+        # Return to main menu
+        self.gui.root.after(4000, self.gui.main_menu)

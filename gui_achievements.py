@@ -214,6 +214,16 @@ class AchievementManager:
         
         # Special Achievements
         self.add_achievement(Achievement(
+            id="town_savior",
+            name="Town Savior",
+            description="Defend the town from a goblin assault",
+            category="special",
+            target_value=1,
+            reward_type="title",
+            reward_value=0
+        ))
+        
+        self.add_achievement(Achievement(
             id="tavern_regular",
             name="Tavern Regular",
             description="Consume 20 beers at the tavern",
