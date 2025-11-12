@@ -112,13 +112,17 @@ class TavernGUI:
                     self.gui.show_image(selected_drink['ascii_art'])
                 self._purchase_drink(selected_drink)
             elif choice == len(drinks) + 1:
+                # Reminisce (view achievements)
+                self._show_achievements()
+            elif choice == len(drinks) + 2:
                 # Go back to town (always the last button)
                 self._return_to_town()
         
-        # Set button labels - show all available drinks plus back button
+        # Set button labels - show all available drinks plus reminisce and back button
         button_labels = []
         for drink in drinks:
             button_labels.append(f"🍻 Order {drink['name']}")
+        button_labels.append("🏆 Reminisce")
         button_labels.append("🚪 Leave Tavern")
         
         self.gui.set_buttons(button_labels, on_drink_action)
@@ -224,3 +228,99 @@ class TavernGUI:
         
         # Return to town after 2 seconds
         self.gui.root.after(2000, self.gui.town.enter_town)
+    
+    def _show_achievements(self):
+        """Display player's achievements"""
+        self.gui.clear_text()
+        
+        # Check if achievements system exists
+        if not hasattr(self.gui, 'achievements') or not self.gui.achievements:
+            self.gui.print_text("\n REMINISCE ")
+            self.gui.print_text("=" * 60)
+            self.gui.print_text("\nYou sit by the fire and reflect on your adventures...")
+            self.gui.print_text("But your memory seems a bit hazy.")
+            self.gui.print_text("\n(Achievement system not available)")
+            
+            def go_back(choice):
+                self._show_drinks()
+            
+            self.gui.set_buttons([" Back"], go_back)
+            return
+        
+        # Display achievements header
+        self.gui.print_text("\n REMINISCE - YOUR ACHIEVEMENTS ")
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\nYou sit by the fireplace with a mug in hand,")
+        self.gui.print_text("reminiscing about your adventures and accomplishments...")
+        self.gui.print_text("")
+        
+        # Get all visible achievements
+        visible_achievements = self.gui.achievements.get_visible_achievements()
+        completed_achievements = [ach for ach in visible_achievements if ach.completed]
+        
+        # Show completion stats
+        completion_percentage = self.gui.achievements.get_completion_percentage()
+        
+        stats_parts = [
+            (" Progress: ", "#ffffff"),
+            (f"{len(completed_achievements)}/{len(visible_achievements)}", "#ffdd00"),
+            (f" ({completion_percentage:.1f}%)", "#00ff00")
+        ]
+        self.gui._print_colored_parts(stats_parts)
+        self.gui.print_text("")
+        
+        if not completed_achievements:
+            self.gui.print_text("=" * 60)
+            self.gui.print_text("\n You haven't unlocked any achievements yet!")
+            self.gui.print_text("   Go on adventures to earn your first achievement!")
+            self.gui.print_text("")
+        else:
+            # Group achievements by category
+            categories = {}
+            for ach in completed_achievements:
+                if ach.category not in categories:
+                    categories[ach.category] = []
+                categories[ach.category].append(ach)
+            
+            # Display by category
+            category_emojis = {
+                'combat': '',
+                'exploration': '',
+                'collection': '',
+                'progression': '',
+                'special': ''
+            }
+            
+            for category, achievements in sorted(categories.items()):
+                emoji = category_emojis.get(category, '')
+                self.gui.print_text("=" * 60)
+                self.gui.print_text(f"\n{emoji} {category.upper()} ACHIEVEMENTS {emoji}")
+                self.gui.print_text("")
+                
+                for ach in sorted(achievements, key=lambda x: x.completed_at or ""):
+                    achievement_parts = [
+                        (" ", "#ffdd00"),
+                        (ach.name, "#00ff00")
+                    ]
+                    self.gui._print_colored_parts(achievement_parts)
+                    
+                    self.gui.print_text(f"   {ach.description}")
+                    
+                    # Show reward if applicable
+                    if ach.reward_type == "gold" and ach.reward_value > 0:
+                        self.gui.print_text(f"    Reward: {ach.reward_value} gold")
+                    elif ach.reward_type == "stat_bonus" and ach.reward_value > 0:
+                        self.gui.print_text(f"    Reward: +{ach.reward_value} permanent stat bonus")
+                    elif ach.reward_type == "title":
+                        self.gui.print_text(f"    Reward: Title earned")
+                    
+                    self.gui.print_text("")
+        
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\nYou finish your drink and smile at the memories.")
+        
+        # Back button only
+        def go_back(choice):
+            self._show_drinks()
+        
+        self.gui.set_buttons([" Back"], go_back)
