@@ -71,16 +71,12 @@ class BackgroundManager:
             'town': {
                 'background': 'art/town_background.png',
                 'fallback_color': '#2B4C3D'
-            },
-            'secret_dungeon': {
-                'background': 'art/secret_dungeon_background.png',
-                'fallback_color': '#1a0d0d'
             }
         }
         
         # Combat biomes (excludes safe zones)
-        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'secret_dungeon']
-        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town', 'secret_dungeon']
+        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
+        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
     
     def _default_print_text(self, text, color='#00ff00'):
         """Default print function if none provided"""
@@ -168,10 +164,6 @@ class BackgroundManager:
         """Set the tavern-specific background"""
         self.set_background_image('art/tavern_background.png', '#3D2B1F')
     
-    def set_secret_dungeon_background(self):
-        """Set the secret dungeon background"""
-        self.set_background_image('art/secret_dungeon_background.png', '#1a0d0d')
-    
     def cycle_biomes(self, available_biomes=None):
         """Cycle through available biomes for testing/debugging
         
@@ -197,8 +189,7 @@ class BackgroundManager:
             'desert': '🏜️', 
             'dungeon': '🏰',
             'ocean': '🌊',
-            'town': '🏘️',
-            'secret_dungeon': '🕳️'
+            'town': '🏘️'
         }
         emoji = biome_emojis.get(next_biome, '🌍')
         self.print_text(f"{emoji} Biome switched to: {next_biome.title().replace('_', ' ')}")
@@ -275,16 +266,14 @@ class BackgroundManager:
             'grassland': '🌱 Rolling green meadows stretch before you...',
             'desert': '🏜️ Hot sand dunes and ancient cacti surround you...',
             'dungeon': '🏰 Cold stone walls echo with mysterious sounds...',
-            'ocean': '🌊 Crystal blue waters and coral reefs surround you...',
-            'secret_dungeon': '🕳️ Ancient shadows whisper forgotten secrets...'
+            'ocean': '🌊 Crystal blue waters and coral reefs surround you...'
         }
         
         biome_emojis = {
             'grassland': '🌱',
             'desert': '🏜️', 
             'dungeon': '🏰',
-            'ocean': '🌊',
-            'secret_dungeon': '🕳️'
+            'ocean': '🌊'
         }
         
         emoji = biome_emojis.get(new_biome, '🌍')
