@@ -3,6 +3,8 @@ import yaml
 import random
 from typing import Dict, Any
 
+import config
+
 
 def _join_repo_path(*parts):
     base = os.path.dirname(__file__)
@@ -49,17 +51,17 @@ def damage_calculator(attack: int, defense: int, attacker_level: int = 1, defend
     - More predictable combat flow
     """
     # Base damage with controlled randomness (80-120% of attack)
-    variance = random.uniform(0.8, 1.2)
+    variance = random.uniform(config.DAMAGE_VARIANCE_MIN, config.DAMAGE_VARIANCE_MAX)
     base_damage = attack * variance
     
     # Level differential bonus/penalty (±15% per level difference, capped at ±75%)
-    level_diff = max(-5, min(5, attacker_level - defender_level))
-    level_modifier = 1.0 + (level_diff * 0.15)
+    level_diff = max(-config.MAX_LEVEL_DIFFERENCE, min(config.MAX_LEVEL_DIFFERENCE, attacker_level - defender_level))
+    level_modifier = 1.0 + (level_diff * config.LEVEL_MODIFIER_PER_LEVEL)
     base_damage *= level_modifier
     
     # Defense as damage reduction percentage (diminishing returns)
-    defense_percentage = defense / (defense + 15)
-    defense_percentage = min(0.85, defense_percentage)  # Cap at 85% reduction
+    defense_percentage = defense / (defense + config.DEFENSE_SCALING_FACTOR)
+    defense_percentage = min(config.MAX_DEFENSE_REDUCTION, defense_percentage)
     
     final_damage = base_damage * (1 - defense_percentage)
     
@@ -103,7 +105,7 @@ def level_up(hero: Dict[str, Any], monster: Dict[str, Any]) -> bool:
     """
     hero['xp'] = hero.get('xp', 0) + monster.get('level', 0)
     leveled = False
-    if hero['xp'] >= hero.get('level', 1) * 5:
+    if hero['xp'] >= hero.get('level', 1) * config.XP_PER_LEVEL_MULTIPLIER:
         hero['maxhp'] = hero.get('maxhp', 1) * 2
         hero['hp'] = hero['maxhp']
         hero['xp'] = 0

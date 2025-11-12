@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from time import sleep
 import logging
 
+import config
 from game_state import initialize_game_state
 from gui_audio import Audio
 from gui_combat import CombatGUI
@@ -29,8 +30,8 @@ class GameGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("MonsterGame")
-        self.root.geometry("800x1050")
-        self.root.configure(bg='#1a1a1a')
+        self.root.geometry(f"{config.WINDOW_WIDTH}x{config.WINDOW_HEIGHT}")
+        self.root.configure(bg=config.COLOR_BACKGROUND)
         
         # Additional window management for foreground display
         try:
@@ -41,7 +42,7 @@ class GameGUI:
             self.root.focus_force()  # Force focus
             
             # Remove topmost after initial display
-            self.root.after(200, lambda: self.root.attributes('-topmost', False))
+            self.root.after(config.VERY_SHORT_DELAY, lambda: self.root.attributes('-topmost', False))
         except Exception as e:
             print(f"Warning: Could not configure window display: {e}")
         
@@ -88,8 +89,8 @@ class GameGUI:
             highlightthickness=0,
             relief='flat',
             bd=0,
-            width=800,  # Fixed width
-            height=400  # Fixed height
+            width=config.CANVAS_WIDTH,
+            height=config.CANVAS_HEIGHT
         )
         self.image_frame.pack(pady=10, padx=5)  # Removed fill=tk.BOTH to prevent expansion
         
@@ -103,10 +104,10 @@ class GameGUI:
         self.text_area = scrolledtext.ScrolledText(
             self.root, 
             wrap=tk.WORD,
-            width=80,
-            height=15,
-            bg='#2a2a2a',
-            fg='#00ff00',
+            width=config.TEXT_AREA_WIDTH,
+            height=config.TEXT_AREA_HEIGHT,
+            bg=config.COLOR_TEXT_AREA_BG,
+            fg=config.COLOR_TEXT_DEFAULT,
             font=('Courier', 10),
             state=tk.DISABLED,  # Make read-only
             cursor='arrow'  # Change cursor to indicate non-editable
@@ -114,7 +115,7 @@ class GameGUI:
         self.text_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
         
         # Button frame container
-        self.button_frame = tk.Frame(self.root, bg='#1a1a1a')
+        self.button_frame = tk.Frame(self.root, bg=config.COLOR_BACKGROUND)
         self.button_frame.pack(fill=tk.X, padx=10, pady=10)
         
         # Dynamic button list (will be created as needed)
@@ -210,13 +211,13 @@ class GameGUI:
         self._clear_buttons()
         
         # Calculate number of rows needed (3 buttons per row)
-        buttons_per_row = 3
+        buttons_per_row = config.BUTTONS_PER_ROW
         num_rows = (count + buttons_per_row - 1) // buttons_per_row
         
         # Create button rows
         for row in range(num_rows):
             # Create frame for this row
-            row_frame = tk.Frame(self.button_frame, bg='#1a1a1a')
+            row_frame = tk.Frame(self.button_frame, bg=config.COLOR_BACKGROUND)
             row_frame.pack(pady=2, fill=tk.X)
             self.button_rows.append(row_frame)
             
@@ -231,11 +232,11 @@ class GameGUI:
                     row_frame,
                     text=f"Option {i+1}",
                     command=lambda idx=i+1: self.button_clicked(idx),
-                    bg='#4a4a4a',
-                    fg='#ffffff',
+                    bg=config.COLOR_BUTTON_BG,
+                    fg=config.COLOR_BUTTON_FG,
                     font=('Arial', 11, 'bold'),
-                    width=22,  # Wider buttons since we have fewer per row
-                    height=2,  # Slightly taller for better appearance
+                    width=config.BUTTON_WIDTH,
+                    height=config.BUTTON_HEIGHT,
                     state=tk.DISABLED
                 )
                 
@@ -333,29 +334,29 @@ class GameGUI:
         # Define color mapping for different types of variables
         color_patterns = {
             # Health and HP related
-            r'\b(\d+)\s*HP\b': '#ff4444',  # Red for HP values
-            r'\bhp:\s*(\d+)': '#ff4444',   # Red for HP stats
-            r'\b(\d+)/(\d+)\s*HP\b': '#ff4444',  # Red for HP fractions
+            r'\b(\d+)\s*HP\b': config.COLOR_HP,
+            r'\bhp:\s*(\d+)': config.COLOR_HP,
+            r'\b(\d+)/(\d+)\s*HP\b': config.COLOR_HP,
             
             # Damage numbers
-            r'\b(\d+)\s*damage\b': '#ff8800',  # Orange for damage
-            r'\bfor\s+(\d+)\s+damage': '#ff8800',  # Orange for damage
+            r'\b(\d+)\s*damage\b': config.COLOR_DAMAGE,
+            r'\bfor\s+(\d+)\s+damage': config.COLOR_DAMAGE,
             
             # Gold and currency
-            r'💰\s*(\d+)': '#ffdd00',  # Gold for money
-            r'\b(\d+)\s*gold\b': '#ffdd00',  # Gold for money
+            r'💰\s*(\d+)': config.COLOR_GOLD,
+            r'\b(\d+)\s*gold\b': config.COLOR_GOLD,
             
             # Experience and levels
-            r'\bLevel\s*(\d+)': '#00aaff',  # Blue for levels
-            r'\blevel:\s*(\d+)': '#00aaff',  # Blue for levels
-            r'\b(\d+)\s*XP\b': '#8844ff',  # Purple for XP
-            r'\bxp:\s*(\d+)': '#8844ff',   # Purple for XP
+            r'\bLevel\s*(\d+)': config.COLOR_LEVEL,
+            r'\blevel:\s*(\d+)': config.COLOR_LEVEL,
+            r'\b(\d+)\s*XP\b': config.COLOR_XP,
+            r'\bxp:\s*(\d+)': config.COLOR_XP,
             
             # Attack and Defense stats
-            r'\bAttack:\s*(\d+)': '#ff6600',  # Red-orange for attack
-            r'\battack:\s*(\d+)': '#ff6600',  # Red-orange for attack
-            r'\bDefense:\s*(\d+)': '#0088ff', # Blue for defense
-            r'\bdefense:\s*(\d+)': '#0088ff', # Blue for defense
+            r'\bAttack:\s*(\d+)': config.COLOR_ATTACK,
+            r'\battack:\s*(\d+)': config.COLOR_ATTACK,
+            r'\bDefense:\s*(\d+)': config.COLOR_DEFENSE,
+            r'\bdefense:\s*(\d+)': config.COLOR_DEFENSE,
             
             # Names and important identifiers
             r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b': '#ffaa00',  # Orange for character names
@@ -431,15 +432,15 @@ class GameGUI:
     def print_colored_value(self, text, value, value_type='default', custom_color=None):
         """Print text with a colored value embedded"""
         color_map = {
-            'hp': '#ff4444',      # Red for health
-            'damage': '#ff8800',  # Orange for damage  
-            'gold': '#ffdd00',    # Gold for money
-            'xp': '#8844ff',      # Purple for experience
-            'level': '#00aaff',   # Blue for levels
-            'attack': '#ff6600',  # Red-orange for attack
-            'defense': '#0088ff', # Blue for defense
-            'name': '#ffaa00',    # Orange for names
-            'default': '#00ff00'  # Default green
+            'hp': config.COLOR_HP,
+            'damage': config.COLOR_DAMAGE,
+            'gold': config.COLOR_GOLD,
+            'xp': config.COLOR_XP,
+            'level': config.COLOR_LEVEL,
+            'attack': config.COLOR_ATTACK,
+            'defense': config.COLOR_DEFENSE,
+            'name': '#ffaa00',  # Orange for names
+            'default': config.COLOR_TEXT_DEFAULT
         }
         
         # Use custom color if provided, otherwise use color map

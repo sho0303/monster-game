@@ -9,6 +9,8 @@ import random
 import os
 from typing import TYPE_CHECKING
 
+import config
+
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
 
@@ -112,7 +114,7 @@ class TownGUI:
         # Small HP restoration
         hero = self.gui.game_state.hero
         if hero['hp'] < hero['maxhp']:
-            heal_amount = min(3, hero['maxhp'] - hero['hp'])  # Heal up to 3 HP
+            heal_amount = min(config.FOUNTAIN_HEAL_AMOUNT, hero['maxhp'] - hero['hp'])
             hero['hp'] += heal_amount
             
             heal_parts = [
@@ -356,5 +358,5 @@ class TownGUI:
         self.gui._print_colored_parts(shame_parts)
         
         # Return to main menu
-        self.gui.root.after(4000, self.gui.main_menu)
+        self.gui.root.after(config.LONG_DELAY, self.gui.main_menu)
 

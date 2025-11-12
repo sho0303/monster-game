@@ -3,6 +3,8 @@ Blacksmith system for GUI - provides services instead of selling items
 """
 from typing import TYPE_CHECKING
 
+import config
+
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
 
@@ -19,19 +21,19 @@ class BlacksmithGUI:
         self.services = {
             'Sharpen Sword': {
                 'name': 'Sharpen Sword',
-                'cost': 100,
-                'description': 'Permanently adds +1 damage to your weapon',
+                'cost': config.BLACKSMITH_UPGRADE_COST,
+                'description': f'Permanently adds +{config.BLACKSMITH_ATTACK_BONUS} damage to your weapon',
                 'stat': 'attack',
-                'bonus': 1,
+                'bonus': config.BLACKSMITH_ATTACK_BONUS,
                 'icon': '⚔️',
                 'message': 'Your weapon gleams with deadly sharpness!'
             },
             'Bolster Armour': {
                 'name': 'Bolster Armour', 
-                'cost': 100,
-                'description': 'Permanently adds +1 defense to your armor',
+                'cost': config.BLACKSMITH_UPGRADE_COST,
+                'description': f'Permanently adds +{config.BLACKSMITH_DEFENSE_BONUS} defense to your armor',
                 'stat': 'defense',
-                'bonus': 1,
+                'bonus': config.BLACKSMITH_DEFENSE_BONUS,
                 'icon': '🛡️',
                 'message': 'Your armor is reinforced with expert craftsmanship!'
             }
@@ -206,7 +208,7 @@ class BlacksmithGUI:
             self._show_services()
         
         # Return to services menu after delay
-        self.gui.root.after(4000, continue_action)
+        self.gui.root.after(config.LONG_DELAY, continue_action)
     
     def _leave_blacksmith(self):
         """Leave blacksmith and return to town"""

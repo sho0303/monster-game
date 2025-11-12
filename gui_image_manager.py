@@ -8,6 +8,8 @@ Extracted from gui_main.py to reduce complexity and improve maintainability.
 import tkinter as tk
 from PIL import Image, ImageTk
 
+import config
+
 
 class ImageManager:
     """
@@ -208,7 +210,7 @@ class ImageManager:
             Tuple of (width, height) in pixels
         """
         # Return fixed canvas dimensions (no dynamic sizing)
-        return 800, 400
+        return config.CANVAS_WIDTH, config.CANVAS_HEIGHT
     
     def get_current_layout(self):
         """Get the current image layout mode

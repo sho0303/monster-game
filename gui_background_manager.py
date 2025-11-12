@@ -9,6 +9,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import random
 
+import config
+
 
 class BackgroundManager:
     """
@@ -53,30 +55,30 @@ class BackgroundManager:
         # Biome configuration
         self.biome_configs = {
             'grassland': {
-                'background': 'art/grassy_background.png',
-                'fallback_color': '#4a7c59'
+                'background': config.BIOME_BACKGROUNDS['grassland'],
+                'fallback_color': config.COLOR_BIOME_GRASSLAND
             },
             'desert': {
-                'background': 'art/desert_background.png', 
-                'fallback_color': '#daa520'
+                'background': config.BIOME_BACKGROUNDS['desert'], 
+                'fallback_color': config.COLOR_BIOME_DESERT
             },
             'dungeon': {
-                'background': 'art/dungeon_background.png',
-                'fallback_color': '#2d1f1a'
+                'background': config.BIOME_BACKGROUNDS['dungeon'],
+                'fallback_color': config.COLOR_BIOME_DUNGEON
             },
             'ocean': {
-                'background': 'art/ocean_background.png',
-                'fallback_color': '#0077be'
+                'background': config.BIOME_BACKGROUNDS['ocean'],
+                'fallback_color': config.COLOR_BIOME_OCEAN
             },
             'town': {
-                'background': 'art/town_background.png',
-                'fallback_color': '#2B4C3D'
+                'background': config.BIOME_BACKGROUNDS['town'],
+                'fallback_color': config.COLOR_BIOME_TOWN
             }
         }
         
         # Combat biomes (excludes safe zones)
-        self.combat_biomes = ['grassland', 'desert', 'dungeon', 'ocean']
-        self.all_biomes = ['grassland', 'desert', 'dungeon', 'ocean', 'town']
+        self.combat_biomes = config.BIOMES_COMBAT
+        self.all_biomes = config.BIOMES_ALL
     
     def _default_print_text(self, text, color='#00ff00'):
         """Default print function if none provided"""
@@ -102,9 +104,9 @@ class BackgroundManager:
             fallback_color: Hex color to use if image loading fails
         """
         try:
-            # Use fixed canvas dimensions (800x400)
-            canvas_width = 800
-            canvas_height = 400
+            # Use fixed canvas dimensions
+            canvas_width = config.CANVAS_WIDTH
+            canvas_height = config.CANVAS_HEIGHT
                 
             # Load and resize the background image
             bg_img = Image.open(background_path)

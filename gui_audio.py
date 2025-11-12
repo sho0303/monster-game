@@ -6,6 +6,8 @@ from pygame import mixer
 import os
 from pathlib import Path
 
+import config
+
 
 class Audio:
     """Enhanced audio handler with background music and sound effects support"""
@@ -15,17 +17,17 @@ class Audio:
         self.background_music_playing = False
         self.current_background_music = None
         self.sound_cache = {}  # Cache for sound effects
-        self.music_volume = 0.5  # Background music volume (0.0 to 1.0)
-        self.sfx_volume = 0.8    # Sound effects volume (0.0 to 1.0)
+        self.music_volume = config.MUSIC_VOLUME_DEFAULT
+        self.sfx_volume = config.SFX_VOLUME_DEFAULT
         
         self._initialize_mixer()
     
     def _initialize_mixer(self):
         """Initialize pygame mixer with optimal settings"""
         try:
-            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
+            mixer.pre_init(frequency=config.AUDIO_FREQUENCY, size=-16, channels=2, buffer=config.AUDIO_BUFFER_SIZE)
             mixer.init()
-            mixer.set_num_channels(8)  # Allow multiple sound effects simultaneously
+            mixer.set_num_channels(config.AUDIO_CHANNELS)
             self.initialized = True
         except Exception as e:
             print(f"Warning: Could not initialize audio system: {e}")
