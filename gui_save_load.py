@@ -91,6 +91,10 @@ class SaveLoadManager:
                 }
             }
             
+            # Add achievements data if available
+            if hasattr(self.gui, 'achievements') and self.gui.achievements:
+                save_data['achievements'] = self.gui.achievements.save_to_dict()
+            
             # Save to file
             save_path = self.saves_dir / save_name
             with open(save_path, 'w', encoding='utf-8') as f:
@@ -124,9 +128,14 @@ class SaveLoadManager:
             hero_data = save_data['hero']
             game_state = save_data.get('game_state', {})
             save_metadata = save_data.get('save_metadata', {})
+            achievements_data = save_data.get('achievements', None)
             
             # Ensure hero has all required fields
             hero_data = self._validate_hero_data(hero_data)
+            
+            # Restore achievements if available
+            if achievements_data and hasattr(self.gui, 'achievements') and self.gui.achievements:
+                self.gui.achievements.load_from_dict(achievements_data)
             
             return {
                 'success': True,

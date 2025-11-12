@@ -22,8 +22,8 @@ class TownGUI:
         # Set town background
         self.gui.set_town_background()
         
-        # 15% chance of goblin assault!
-        if random.random() < 0.15:
+        # 10 chance of goblin assault!
+        if random.random() < 0.10:
             self._goblin_assault()
             return
         

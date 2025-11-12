@@ -20,6 +20,7 @@ from gui_town import TownGUI
 from gui_tavern import TavernGUI
 from gui_image_manager import ImageManager
 from gui_background_manager import BackgroundManager
+from gui_achievements import AchievementManager
 
 
 class GameGUI:
@@ -821,6 +822,7 @@ class GameGUI:
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
         self.tavern = TavernGUI(self)
+        self.achievements = AchievementManager(self)
         
         # Start hero selection
         self.select_hero()
