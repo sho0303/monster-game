@@ -4,9 +4,14 @@ Main entry point for the graphical user interface version with enhanced error ha
 """
 import sys
 import os
+import warnings
 from pathlib import Path
 from datetime import datetime
 from logger_utils import setup_logging, get_logger
+
+# Suppress pygame's pkg_resources deprecation warning
+# This is a pygame internal issue that will be fixed in future pygame versions
+warnings.filterwarnings("ignore", message=".*pkg_resources is deprecated.*")
 
 # Initialize logging first
 log_file = setup_logging()
