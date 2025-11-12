@@ -1085,9 +1085,8 @@ class GameGUI:
         self.set_buttons(["🏘️ Town", "⚔️ Fight Monster", "🧪 Use Item", "📜 Quests", "🌀 Teleport", "💾 Save Game"], on_menu_select)
 
     def show_quests(self):
-        """Display quest interface"""
+        """Display quest interface - main entry point"""
         self.clear_text()
-        
         hero = self.game_state.hero
         self.quest_manager.initialize_hero_quests(hero)
         
@@ -1096,130 +1095,149 @@ class GameGUI:
         active_quests = self.quest_manager.get_active_quests(hero)
         
         if not active_quests:
-            self.print_text("No active quests.\n")
-            
-            # Offer to generate a new quest
-            self.print_text("Would you like to take on a new quest?")
-            
-            def on_quest_choice(choice):
-                if choice == 1:
-                    # Generate new kill monster quest
-                    new_quest = self.quest_manager.generate_kill_monster_quest()
-                    if isinstance(new_quest, str):
-                        # Handle error cases
-                        if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
-                            current_biome = getattr(self, 'current_biome', 'grassland')
-                            error_parts = [
-                                ("❌ No quests available! ", "#ff6666"),
-                                (f"All monsters in {current_biome} already have active quests.", "#ffffff")
-                            ]
-                            self._print_colored_parts(error_parts)
-                            self.print_text("💡 Complete existing quests or explore other biomes!")
-                            # Stay in quest menu to see existing quests
-                            self.root.after(2500, self.show_quests)
-                        elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
-                            error_parts = [
-                                ("❌ No quests available! ", "#ff6666"),
-                                ("You have active quests for all available monsters.", "#ffffff")
-                            ]
-                            self._print_colored_parts(error_parts)
-                            self.print_text("💡 Complete some existing quests first!")
-                            # Stay in quest menu to see existing quests
-                            self.root.after(2500, self.show_quests)
-                        else:
-                            self.print_text("❌ Could not generate quest (unknown error)")
-                            # Return to main menu for unknown errors
-                            self.root.after(2000, self.main_menu)
-                    elif new_quest:
-                        # Successfully generated quest
-                        self.quest_manager.add_quest(hero, new_quest)
-                        
-                        # Show the new quest
-                        quest_parts = [
-                            ("🆕 New Quest: ", "#00ff00"),
-                            (new_quest.description, "#ffffff"),
-                            (f" (Reward: {new_quest.reward_xp} XP)", "#ffdd00")
-                        ]
-                        self._print_colored_parts(quest_parts)
-                        
-                        self.print_text("\nQuest added to your journal!")
-                        # Stay in quest menu after adding quest
-                        self.root.after(1500, self.show_quests)
-                    else:
-                        self.print_text("❌ Could not generate quest (no monsters available)")
-                        # Return to main menu only on error
-                        self.root.after(2000, self.main_menu)
-                elif choice == 2:
-                    # Back button pressed
-                    self.main_menu()
-            
-            self.set_buttons(["✅ Accept New Quest", "🔙 Back"], on_quest_choice)
-            
+            self._show_no_quests_screen()
         else:
-            # Show active quests
-            for i, quest in enumerate(active_quests, 1):
-                quest_parts = [
-                    (f"{i}. ", "#ffffff"),
-                    (quest.description, "#00ff00"),
-                    (f" (Reward: {quest.reward_xp} XP)", "#ffdd00")
-                ]
-                self._print_colored_parts(quest_parts)
+            self._show_active_quests_screen(active_quests)
+    
+    def _show_no_quests_screen(self):
+        """Display screen when hero has no active quests"""
+        self.print_text("No active quests.\n")
+        self.print_text("Would you like to take on a new quest?")
+        
+        def on_quest_choice(choice):
+            if choice == 1:
+                self._handle_accept_new_quest()
+            elif choice == 2:
+                self.main_menu()
+        
+        self.set_buttons(["✅ Accept New Quest", "🔙 Back"], on_quest_choice)
+    
+    def _show_active_quests_screen(self, active_quests):
+        """Display screen when hero has active quests"""
+        # Display quest list
+        for i, quest in enumerate(active_quests, 1):
+            quest_parts = [
+                (f"{i}. ", "#ffffff"),
+                (quest.description, "#00ff00"),
+                (f" (Reward: {quest.reward_xp} XP)", "#ffdd00")
+            ]
+            self._print_colored_parts(quest_parts)
+        
+        self.print_text(f"\nYou have {len(active_quests)} active quest(s).")
+        
+        # Build button list and handler
+        buttons = self._build_quest_menu_buttons(active_quests)
+        handler = self._create_quest_menu_handler(active_quests)
+        
+        self.set_buttons(buttons, handler)
+    
+    def _build_quest_menu_buttons(self, active_quests):
+        """Build button list for quest menu based on current state"""
+        buttons = []
+        
+        if len(active_quests) < 3:
+            buttons.append("➕ Take Another Quest")
+        
+        buttons.append("🗑️ Drop Quest")
+        buttons.append("🔙 Back")
+        
+        return buttons
+    
+    def _create_quest_menu_handler(self, active_quests):
+        """Create button handler for quest menu with proper index mapping"""
+        def on_quest_menu_choice(choice):
+            button_index = 0
             
-            self.print_text(f"\nYou have {len(active_quests)} active quest(s).")
-            
-            def on_quest_menu_choice(choice):
-                button_index = 0
-                
-                # Take Another Quest option
-                if len(active_quests) < 3:
-                    if choice == button_index + 1:
-                        new_quest = self.quest_manager.generate_kill_monster_quest()
-                        if isinstance(new_quest, str):
-                            # Handle error cases
-                            if new_quest == "NO_QUESTS_AVAILABLE_BIOME":
-                                current_biome = getattr(self, 'current_biome', 'grassland')
-                                error_parts = [
-                                    ("❌ No new quests! ", "#ff6666"),
-                                    (f"All {current_biome} monsters already have quests.", "#ffffff")
-                                ]
-                                self._print_colored_parts(error_parts)
-                            elif new_quest == "NO_QUESTS_AVAILABLE_ALL":
-                                error_parts = [
-                                    ("❌ No new quests! ", "#ff6666"),
-                                    ("All monsters already have active quests.", "#ffffff")
-                                ]
-                                self._print_colored_parts(error_parts)
-                            else:
-                                self.print_text("❌ Could not generate quest")
-                            self.root.after(2000, self.main_menu)
-                        elif new_quest:
-                            self.quest_manager.add_quest(hero, new_quest)
-                            self.print_text("\n🆕 New quest added!")
-                            self.root.after(1500, self.show_quests)  # Refresh quest view
-                        else:
-                            self.print_text("❌ Could not generate quest")
-                            self.root.after(1500, self.main_menu)
-                        return
-                    button_index += 1
-                
-                # Drop Quest option
+            # Take Another Quest option (only if < 3 quests)
+            if len(active_quests) < 3:
                 if choice == button_index + 1:
-                    self.show_drop_quest_menu()
+                    self._handle_take_another_quest()
                     return
                 button_index += 1
-                
-                # Back option
-                if choice == button_index + 1:
-                    self.main_menu()
-                    return
             
-            buttons = []
-            if len(active_quests) < 3:
-                buttons.append("➕ Take Another Quest")
-            buttons.append("🗑️ Drop Quest")
-            buttons.append("🔙 Back")
+            # Drop Quest option
+            if choice == button_index + 1:
+                self.show_drop_quest_menu()
+                return
+            button_index += 1
             
-            self.set_buttons(buttons, on_quest_menu_choice)
+            # Back option
+            if choice == button_index + 1:
+                self.main_menu()
+                return
+        
+        return on_quest_menu_choice
+    
+    def _handle_accept_new_quest(self):
+        """Handle accepting a new quest when hero has no quests"""
+        hero = self.game_state.hero
+        new_quest = self.quest_manager.generate_kill_monster_quest()
+        
+        if isinstance(new_quest, str):
+            self._handle_quest_generation_error(new_quest, stay_in_menu=True)
+        elif new_quest:
+            self._add_and_display_new_quest(hero, new_quest, stay_in_menu=True)
+        else:
+            self.print_text("❌ Could not generate quest (no monsters available)")
+            self.root.after(2000, self.main_menu)
+    
+    def _handle_take_another_quest(self):
+        """Handle taking an additional quest when hero already has quests"""
+        hero = self.game_state.hero
+        new_quest = self.quest_manager.generate_kill_monster_quest()
+        
+        if isinstance(new_quest, str):
+            self._handle_quest_generation_error(new_quest, stay_in_menu=False)
+        elif new_quest:
+            self._add_and_display_new_quest(hero, new_quest, stay_in_menu=True)
+        else:
+            self.print_text("❌ Could not generate quest")
+            self.root.after(1500, self.main_menu)
+    
+    def _handle_quest_generation_error(self, error_code, stay_in_menu=False):
+        """Display appropriate error message for quest generation failures"""
+        if error_code == "NO_QUESTS_AVAILABLE_BIOME":
+            current_biome = getattr(self, 'current_biome', 'grassland')
+            error_parts = [
+                ("❌ No quests available! ", "#ff6666"),
+                (f"All monsters in {current_biome} already have active quests.", "#ffffff")
+            ]
+            self._print_colored_parts(error_parts)
+            self.print_text("💡 Complete existing quests or explore other biomes!")
+        elif error_code == "NO_QUESTS_AVAILABLE_ALL":
+            error_parts = [
+                ("❌ No quests available! ", "#ff6666"),
+                ("You have active quests for all available monsters.", "#ffffff")
+            ]
+            self._print_colored_parts(error_parts)
+            self.print_text("💡 Complete some existing quests first!")
+        else:
+            self.print_text("❌ Could not generate quest (unknown error)")
+        
+        # Return to appropriate screen
+        if stay_in_menu:
+            self.root.after(2500, self.show_quests)
+        else:
+            self.root.after(2000, self.main_menu)
+    
+    def _add_and_display_new_quest(self, hero, new_quest, stay_in_menu=False):
+        """Add a new quest to hero's journal and display confirmation"""
+        self.quest_manager.add_quest(hero, new_quest)
+        
+        quest_parts = [
+            ("🆕 New Quest: ", "#00ff00"),
+            (new_quest.description, "#ffffff"),
+            (f" (Reward: {new_quest.reward_xp} XP)", "#ffdd00")
+        ]
+        self._print_colored_parts(quest_parts)
+        
+        self.print_text("\nQuest added to your journal!")
+        
+        # Return to quest menu to show updated list
+        if stay_in_menu:
+            self.root.after(1500, self.show_quests)
+        else:
+            self.root.after(1500, self.main_menu)
 
     def show_drop_quest_menu(self):
         """Display quest dropping interface"""
