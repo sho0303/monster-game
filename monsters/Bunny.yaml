@@ -2,8 +2,8 @@ Carnivorous Bunny Rabbit:
   name: Carnivorous Bunny Rabbit
   hp: 8
   maxhp: 8
-  attack: 1
-  defense: 1
+  attack: 2
+  defense: 2
   gold: 10
   level: 1
   xp: 1
