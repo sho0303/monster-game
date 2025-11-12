@@ -76,8 +76,13 @@ class Achievement:
 class AchievementManager:
     """Manages all achievements and player progress"""
     
-    def __init__(self, gui=None):
-        self.gui = gui
+    def __init__(self, game_state=None):
+        """Initialize achievement manager with optional game state reference.
+        
+        Args:
+            game_state: Game state object for accessing hero data (optional)
+        """
+        self.game_state = game_state
         self.achievements: Dict[str, Achievement] = {}
         self.player_stats = {
             'monsters_killed': {},  # {monster_name: count}
@@ -289,10 +294,10 @@ class AchievementManager:
     
     def _award_achievement_reward(self, achievement: Achievement):
         """Award the reward for completing an achievement"""
-        if not self.gui or not self.gui.game_state or not self.gui.game_state.hero:
+        if not self.game_state or not self.game_state.hero:
             return
         
-        hero = self.gui.game_state.hero
+        hero = self.game_state.hero
         
         if achievement.reward_type == "gold":
             hero['gold'] = hero.get('gold', 0) + achievement.reward_value

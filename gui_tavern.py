@@ -3,11 +3,20 @@ Tavern system for GUI - drink purchasing and atmosphere
 """
 import yaml
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class TavernGUI:
     """Tavern system for GUI"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
         self.tavern_data = None
     
@@ -324,3 +333,4 @@ class TavernGUI:
             self._show_drinks()
         
         self.gui.set_buttons([" Back"], go_back)
+

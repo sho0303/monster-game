@@ -812,8 +812,15 @@ class GameGUI:
         # Initialize game state
         self.game_state = initialize_game_state()
         
-        # Initialize game systems with GUI
-        self.combat = CombatGUI(self)
+        # Initialize game systems with dependency injection
+        self.combat = CombatGUI(
+            text_display=self,
+            image_display=self,
+            audio=self.audio,
+            interface_control=self,
+            timer=self.root,
+            game_state=self.game_state
+        )
         self.shop = ShopGUI(self)
         self.blacksmith = BlacksmithGUI(self)
         self.inventory = InventoryGUI(self)
@@ -822,7 +829,7 @@ class GameGUI:
         self.save_load_manager = SaveLoadManager(self)
         self.town = TownGUI(self)
         self.tavern = TavernGUI(self)
-        self.achievements = AchievementManager(self)
+        self.achievements = AchievementManager(game_state=self.game_state)
         
         # Start hero selection
         self.select_hero()

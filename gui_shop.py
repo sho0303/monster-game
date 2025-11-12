@@ -3,11 +3,20 @@ Shop system for GUI
 """
 import yaml
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class ShopGUI:
     """Shop system for GUI"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
         self.store_data = None
         self.current_category = None
@@ -267,3 +276,4 @@ class ShopGUI:
         
         # Return to store category selection after delay
         self.gui.root.after(3000, self._select_category)
+

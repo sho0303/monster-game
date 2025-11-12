@@ -7,11 +7,21 @@ import tkinter as tk
 from tkinter import scrolledtext
 import random
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
+
 
 class TownGUI:
     """GUI for town activities and menu"""
     
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
     
     def enter_town(self):
@@ -347,3 +357,4 @@ class TownGUI:
         
         # Return to main menu
         self.gui.root.after(4000, self.gui.main_menu)
+

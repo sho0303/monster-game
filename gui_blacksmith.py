@@ -1,10 +1,20 @@
 """
 Blacksmith system for GUI - provides services instead of selling items
 """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
+
 
 class BlacksmithGUI:
     """Blacksmith service system for GUI"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
         self.services = {
             'Sharpen Sword': {

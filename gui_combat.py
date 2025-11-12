@@ -2,24 +2,47 @@
 Combat system for GUI
 """
 import random
+from typing import Callable, Dict, Any, Optional
+from gui_interfaces import GameContextProtocol
 
 
 class CombatGUI:
-    """Combat system for GUI"""
-    def __init__(self, gui):
-        self.gui = gui
+    """Combat system for GUI using dependency injection"""
+    def __init__(self, 
+                 text_display,
+                 image_display, 
+                 audio,
+                 interface_control,
+                 timer,
+                 game_state):
+        """Initialize combat system with specific dependencies.
+        
+        Args:
+            text_display: Object with print_text(), clear_text(), print_combat_damage(), _print_colored_parts()
+            image_display: Object with show_image(), _clear_foreground_images(), _add_canvas_image(), _get_canvas_dimensions()
+            audio: Object with play_sound_effect() method
+            interface_control: Object with lock_interface(), unlock_interface() methods
+            timer: Object with after() method for scheduling callbacks (typically tkinter root)
+            game_state: Object with game state data
+        """
+        self.text_display = text_display
+        self.image_display = image_display
+        self.audio = audio
+        self.interface_control = interface_control
+        self.timer = timer
+        self.game_state = game_state
     
     def fight(self, hero, monster, callback):
         """Execute fight with GUI updates and attack animations"""
-        self.gui.clear_text()
+        self.text_display.clear_text()
         
         # Lock interface to prevent interruptions during combat
-        self.gui.lock_interface()
+        self.interface_control.lock_interface()
         
         # Display hero and monster side by side for combat
         self._display_combat_images(hero, monster)
         
-        self.gui.print_text("\n⚔️  FIGHT! ⚔️\n")
+        self.text_display.print_text("\n⚔️  FIGHT! ⚔️\n")
         
         # Store callback and fight participants for async combat
         self.fight_callback = callback
@@ -40,7 +63,7 @@ class CombatGUI:
             self._end_combat()
             return
         
-        self.gui.print_text(f"--- Round {self.round_num} ---")
+        self.text_display.print_text(f"--- Round {self.round_num} ---")
         
         # Random initiative - determine who attacks first this round
         hero_goes_first = random.choice([True, False])
@@ -56,14 +79,14 @@ class CombatGUI:
             self._show_hero_attack_animation(hero)
             
             # After hero animation completes, apply damage and start monster attack
-            self.gui.root.after(1500, lambda: self._complete_hero_attack_start_monster(
+            self.timer.after(1500, lambda: self._complete_hero_attack_start_monster(
                 hero_damage, monster_damage, monster, hero, "⚡ You attack for {damage} damage!", self.round_num))
         else:
             # Monster attacks first, then hero attacks
             self._show_monster_attack_animation(monster)
             
             # After monster animation completes, apply damage and start hero attack
-            self.gui.root.after(1500, lambda: self._complete_monster_attack_start_hero(
+            self.timer.after(1500, lambda: self._complete_monster_attack_start_hero(
                 monster_damage, hero_damage, monster, hero, f"💀 {monster['name']} attacks for {{damage}} damage!", self.round_num))
 
     def _end_combat(self):
@@ -84,14 +107,14 @@ class CombatGUI:
         else:
             # Standard victory/defeat handling
             if result == 'won':
-                self.gui.show_image('art/you_won.png')
-                self.gui.audio.play_sound_effect('win.mp3')
+                self.image_display.show_image('art/you_won.png')
+                self.audio.play_sound_effect('win.mp3')
             else:
-                self.gui.show_image('art/you_lost.png')
-                self.gui.audio.play_sound_effect('death.mp3')
+                self.image_display.show_image('art/you_lost.png')
+                self.audio.play_sound_effect('death.mp3')
             
             # Unlock interface before calling callback (so next screen can set buttons)
-            self.gui.unlock_interface()
+            self.interface_control.unlock_interface()
             
             self.fight_callback(result)
     
@@ -140,10 +163,10 @@ class CombatGUI:
     def _display_combat_images_with_sizing(self):
         """Display hero and monster images with special Dragon boss sizing"""
         # Clear existing foreground images
-        self.gui._clear_foreground_images()
+        self.image_display._clear_foreground_images()
         
         # Get canvas dimensions for positioning
-        canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+        canvas_width, canvas_height = self.image_display._get_canvas_dimensions()
         
         # Calculate final positions (same logic as encounter system)
         base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
@@ -173,14 +196,14 @@ class CombatGUI:
         self.combat_y = final_y
         
         # Display both images with appropriate sizes
-        self.gui._add_canvas_image(
+        self.image_display._add_canvas_image(
             self.current_hero_image, 
             hero_final_x, 
             final_y, 
             hero_img_size, 
             hero_img_size
         )
-        self.gui._add_canvas_image(
+        self.image_display._add_canvas_image(
             self.current_monster_image, 
             monster_final_x, 
             final_y, 
@@ -191,7 +214,7 @@ class CombatGUI:
     def _show_hero_attack_animation(self, hero):
         """Show hero attack animation - toggle between normal and attack 3 times"""
         # Play hero attack sound at the start of animation
-        self.gui.audio.play_sound_effect('punch.mp3')
+        self.audio.play_sound_effect('punch.mp3')
         
         hero_class = hero.get('class', 'Warrior').lower()
         attack_image_path = f"art/{hero_class}_attack.png"
@@ -212,7 +235,7 @@ class CombatGUI:
         """Toggle between normal and attack images with quarter-second delay using custom sizing"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
             # Clear and redraw with appropriate image
-            self.gui._clear_foreground_images()
+            self.image_display._clear_foreground_images()
             
             if toggle_count % 2 == 0:
                 # Even count: show attack image
@@ -222,14 +245,14 @@ class CombatGUI:
                 hero_image = normal_image
             
             # Display with custom sizing for Dragon boss
-            self.gui._add_canvas_image(
+            self.image_display._add_canvas_image(
                 hero_image, 
                 self.combat_hero_x, 
                 self.combat_y, 
                 self.hero_img_size, 
                 self.hero_img_size
             )
-            self.gui._add_canvas_image(
+            self.image_display._add_canvas_image(
                 monster_image, 
                 self.combat_monster_x, 
                 self.combat_y, 
@@ -238,7 +261,7 @@ class CombatGUI:
             )
             
             # Schedule next toggle after 250ms (quarter second)
-            self.gui.root.after(250, lambda: self._toggle_attack_animation(
+            self.timer.after(250, lambda: self._toggle_attack_animation(
                 toggle_count + 1, attack_image, normal_image, monster_image))
         else:
             # Animation complete - ensure we end with normal hero image
@@ -250,7 +273,7 @@ class CombatGUI:
         
         # Display attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, damage, "Hero")
+        self.text_display.print_combat_damage(base_message, damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - damage)
         
         # Return to normal display
@@ -262,22 +285,22 @@ class CombatGUI:
         
         # Display damage message with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
+        self.text_display.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Check if monster is still alive to counter-attack
         if monster['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             # Monster counter-attacks after a brief pause
-            self.gui.root.after(1000, lambda: self._start_monster_counter_attack(monster_damage, monster, hero, round_num))
+            self.timer.after(1000, lambda: self._start_monster_counter_attack(monster_damage, monster, hero, round_num))
     
     def _start_monster_counter_attack(self, monster_damage, monster, hero, round_num):
         """Start monster counter-attack animation"""
         self._show_monster_attack_animation(monster)
         
         # After monster animation completes, apply damage and finish round
-        self.gui.root.after(1500, lambda: self._complete_monster_counter_attack_finish_round(
+        self.timer.after(1500, lambda: self._complete_monster_counter_attack_finish_round(
             monster_damage, monster, hero, f"💀 {monster['name']} counter-attacks for {{damage}} damage!", round_num))
     
     def _complete_hero_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
@@ -286,23 +309,23 @@ class CombatGUI:
         
         # Display hero attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
+        self.text_display.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Finish round and show status, then continue to next round
         self._finish_round_status(hero, monster, round_num)
         
         if monster['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.gui.root.after(1500, lambda: self._start_combat_round())
+            self.timer.after(1500, lambda: self._start_combat_round())
     
     def _show_monster_attack_animation(self, monster):
         """Show monster attack animation - toggle between normal and attack 3 times"""
         # Play monster attack sound at the start of animation (limited to 3 seconds)
         attack_sound = self._get_monster_attack_sound(monster)
-        self.gui.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
+        self.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
         
         # Check for attack_art key first (preferred method)
         if 'attack_art' in monster and monster['attack_art']:
@@ -345,7 +368,7 @@ class CombatGUI:
         """Toggle between normal and attack images for monster with quarter-second delay using custom sizing"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
             # Clear and redraw with appropriate image
-            self.gui._clear_foreground_images()
+            self.image_display._clear_foreground_images()
             
             if toggle_count % 2 == 0:
                 # Even count: show monster attack image
@@ -355,14 +378,14 @@ class CombatGUI:
                 monster_image = normal_image
             
             # Display with custom sizing for Dragon boss
-            self.gui._add_canvas_image(
+            self.image_display._add_canvas_image(
                 hero_image, 
                 self.combat_hero_x, 
                 self.combat_y, 
                 self.hero_img_size, 
                 self.hero_img_size
             )
-            self.gui._add_canvas_image(
+            self.image_display._add_canvas_image(
                 monster_image, 
                 self.combat_monster_x, 
                 self.combat_y, 
@@ -371,7 +394,7 @@ class CombatGUI:
             )
             
             # Schedule next toggle after 500ms (slower for visibility)
-            self.gui.root.after(500, lambda: self._toggle_monster_attack_animation(
+            self.timer.after(500, lambda: self._toggle_monster_attack_animation(
                 toggle_count + 1, attack_image, normal_image, hero_image))
         else:
             # Animation complete - ensure we end with normal monster image
@@ -383,22 +406,22 @@ class CombatGUI:
         
         # Display damage message with enhanced visual impact  
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
+        self.text_display.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Check if hero is still alive to counter-attack
         if hero['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             # Hero counter-attacks after a brief pause
-            self.gui.root.after(1000, lambda: self._start_hero_counter_attack(hero_damage, monster, hero, round_num))
+            self.timer.after(1000, lambda: self._start_hero_counter_attack(hero_damage, monster, hero, round_num))
     
     def _start_hero_counter_attack(self, hero_damage, monster, hero, round_num):
         """Start hero counter-attack animation"""
         self._show_hero_attack_animation(hero)
         
         # After hero animation completes, apply damage and finish round
-        self.gui.root.after(1500, lambda: self._complete_hero_counter_attack_finish_round(
+        self.timer.after(1500, lambda: self._complete_hero_counter_attack_finish_round(
             hero_damage, monster, hero, "⚡ You counter-attack for {damage} damage!", round_num))
     
     def _complete_hero_counter_attack_finish_round(self, hero_damage, monster, hero, message_template, round_num):
@@ -407,17 +430,17 @@ class CombatGUI:
         
         # Display counter-attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, hero_damage, "Hero")
+        self.text_display.print_combat_damage(base_message, hero_damage, "Hero")
         monster['hp'] = max(0, monster['hp'] - hero_damage)
         
         # Finish round and show status, then continue to next round
         self._finish_round_status(hero, monster, round_num)
         
         if monster['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.gui.root.after(1500, lambda: self._start_combat_round())
+            self.timer.after(1500, lambda: self._start_combat_round())
     
     def _complete_monster_counter_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster counter-attack and finish the round"""
@@ -425,17 +448,17 @@ class CombatGUI:
         
         # Display monster counter-attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
+        self.text_display.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Finish round and show status, then continue to next round
         self._finish_round_status(hero, monster, round_num)
         
         if hero['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.gui.root.after(1500, lambda: self._start_combat_round())
+            self.timer.after(1500, lambda: self._start_combat_round())
     
     def _complete_monster_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster attack and finish the round (legacy method for single attack rounds)"""
@@ -443,17 +466,17 @@ class CombatGUI:
         
         # Display monster attack damage with enhanced visual impact
         base_message = message_template.replace("{damage}", "")
-        self.gui.print_combat_damage(base_message, monster_damage, monster['name'])
+        self.text_display.print_combat_damage(base_message, monster_damage, monster['name'])
         hero['hp'] = max(0, hero['hp'] - monster_damage)
         
         # Finish round and show status, then continue to next round
         self._finish_round_status(hero, monster, round_num)
         
         if hero['hp'] <= 0:
-            self.gui.root.after(1000, lambda: self._end_combat())
+            self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.gui.root.after(1500, lambda: self._start_combat_round())
+            self.timer.after(1500, lambda: self._start_combat_round())
 
     def _finish_round_status(self, hero, monster, round_num):
         """Show round status and return to normal display"""
@@ -467,7 +490,7 @@ class CombatGUI:
             (str(monster['hp']), "#ff4444"),
             ("\n", "#00ff00")
         ]
-        self.gui._print_colored_parts(status_parts)
+        self.text_display._print_colored_parts(status_parts)
         self._return_to_monster_view(monster)
 
     def _return_to_monster_view(self, monster):
@@ -477,14 +500,14 @@ class CombatGUI:
             self._display_combat_images_with_sizing()
         except Exception as e:
             # Fallback - show both as crossed swords with normal sizing
-            self.gui._clear_foreground_images()
-            canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+            self.image_display._clear_foreground_images()
+            canvas_width, canvas_height = self.image_display._get_canvas_dimensions()
             img_size = 120
             spacing_x = canvas_width // 3
             start_y = (canvas_height - img_size) // 2
             
-            self.gui._add_canvas_image('art/crossed_swords.png', spacing_x - img_size // 2, start_y, img_size, img_size)
-            self.gui._add_canvas_image('art/crossed_swords.png', 2 * spacing_x - img_size // 2, start_y, img_size, img_size)
+            self.image_display._add_canvas_image('art/crossed_swords.png', spacing_x - img_size // 2, start_y, img_size, img_size)
+            self.image_display._add_canvas_image('art/crossed_swords.png', 2 * spacing_x - img_size // 2, start_y, img_size, img_size)
 
     def calculate_damage(self, attack, defense, attacker_level=1, defender_level=1):
         """Improved damage calculation with level consideration"""
@@ -513,10 +536,10 @@ class CombatGUI:
     def _start_victory_fireworks_animation(self):
         """Start epic victory fireworks animation for final boss defeat"""
         # Keep interface locked during animation to prevent interruptions
-        self.gui.lock_interface()
+        self.interface_control.lock_interface()
         
         # Play epic fireworks victory sound at start
-        self.gui.audio.play_sound_effect('win-fireworks.mp3')
+        self.audio.play_sound_effect('win-fireworks.mp3')
         
         # Start fireworks animation sequence - 4 frames, 1.5 seconds each
         self._show_fireworks_frame(1)
@@ -525,14 +548,14 @@ class CombatGUI:
         """Show specific fireworks frame and schedule next one"""
         try:
             # Show the fireworks frame
-            self.gui.show_image(f'art/victory_fireworks_{frame_number}.png')
+            self.image_display.show_image(f'art/victory_fireworks_{frame_number}.png')
             
             if frame_number < 4:
                 # Schedule next frame after 1.5 seconds
-                self.gui.root.after(1500, lambda: self._show_fireworks_frame(frame_number + 1))
+                self.timer.after(1500, lambda: self._show_fireworks_frame(frame_number + 1))
             else:
                 # Animation complete - show final victory screen and end
-                self.gui.root.after(1500, self._complete_victory_animation)
+                self.timer.after(1500, self._complete_victory_animation)
         except Exception as e:
             # Fallback if fireworks images not found
             self._complete_victory_animation()
@@ -540,10 +563,10 @@ class CombatGUI:
     def _complete_victory_animation(self):
         """Complete the victory animation and return control"""
         # Show final victory screen
-        self.gui.show_image('art/you_won.png')
+        self.image_display.show_image('art/you_won.png')
         
         # Unlock interface before calling callback
-        self.gui.unlock_interface()
+        self.interface_control.unlock_interface()
         
         # Call the fight callback with victory result
         self.fight_callback('won')

@@ -3,11 +3,20 @@ Monster encounter system for GUI
 """
 import os
 import random
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class MonsterEncounterGUI:
     """Monster encounter for GUI"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
     
     def set_background(self, biome_name):
@@ -690,3 +699,4 @@ class MonsterEncounterGUI:
         
         # No level-appropriate monsters found in this biome
         return None
+

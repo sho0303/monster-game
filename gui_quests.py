@@ -2,6 +2,10 @@
 Quest system for the monster game
 """
 import random
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class Quest:
@@ -41,7 +45,12 @@ class Quest:
 
 class QuestManager:
     """Manages quests for the game"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize quest manager.
+        
+        Args:
+            gui: Game context providing access to game_state, current_biome, and subsystems
+        """
         self.gui = gui
         
     def initialize_hero_quests(self, hero):

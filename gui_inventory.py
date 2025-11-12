@@ -1,11 +1,20 @@
 """
 Inventory system for GUI
 """
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class InventoryGUI:
     """Inventory system for GUI"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
     
     def use_item(self):
@@ -102,3 +111,4 @@ class InventoryGUI:
             self.gui._print_colored_parts(remaining_parts)
         
         self.gui.root.after(3000, self.gui.main_menu)
+

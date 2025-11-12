@@ -5,12 +5,21 @@ import os
 import yaml
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class SaveLoadManager:
     """Manages saving and loading game states using YAML files"""
     
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
         self.saves_dir = Path("saves")
         self._ensure_saves_directory()

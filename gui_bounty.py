@@ -3,6 +3,10 @@ Bounty Board system for the tavern
 Offers special hunting quests with enhanced rewards
 """
 import random
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gui_interfaces import GameContextProtocol
 
 
 class Bounty:
@@ -55,7 +59,12 @@ class Bounty:
 
 class BountyManager:
     """Manages bounty board system"""
-    def __init__(self, gui):
+    def __init__(self, gui: 'GameContextProtocol'):
+        """Initialize with game context.
+        
+        Args:
+            gui: Game context providing UI, state, and subsystem access
+        """
         self.gui = gui
         
         # Initialize bounty lists
@@ -539,3 +548,4 @@ class BountyManager:
 
         self.gui.print_text("\n🔄 Bounty board refreshed!")
         self.gui.root.after(1000, self.show_bounty_board)
+
