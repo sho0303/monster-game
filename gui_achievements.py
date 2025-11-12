@@ -9,6 +9,8 @@ import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
+import config
+
 class Achievement:
     """Represents a single achievement"""
     
@@ -119,7 +121,7 @@ class AchievementManager:
             category="combat",
             target_value=1,
             reward_type="gold",
-            reward_value=50
+            reward_value=config.ACHIEVEMENT_REWARD_BRONZE // 2  # 50 gold
         ))
         
         self.add_achievement(Achievement(
@@ -139,7 +141,7 @@ class AchievementManager:
             category="combat",
             target_value=50,
             reward_type="gold",
-            reward_value=500
+            reward_value=config.ACHIEVEMENT_REWARD_GOLD  # 400 gold (using GOLD tier)
         ))
         
         self.add_achievement(Achievement(
@@ -160,7 +162,7 @@ class AchievementManager:
             category="exploration",
             target_value=4,
             reward_type="gold",
-            reward_value=200
+            reward_value=config.ACHIEVEMENT_REWARD_SILVER  # 250 gold
         ))
         
         # Collection Achievements
@@ -171,7 +173,7 @@ class AchievementManager:
             category="collection",
             target_value=3,  # Assuming 3 grassland monsters
             reward_type="gold",
-            reward_value=300
+            reward_value=config.ACHIEVEMENT_REWARD_SILVER + 50  # 300 gold
         ))
         
         self.add_achievement(Achievement(
@@ -181,7 +183,7 @@ class AchievementManager:
             category="collection", 
             target_value=3,
             reward_type="gold",
-            reward_value=400
+            reward_value=config.ACHIEVEMENT_REWARD_GOLD  # 400 gold
         ))
         
         # Progression Achievements
@@ -192,7 +194,7 @@ class AchievementManager:
             category="progression",
             target_value=5,
             reward_type="gold",
-            reward_value=100
+            reward_value=config.ACHIEVEMENT_REWARD_BRONZE  # 100 gold
         ))
         
         self.add_achievement(Achievement(

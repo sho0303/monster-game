@@ -4,6 +4,8 @@ Quest system for the monster game
 import random
 from typing import TYPE_CHECKING
 
+import config
+
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
 
@@ -97,8 +99,8 @@ class QuestManager:
         available_biome_monsters = [
             (key, value) for key, value in monsters.items()
             if (value.get('biome', 'grassland') == current_biome and 
-                value['level'] <= hero_level + 1 and
-                value['level'] >= max(1, hero_level - 2) and
+                value['level'] <= hero_level + config.QUEST_LEVEL_RANGE_MAX and
+                value['level'] >= max(1, hero_level + config.QUEST_LEVEL_RANGE_MIN) and
                 key not in existing_quest_targets)
         ]
         
@@ -107,8 +109,8 @@ class QuestManager:
             biome_level_monsters = [
                 (key, value) for key, value in monsters.items()
                 if (value.get('biome', 'grassland') == current_biome and
-                    value['level'] <= hero_level + 1 and
-                    value['level'] >= max(1, hero_level - 2))
+                    value['level'] <= hero_level + config.QUEST_LEVEL_RANGE_MAX and
+                    value['level'] >= max(1, hero_level + config.QUEST_LEVEL_RANGE_MIN))
             ]
             
             if biome_level_monsters:
@@ -120,8 +122,8 @@ class QuestManager:
                 available_all_monsters = [
                     (key, value) for key, value in monsters.items()
                     if (key not in existing_quest_targets and
-                        value['level'] <= hero_level + 1 and
-                        value['level'] >= max(1, hero_level - 2))
+                        value['level'] <= hero_level + config.QUEST_LEVEL_RANGE_MAX and
+                        value['level'] >= max(1, hero_level + config.QUEST_LEVEL_RANGE_MIN))
                 ]
                 
                 if not available_all_monsters:

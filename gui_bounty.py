@@ -5,6 +5,8 @@ Offers special hunting quests with enhanced rewards
 import random
 from typing import TYPE_CHECKING
 
+import config
+
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
 
@@ -133,12 +135,12 @@ class BountyManager:
         
         base = monsters[base_monster_name].copy()
         
-        # Create elite version with 1.5x HP and Attack
+        # Create elite version with enhanced stats
         elite = {
             'name': f"Elite {base['name']}",
-            'hp': int(base['hp'] * 1.5),
-            'maxhp': int(base['maxhp'] * 1.5),
-            'attack': int(base['attack'] * 1.5),
+            'hp': int(base['hp'] * config.ELITE_STAT_MULTIPLIER),
+            'maxhp': int(base['maxhp'] * config.ELITE_STAT_MULTIPLIER),
+            'attack': int(base['attack'] * config.ELITE_STAT_MULTIPLIER),
             'defense': base['defense'],  # Keep defense same
             'gold': int(base.get('gold', 10) * 2),  # 2x gold
             'level': base['level'] + 1,  # 1 level higher
@@ -189,8 +191,8 @@ class BountyManager:
         # Filter by level range and biome
         suitable_monsters = [
             (name, data) for name, data in monsters.items()
-            if (data['level'] <= hero_level + 2 and
-                data['level'] >= max(1, hero_level - 1) and
+            if (data['level'] <= hero_level + config.QUEST_LEVEL_RANGE_MAX and
+                data['level'] >= max(1, hero_level + config.QUEST_LEVEL_RANGE_MIN) and
                 data.get('biome', 'grassland') == current_biome)
         ]
 
@@ -198,8 +200,8 @@ class BountyManager:
             # Fallback to any level-appropriate monster
             suitable_monsters = [
                 (name, data) for name, data in monsters.items()
-                if (data['level'] <= hero_level + 2 and
-                    data['level'] >= max(1, hero_level - 1))
+                if (data['level'] <= hero_level + config.QUEST_LEVEL_RANGE_MAX and
+                    data['level'] >= max(1, hero_level + config.QUEST_LEVEL_RANGE_MIN))
             ]
 
         if not suitable_monsters:
@@ -257,7 +259,11 @@ class BountyManager:
     def _generate_collector_bounty(self, target_name, target_data, difficulty):
         """Generate collector bounty (kill multiple of same monster)"""
         # Count based on difficulty
-        count_mult = {'Bronze': 3, 'Silver': 5, 'Gold': 7}
+        count_mult = {
+            'Bronze': config.BOUNTY_COLLECTOR_MIN_KILLS,
+            'Silver': (config.BOUNTY_COLLECTOR_MIN_KILLS + config.BOUNTY_COLLECTOR_MAX_KILLS) // 2,
+            'Gold': config.BOUNTY_COLLECTOR_MAX_KILLS
+        }
         target_count = count_mult[difficulty]
 
         gold_mult = {'Bronze': 1.5, 'Silver': 2, 'Gold': 2.5}

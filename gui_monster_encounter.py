@@ -5,6 +5,8 @@ import os
 import random
 from typing import TYPE_CHECKING
 
+import config
+
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
 
