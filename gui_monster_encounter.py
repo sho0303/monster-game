@@ -6,6 +6,9 @@ import random
 from typing import TYPE_CHECKING
 
 import config
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
@@ -419,7 +422,8 @@ class MonsterEncounterGUI:
             else:
                 # Use crossed swords as fallback for hero
                 image_paths.append('art/crossed_swords.png')
-        except:
+        except (OSError, TypeError) as e:
+            logger.debug(f"Could not access hero image, using fallback: {e}")
             image_paths.append('art/crossed_swords.png')
         
         # Get monster image path
@@ -430,7 +434,8 @@ class MonsterEncounterGUI:
                 else:
                     # Use crossed swords as fallback for monster
                     image_paths.append('art/crossed_swords.png')
-            except:
+            except (OSError, TypeError) as e:
+                logger.debug(f"Could not access monster image, using fallback: {e}")
                 image_paths.append('art/crossed_swords.png')
         else:
             # Default monster image

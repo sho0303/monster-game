@@ -4,6 +4,9 @@ Combat system for GUI
 import random
 from typing import Callable, Dict, Any, Optional
 from gui_interfaces import GameContextProtocol
+from logger_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class CombatGUI:
@@ -130,7 +133,8 @@ class CombatGUI:
                 self.current_hero_image = hero_image_path
             else:
                 self.current_hero_image = 'art/crossed_swords.png'
-        except:
+        except (OSError, TypeError) as e:
+            logger.debug(f"Could not access hero image, using fallback: {e}")
             self.current_hero_image = 'art/crossed_swords.png'
         
         # Get monster image path
@@ -140,7 +144,8 @@ class CombatGUI:
                     self.current_monster_image = monster['art']
                 else:
                     self.current_monster_image = 'art/crossed_swords.png'
-            except:
+            except (OSError, TypeError) as e:
+                logger.debug(f"Could not access monster image, using fallback: {e}")
                 self.current_monster_image = 'art/crossed_swords.png'
         else:
             self.current_monster_image = 'art/crossed_swords.png'

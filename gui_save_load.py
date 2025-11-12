@@ -382,7 +382,8 @@ class SaveLoadManager:
             try:
                 save_date = datetime.fromisoformat(save_info['save_date'])
                 date_str = save_date.strftime("%Y-%m-%d %H:%M")
-            except:
+            except (ValueError, KeyError, TypeError) as e:
+                logger.debug(f"Could not parse save date: {e}")
                 date_str = save_info['save_date'][:16] if len(save_info['save_date']) > 16 else save_info['save_date']
             
             save_display_parts = [

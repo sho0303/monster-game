@@ -292,8 +292,8 @@ class BackgroundManager:
         if self.audio:
             try:
                 self.audio.play_sound_effect('teleport.mp3')
-            except:
-                pass  # Ignore audio errors
+            except (AttributeError, FileNotFoundError, Exception) as e:
+                logger.debug(f"Could not play teleport sound: {e}")
         
         # Show teleport result after brief delay
         def show_teleport_result():
@@ -308,13 +308,15 @@ class BackgroundManager:
                 # Use root.after if available, otherwise just call directly
                 try:
                     self.image_canvas.after(3000, self.main_menu)
-                except:
+                except (tk.TclError, AttributeError) as e:
+                    logger.debug(f"Could not schedule main menu, calling directly: {e}")
                     self.main_menu()
         
         # Show result after teleportation delay
         try:
             self.image_canvas.after(1000, show_teleport_result)
-        except:
+        except (tk.TclError, AttributeError) as e:
+            logger.debug(f"Could not schedule teleport result, showing immediately: {e}")
             show_teleport_result()  # Fallback to immediate call
     
     def get_current_biome(self):
