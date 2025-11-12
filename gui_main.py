@@ -1304,8 +1304,7 @@ class GameGUI:
         self.print_text("Thank you for playing MonsterGame!")
         self.print_text("=" * 60)
         
-        # Play game over sound and show hero death image immediately
-        self.audio.play_sound_effect('death.mp3')
+        # Show hero death image (death sound already played in combat sequence)
         self._show_hero_death_game_over()
         
         # Close the game after 5 seconds
