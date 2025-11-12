@@ -12,9 +12,9 @@ class GameState:
 
 
 def yaml_file_to_dictionary(file, dict):
-    fh = open(file)
-    fh_yaml = yaml.safe_load(fh)
-    dict.update(fh_yaml)
+    with open(file, encoding='utf-8') as fh:
+        fh_yaml = yaml.safe_load(fh)
+        dict.update(fh_yaml)
     return dict
 
 
