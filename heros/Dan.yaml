@@ -8,3 +8,4 @@ Destroyer Dan:
   defense: 5
   level: 1
   class: 'Warrior'
+  attack_sound: sword-clash.mp3

@@ -50,7 +50,10 @@ def yaml_file_to_dictionary(file, target_dict):
 def hero_status(hero):
     logger.info("Hero stats:")
     for key, value in hero.items():
-        if key == 'xp':
+        # Skip internal/technical fields
+        if key == 'attack_sound':
+            continue
+        elif key == 'xp':
             logger.info(f"{key}: {value}/{hero['level']*5}")
         elif key == 'item' and value is not None:
             logger.info(f"{key}: {value['name']}")

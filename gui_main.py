@@ -845,6 +845,9 @@ class GameGUI:
         for i, (hero_name, hero_data) in enumerate(self.game_state.heros.items(), 1):
             self.print_text(f"\n{i}. {hero_name}")
             for key, value in hero_data.items():
+                # Skip internal/technical fields
+                if key == 'attack_sound':
+                    continue
                 self.print_text(f"   {key}: {value}")
         
         # Check for existing saves to show load option
@@ -959,7 +962,8 @@ class GameGUI:
         
         for key, value in self.game_state.hero.items():
             # Skip displaying quests in hero stats - they have their own section
-            if key == 'quests':
+            # Also skip internal/technical fields
+            if key in ('quests', 'attack_sound'):
                 continue
             elif key == 'xp':
                 # Special handling for XP with colored values

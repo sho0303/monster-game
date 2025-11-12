@@ -8,3 +8,4 @@ Shadow Billy Bob:
     defense: 10
     level: 1
     class: 'Ninja'
+    attack_sound: ninja-attack.mp3

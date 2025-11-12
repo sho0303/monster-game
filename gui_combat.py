@@ -156,6 +156,15 @@ class CombatGUI:
         # Use custom display logic for Dragon boss sizing
         self._display_combat_images_with_sizing()
     
+    def _get_hero_attack_sound(self, hero):
+        """Get the appropriate attack sound for the hero"""
+        # Check if hero has custom attack_sound defined
+        if 'attack_sound' in hero and hero['attack_sound']:
+            return hero['attack_sound']
+        else:
+            # Use default hero attack sound
+            return 'punch.mp3'
+    
     def _get_monster_attack_sound(self, monster):
         """Get the appropriate attack sound for the monster"""
         # Check if monster has custom attack_sound defined
@@ -218,8 +227,9 @@ class CombatGUI:
 
     def _show_hero_attack_animation(self, hero):
         """Show hero attack animation - toggle between normal and attack 3 times"""
-        # Play hero attack sound at the start of animation
-        self.audio.play_sound_effect('punch.mp3')
+        # Play hero-specific attack sound at the start of animation
+        hero_attack_sound = self._get_hero_attack_sound(hero)
+        self.audio.play_sound_effect(hero_attack_sound)
         
         hero_class = hero.get('class', 'Warrior').lower()
         attack_image_path = f"art/{hero_class}_attack.png"

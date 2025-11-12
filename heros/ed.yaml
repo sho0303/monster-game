@@ -8,3 +8,4 @@ Eduardo the wise:
   defense: 5
   level: 1
   class: 'Magician'
+  attack_sound: fireball.mp3

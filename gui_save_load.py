@@ -260,6 +260,22 @@ class SaveLoadManager:
         validated_data = defaults.copy()
         validated_data.update(hero_data)
         
+        # Restore attack_sound from hero template if missing
+        # This ensures loaded saves get the correct class-specific attack sound
+        if 'attack_sound' not in validated_data or not validated_data['attack_sound']:
+            hero_name = validated_data.get('name', '')
+            # Look up the hero template from game_state to get attack_sound
+            if hasattr(self.gui, 'game_state') and hasattr(self.gui.game_state, 'heros'):
+                for template_name, template_data in self.gui.game_state.heros.items():
+                    if template_name == hero_name:
+                        validated_data['attack_sound'] = template_data.get('attack_sound', 'punch.mp3')
+                        break
+                else:
+                    # Fallback: use default based on class
+                    validated_data['attack_sound'] = 'punch.mp3'
+            else:
+                validated_data['attack_sound'] = 'punch.mp3'
+        
         # Ensure numeric fields are actually numeric
         numeric_fields = ['level', 'xp', 'hp', 'maxhp', 'attack', 'defense', 'gold', 'lives_left', 'age']
         for field in numeric_fields:
