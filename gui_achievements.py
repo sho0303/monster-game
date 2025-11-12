@@ -90,7 +90,6 @@ class AchievementManager:
             'deaths': 0,
             'combats_won': 0,
             'combats_lost': 0,
-            'secret_dungeon_discovered': False,
             'tavern_npcs_met': set(),
             'beers_consumed': 0,
             'fountain_uses': 0,
@@ -157,17 +156,6 @@ class AchievementManager:
             target_value=4,
             reward_type="gold",
             reward_value=200
-        ))
-        
-        self.add_achievement(Achievement(
-            id="secret_keeper",
-            name="Secret Keeper",
-            description="Discover the Secret Dungeon",
-            category="exploration",
-            target_value=1,
-            reward_type="title",
-            reward_value=0,
-            hidden=True
         ))
         
         # Collection Achievements
@@ -247,9 +235,9 @@ class AchievementManager:
         self.add_achievement(Achievement(
             id="questmaster",
             name="Quest Master",
-            description="Complete 25 quests (any type)",
+            description="Complete 10 quests (any type)",
             category="progression",
-            target_value=25,
+            target_value=10,
             reward_type="title",
             reward_value=0
         ))
@@ -365,12 +353,6 @@ class AchievementManager:
         
         if visited_basic >= 4:
             self.update_progress("explorer", visited_basic - 3)  # Complete when all 4 visited
-    
-    def track_secret_dungeon_discovery(self):
-        """Track secret dungeon discovery"""
-        if not self.player_stats['secret_dungeon_discovered']:
-            self.player_stats['secret_dungeon_discovered'] = True
-            self.update_progress("secret_keeper", 1)
     
     def track_quest_completion(self, quest_type: str = "main"):
         """Track quest completion"""
