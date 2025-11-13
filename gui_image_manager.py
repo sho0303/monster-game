@@ -196,6 +196,54 @@ class ImageManager:
         self.image_canvas.delete("foreground")
         self.canvas_images.clear()
     
+    def show_story_text(self, text_lines, font_size=24, text_color='#ffffff', 
+                       shadow_color='#000000', line_spacing=40):
+        """
+        Display story text overlaid on the canvas foreground
+        
+        Args:
+            text_lines: List of text strings to display (one per line)
+            font_size: Size of the font (default: 24)
+            text_color: Color of the text (default: white)
+            shadow_color: Color of text shadow for readability (default: black)
+            line_spacing: Vertical spacing between lines in pixels (default: 40)
+        """
+        # Clear existing foreground content
+        self.clear_foreground_images()
+        
+        # Get canvas dimensions
+        canvas_width, canvas_height = self.get_canvas_dimensions()
+        
+        # Calculate starting Y position to center the text block vertically
+        total_text_height = len(text_lines) * line_spacing
+        start_y = (canvas_height - total_text_height) // 2
+        
+        # Display each line of text
+        for i, line in enumerate(text_lines):
+            y_pos = start_y + (i * line_spacing)
+            
+            # Draw text shadow first (for readability against any background)
+            self.image_canvas.create_text(
+                canvas_width // 2 + 2, 
+                y_pos + 2, 
+                text=line,
+                fill=shadow_color,
+                font=('Arial', font_size, 'bold'),
+                anchor='center',
+                tags='foreground'
+            )
+            
+            # Draw main text
+            self.image_canvas.create_text(
+                canvas_width // 2, 
+                y_pos, 
+                text=line,
+                fill=text_color,
+                font=('Arial', font_size, 'bold'),
+                anchor='center',
+                tags='foreground'
+            )
+    
     def clear_image_area(self):
         """Clear all foreground images from canvas, preserving background"""
         self.clear_foreground_images()

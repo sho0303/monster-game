@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import scrolledtext
 from PIL import Image, ImageTk
 from time import sleep
+import yaml
 
 import config
 from logger_utils import get_logger
@@ -794,15 +795,8 @@ class GameGUI:
         """Initialize the game"""
         # Start background music that will loop continuously
         self.audio.play_background_music('start.mp3', loop=True, volume=0.4)
-        self.show_image('art/pyquest.png')
-        self.print_text("=" * 60)
-        self.print_text("Welcome to Monster Game!")
-        self.print_text("=" * 60)
-        self.print_text("⌨️  Keyboard shortcuts enabled! Press F1 for help")
-        self.print_text("   Use 1-3 keys, arrows, SPACE, or ESC to navigate")
-        self.print_text("")
         
-        # Initialize game state
+        # Initialize game state first (needed for game systems)
         self.game_state = initialize_game_state()
         
         # Initialize game systems with dependency injection
@@ -823,6 +817,61 @@ class GameGUI:
         self.town = TownGUI(self)
         self.tavern = TavernGUI(self)
         self.achievements = AchievementManager(game_state=self.game_state)
+        
+        # Show story prologue first
+        self.show_story_prologue()
+    
+    def show_story_prologue(self):
+        """Display the story prologue before the title screen"""
+        try:
+            # Load story from YAML file
+            with open('story.yaml', 'r', encoding='utf-8') as f:
+                story_data = yaml.safe_load(f)
+            
+            prologue_lines = story_data.get('Prologue', [])
+            
+            if prologue_lines:
+                # Set attractive story background image
+                self.background_manager.set_background_image('art/story_background.png')
+                
+                # Display story text on canvas
+                self.image_manager.show_story_text(
+                    text_lines=prologue_lines,
+                    font_size=28,
+                    text_color='#ffdd00',
+                    shadow_color='#000000',
+                    line_spacing=50
+                )
+                
+                # Show message in text area
+                self.print_text("=" * 60)
+                self.print_text("📖  The Story Begins...")
+                self.print_text("=" * 60)
+                self.print_text("\n(Press any button to continue)")
+                
+                # Set up button to continue to title screen
+                self.set_buttons(["Continue"], lambda choice: self.show_title_screen())
+            else:
+                # No prologue found, go straight to title
+                self.show_title_screen()
+                
+        except FileNotFoundError:
+            logger.warning("story.yaml not found, skipping prologue")
+            self.show_title_screen()
+        except Exception as e:
+            logger.error(f"Error loading story prologue: {e}")
+            self.show_title_screen()
+    
+    def show_title_screen(self):
+        """Display the title screen and welcome message"""
+        self.clear_text()
+        self.show_image('art/pyquest.png')
+        self.print_text("=" * 60)
+        self.print_text("Welcome to Monster Game!")
+        self.print_text("=" * 60)
+        self.print_text("⌨️  Keyboard shortcuts enabled! Press F1 for help")
+        self.print_text("   Use 1-3 keys, arrows, SPACE, or ESC to navigate")
+        self.print_text("")
         
         # Start hero selection
         self.select_hero()

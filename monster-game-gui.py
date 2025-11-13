@@ -1,5 +1,5 @@
 """
-PyQuest Monster Game - GUI Launcher
+Monster Game - GUI Launcher
 Main entry point for the graphical user interface version with enhanced error handling
 """
 import sys
