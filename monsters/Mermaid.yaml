@@ -1,9 +1,9 @@
 Enchanted Mermaid:
   name: Enchanted Mermaid
-  hp: 12
-  maxhp: 12
-  attack: 2
-  defense: 1
+  hp: 13
+  maxhp: 13
+  attack: 3
+  defense: 2
   gold: 10
   level: 2
   xp: 2
