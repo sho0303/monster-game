@@ -659,6 +659,9 @@ class CombatGUI:
         wagon_y = start_y
         wagon_image_id = self.image_display._add_canvas_image('art/wagon.png', wagon_start_x, wagon_y, tags='wagon')
         
+        # Play honk sound before wagon starts moving
+        self.audio.play_sound_effect('honk.mp3')
+        
         # Calculate target position (just past the hero)
         target_x = hero_x - 20  # Overlap slightly for collision effect
         
@@ -718,5 +721,82 @@ class CombatGUI:
         # Add death image at same position as hero was
         self.image_display._add_canvas_image(death_image_path, hero_x, hero_y, tags='hero_death')
         
-        # Game stays frozen here - no return to menu
+        # After a delay, trigger the Shiva divine intervention scene (4.5 seconds to give time to read)
+        self.timer.after(8000, self._show_shiva_divine_intervention)
+    
+    def _show_shiva_divine_intervention(self):
+        """Show Shiva's divine intervention after wagon death"""
+        # Clear all foreground images
+        self.image_display._clear_foreground_images()
+        
+        # Show Shiva mountains background
+        self.image_display.set_background_image('art/shiva_mountains_background.png')
+        
+        # Clear and update text with Shiva's message
+        self.text_display.clear_text()
+        self.text_display.text_area.config(state='normal')
+        
+        # Insert Shiva's divine message with same large font style
+        shiva_message = ("I am the earth god Shiva.  I have summoned you to our world to face a great evil.  "
+                        "Find and face the evil orange one.  If you fail our world will perish.  "
+                        "If you succeed you will be hailed forever as the savior of earth!  "
+                        "Do you accept this task brave hero?")
+        
+        self.text_display.text_area.insert('end', '\n\n' + shiva_message, 'shiva_text')
+        self.text_display.text_area.tag_config('shiva_text', 
+                                               foreground='#ff4444', 
+                                               font=('Consolas', 16, 'bold'),
+                                               justify='center')
+        
+        self.text_display.text_area.config(state='disabled')
+        
+        # Offer "choices" to the player (all lead to same outcome)
+        self.interface_control.set_buttons(
+            ["Yes", "Absolutely", "Uh-huh", "I live to serve"],
+            lambda choice: self._show_isekai_story()
+        )
+        
+        # Unlock interface to allow button clicks
+        self.interface_control.unlock_interface()
+    
+    def _show_isekai_story(self):
+        """Display the Isekai story section after accepting Shiva's quest"""
+        import yaml
+        
+        # Lock interface during story display
+        self.interface_control.lock_interface()
+        
+        try:
+            # Load story from YAML file
+            with open('story.yaml', 'r', encoding='utf-8') as f:
+                story_data = yaml.safe_load(f)
+            
+            isekai_lines = story_data.get('Isekai', [])
+            
+            if isekai_lines:
+                # Clear displays
+                self.text_display.clear_text()
+                self.image_display._clear_foreground_images()
+                
+                # Set story background (same as prologue)
+                self.image_display.set_background_image('art/story_background.png')
+                
+                # Display Isekai story text on canvas (same style as prologue)
+                self.image_display.image_manager.show_story_text(
+                    text_lines=isekai_lines,
+                    font_size=28,
+                    text_color='#ffdd00',
+                    shadow_color='#000000',
+                    line_spacing=50
+                )
+                
+                # Show message in text area
+                self.text_display.print_text("=" * 60)
+                self.text_display.print_text("🌍  A New World Awaits...")
+                self.text_display.print_text("=" * 60)
+                
+                # Game state frozen here - to be continued later
+                
+        except FileNotFoundError:
+            logger.warning("story.yaml not found, skipping Isekai story")
 
