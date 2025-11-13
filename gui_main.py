@@ -362,7 +362,7 @@ class GameGUI:
             r'\bdefense:\s*(\d+)': config.COLOR_DEFENSE,
             
             # Names and important identifiers
-            r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b': '#ffaa00',  # Orange for character names
+            r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b': '#ffaa00',  # Orange for character names (2+ words)
             r'⚔️\s*([^!]+)!': '#ffaa00',  # Orange for monster names in encounters
         }
         
@@ -458,8 +458,9 @@ class GameGUI:
             parts.append((str(value), color))   # Special color for value
             parts.append((after, '#00ff00'))   # Default color for remaining text
         else:
-            # No placeholder, just print normally
-            parts.append((text + str(value), '#00ff00'))
+            # No placeholder, treat as label + value
+            parts.append((text, '#00ff00'))  # Default color for label
+            parts.append((str(value), color))  # Special color for value
         
         # Print using the enhanced method
         self._print_colored_parts(parts)
@@ -884,8 +885,8 @@ class GameGUI:
         for i, (hero_name, hero_data) in enumerate(self.game_state.heros.items(), 1):
             self.print_text(f"\n{i}. {hero_name}")
             for key, value in hero_data.items():
-                # Skip internal/technical fields
-                if key == 'attack_sound':
+                # Skip internal/technical fields and titles (shown in tavern)
+                if key in ('attack_sound', 'titles', 'earned_titles'):
                     continue
                 self.print_text(f"   {key}: {value}")
         
@@ -999,10 +1000,53 @@ class GameGUI:
         self.print_text("⚔️  Hero Stats ⚔️")
         self.print_text("=" * 60)
         
+        # Track if we've already displayed hp/maxhp
+        hp_displayed = False
+        
         for key, value in self.game_state.hero.items():
             # Skip displaying quests in hero stats - they have their own section
-            # Also skip internal/technical fields
-            if key in ('quests', 'attack_sound'):
+            # Also skip internal/technical fields and titles (shown in tavern)
+            if key in ('quests', 'attack_sound', 'titles', 'earned_titles'):
+                continue
+            elif key == 'hp':
+                # Display HP as "hp: current/max" with color coding
+                if not hp_displayed:
+                    hp_current = value
+                    hp_max = self.game_state.hero.get('maxhp', value)
+                    hp_text = "  hp: "
+                    
+                    # Color code based on HP percentage
+                    hp_percent = (hp_current / hp_max) if hp_max > 0 else 0
+                    if hp_percent > 0.6:
+                        hp_color = '#00ff00'  # Bright green for healthy
+                        hp_font = ('Consolas', 10, 'bold')  # Bold when healthy
+                    elif hp_percent > 0.3:
+                        hp_color = '#ffaa00'  # Orange for wounded
+                        hp_font = ('Consolas', 10)
+                    else:
+                        hp_color = '#ff4444'  # Red for critical
+                        hp_font = ('Consolas', 10)
+                    
+                    self.text_area.config(state=tk.NORMAL)
+                    self.text_area.insert(tk.END, hp_text, 'hp_label')
+                    self.text_area.tag_config('hp_label', foreground='#00ff00')
+                    
+                    self.text_area.insert(tk.END, str(hp_current), 'hp_current')
+                    self.text_area.tag_config('hp_current', foreground=hp_color, font=hp_font)
+                    
+                    self.text_area.insert(tk.END, "/", 'hp_slash')
+                    self.text_area.tag_config('hp_slash', foreground='#00ff00')
+                    
+                    self.text_area.insert(tk.END, str(hp_max), 'hp_max')
+                    self.text_area.tag_config('hp_max', foreground='#00ff00')
+                    
+                    self.text_area.insert(tk.END, '\n')
+                    self.text_area.see(tk.END)
+                    self.text_area.config(state=tk.DISABLED)
+                    
+                    hp_displayed = True
+            elif key == 'maxhp':
+                # Skip maxhp since it's now shown with hp
                 continue
             elif key == 'xp':
                 # Special handling for XP with colored values
@@ -1039,8 +1083,6 @@ class GameGUI:
             elif key == 'item' and value is not None:
                 # Legacy support for old save files
                 self.print_colored_value(f"  {key}: ", value['name'], 'name')
-            elif key in ['hp', 'maxhp']:
-                self.print_colored_value(f"  {key}: ", value, 'hp')
             elif key == 'attack':
                 self.print_colored_value(f"  {key}: ", value, 'attack')
             elif key == 'defense':

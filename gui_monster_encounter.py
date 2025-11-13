@@ -217,6 +217,16 @@ class MonsterEncounterGUI:
         
         # Check and handle quest completion
         self._process_quest_completion(monster_type)
+        
+        # Track monster defeat for achievements
+        if hasattr(self.gui, 'achievements'):
+            monster_biome = monster.get('biome', None)
+            is_final_boss = monster.get('finalboss', False)
+            self.gui.achievements.track_monster_defeat(
+                monster_name=monster_type,
+                biome=monster_biome,
+                is_final_boss=is_final_boss
+            )
     
     def _apply_gold_loss_on_death(self, death_message="💀 Defeat!"):
         """Apply gold loss on death, with Miser Coin Purse protection if available"""

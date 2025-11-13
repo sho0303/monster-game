@@ -258,6 +258,17 @@ class AchievementManager:
             reward_type="stat_bonus",
             reward_value=10  # +10 max HP permanently
         ))
+        
+        self.add_achievement(Achievement(
+            id="savior_of_monster_world",
+            name="Savior of Monster World",
+            description="Defeat the final boss and save the world",
+            category="special",
+            target_value=1,
+            reward_type="title",
+            reward_value=0,
+            hidden=True
+        ))
     
     def add_achievement(self, achievement: Achievement):
         """Add an achievement to the manager"""
@@ -318,7 +329,7 @@ class AchievementManager:
             if achievement.name not in hero['titles']:
                 hero['titles'].append(achievement.name)
     
-    def track_monster_defeat(self, monster_name: str, biome: str = None):
+    def track_monster_defeat(self, monster_name: str, biome: str = None, is_final_boss: bool = False):
         """Track when a monster is defeated"""
         # Update monster kill count
         self.player_stats['monsters_killed'][monster_name] = self.player_stats['monsters_killed'].get(monster_name, 0) + 1
@@ -331,6 +342,10 @@ class AchievementManager:
         self.update_progress("beast_hunter", 1 if total_kills <= 50 else 0) 
         self.update_progress("apex_predator", 1 if total_kills <= 100 else 0)
         self.update_progress("death_defier", 1)
+        
+        # Check for final boss defeat
+        if is_final_boss:
+            self.update_progress("savior_of_monster_world", 1)
         
         # Track biome-specific collections
         if biome:
