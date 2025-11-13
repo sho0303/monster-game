@@ -623,3 +623,100 @@ class CombatGUI:
         
         # Call the fight callback with defeat result
         self.fight_callback(result)
+    
+    def start_wagon_death_event(self, hero):
+        """Special event: Wagon runs over the hero who saved the world"""
+        self.text_display.clear_text()
+        
+        # Lock interface during the event
+        self.interface_control.lock_interface()
+        
+        # Clear any existing images
+        self.image_display._clear_foreground_images()
+        
+        # Get canvas dimensions for positioning
+        canvas_width, canvas_height = self.image_display._get_canvas_dimensions()
+        
+        # Display hero on the left (normal position)
+        hero_class = hero.get('class', 'Warrior').lower()
+        hero_image_path = f'art/{hero_class}.png'
+        
+        # Calculate base image size (same as combat)
+        base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
+        
+        # Calculate vertical position (same centering logic as combat)
+        start_y = (canvas_height - base_img_size) // 2
+        
+        # Position hero on left side (same horizontal spacing as combat)
+        spacing_x = canvas_width // 3
+        hero_x = spacing_x - base_img_size // 2
+        hero_y = start_y
+        
+        self.image_display._add_canvas_image(hero_image_path, hero_x, hero_y, tags='hero')
+        
+        # Display wagon on the right side (will animate left)
+        wagon_start_x = canvas_width - 50  # Start from right edge
+        wagon_y = start_y
+        wagon_image_id = self.image_display._add_canvas_image('art/wagon.png', wagon_start_x, wagon_y, tags='wagon')
+        
+        # Calculate target position (just past the hero)
+        target_x = hero_x - 20  # Overlap slightly for collision effect
+        
+        # Start wagon animation
+        self._animate_wagon(wagon_image_id, wagon_start_x, wagon_y, target_x, hero, hero_class, hero_x, hero_y)
+    
+    def _animate_wagon(self, wagon_id, current_x, wagon_y, target_x, hero, hero_class, hero_x, hero_y):
+        """Animate wagon moving left towards hero"""
+        step_size = 10  # Pixels per frame
+        
+        if current_x > target_x:
+            # Continue moving left
+            new_x = current_x - step_size
+            
+            # Update wagon position on canvas
+            canvas = self.image_display.image_canvas
+            canvas.coords(wagon_id, new_x, wagon_y)
+            
+            # Schedule next frame (30 FPS = ~33ms per frame)
+            self.timer.after(33, lambda: self._animate_wagon(wagon_id, new_x, wagon_y, target_x, hero, hero_class, hero_x, hero_y))
+        else:
+            # Wagon has reached hero - trigger death
+            self._trigger_wagon_death(hero, hero_class, hero_x, hero_y)
+    
+    def _trigger_wagon_death(self, hero, hero_class, hero_x, hero_y):
+        """Trigger hero death after wagon collision"""
+        # Play death sound
+        self.audio.play_sound_effect('death.mp3')
+        
+        # Display special message in larger font
+        self.text_display.clear_text()
+        self.text_display.text_area.config(state='normal')
+        
+        # Insert message with larger font
+        message = "OH NO!  You've been run over by Truck-kun, errrrrrr, I mean Wagon-kun"
+        self.text_display.text_area.insert('end', '\n\n' + message, 'large_death_text')
+        self.text_display.text_area.tag_config('large_death_text', 
+                                               foreground='#ff4444', 
+                                               font=('Consolas', 16, 'bold'),
+                                               justify='center')
+        
+        self.text_display.text_area.config(state='disabled')
+        
+        # Get the appropriate death image based on class
+        death_images = {
+            'warrior': 'art/warrior_death.png',
+            'ninja': 'art/ninja_death.png',
+            'magician': 'art/magician_death.png'
+        }
+        
+        death_image_path = death_images.get(hero_class, 'art/warrior_death.png')
+        
+        # Remove hero image and replace with death image
+        canvas = self.image_display.image_canvas
+        canvas.delete('hero')
+        
+        # Add death image at same position as hero was
+        self.image_display._add_canvas_image(death_image_path, hero_x, hero_y, tags='hero_death')
+        
+        # Game stays frozen here - no return to menu
+

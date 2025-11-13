@@ -1157,6 +1157,15 @@ class GameGUI:
             if choice == 1:
                 self.town.enter_town()
             elif choice == 2:
+                # Check if hero has "Savior of Monster World" achievement
+                if hasattr(self, 'achievements') and self.achievements:
+                    savior_achievement = self.achievements.achievements.get('savior_of_monster_world')
+                    if savior_achievement and savior_achievement.completed:
+                        # Trigger special wagon death event
+                        self.combat.start_wagon_death_event(self.game_state.hero)
+                        return
+                
+                # Normal monster encounter
                 self.monster_encounter.start()
             elif choice == 3:
                 self.inventory.use_item()
