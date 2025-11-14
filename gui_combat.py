@@ -233,7 +233,24 @@ class CombatGUI:
         )
 
     def _show_hero_attack_animation(self, hero):
-        """Show hero attack animation - toggle between normal and attack 3 times"""
+        """Show hero attack animation with jump forward, attack, and jump back"""
+        # Start with jump forward animation
+        self._animate_hero_jump_forward(hero)
+    
+    def _animate_hero_jump_forward(self, hero):
+        """Animate hero jumping forward toward monster"""
+        # Calculate jump distance (move 30% toward monster)
+        jump_distance = int((self.combat_monster_x - self.combat_hero_x) * 0.3)
+        
+        # Store original position
+        self.hero_original_x = self.combat_hero_x
+        
+        # Animate jump in 3 steps (150ms total)
+        self._jump_step(self.combat_hero_x, jump_distance, 3, 0, 'hero', 
+                       lambda: self._start_hero_attack_after_jump(hero))
+    
+    def _start_hero_attack_after_jump(self, hero):
+        """Start hero attack animation after jump forward"""
         # Play hero-specific attack sound at the start of animation
         hero_attack_sound = self._get_hero_attack_sound(hero)
         self.audio.play_sound_effect(hero_attack_sound)
@@ -245,16 +262,16 @@ class CombatGUI:
             import os
             if os.path.exists(attack_image_path):
                 # Start the toggle animation sequence
-                self._toggle_attack_animation(0, attack_image_path, self.current_hero_image, self.current_monster_image)
+                self._toggle_hero_attack_animation(0, attack_image_path, self.current_hero_image)
             else:
-                # Fallback - keep current display
-                self._display_combat_images_with_sizing()
+                # Fallback - jump back without attack animation
+                self._animate_hero_jump_back()
         except Exception as e:
-            # Fallback - keep current display
-            self._display_combat_images_with_sizing()
-
-    def _toggle_attack_animation(self, toggle_count, attack_image, normal_image, monster_image):
-        """Toggle between normal and attack images with quarter-second delay using custom sizing"""
+            # Fallback - jump back without attack animation
+            self._animate_hero_jump_back()
+    
+    def _toggle_hero_attack_animation(self, toggle_count, attack_image, normal_image):
+        """Toggle between normal and attack images for hero"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
             # Clear and redraw with appropriate image
             self.image_display._clear_foreground_images()
@@ -275,7 +292,7 @@ class CombatGUI:
                 self.hero_img_size
             )
             self.image_display._add_canvas_image(
-                monster_image, 
+                self.current_monster_image, 
                 self.combat_monster_x, 
                 self.combat_y, 
                 self.monster_img_size, 
@@ -283,11 +300,58 @@ class CombatGUI:
             )
             
             # Schedule next toggle after 250ms (quarter second)
-            self.timer.after(250, lambda: self._toggle_attack_animation(
-                toggle_count + 1, attack_image, normal_image, monster_image))
+            self.timer.after(250, lambda: self._toggle_hero_attack_animation(
+                toggle_count + 1, attack_image, normal_image))
         else:
-            # Animation complete - ensure we end with normal hero image
-            self._display_combat_images_with_sizing()
+            # Animation complete - jump back
+            self._animate_hero_jump_back()
+    
+    def _animate_hero_jump_back(self):
+        """Animate hero jumping back to original position"""
+        # Calculate distance to jump back
+        jump_distance = self.hero_original_x - self.combat_hero_x
+        
+        # Animate jump back in 3 steps (150ms total)
+        self._jump_step(self.combat_hero_x, jump_distance, 3, 0, 'hero', 
+                       self._display_combat_images_with_sizing)
+    
+    def _jump_step(self, start_x, total_distance, total_steps, current_step, attacker_type, callback):
+        """Animate a single jump step"""
+        if current_step < total_steps:
+            # Calculate new position
+            step_distance = total_distance // total_steps
+            new_x = start_x + step_distance
+            
+            # Update position
+            if attacker_type == 'hero':
+                self.combat_hero_x = new_x
+            else:  # monster
+                self.combat_monster_x = new_x
+            
+            # Redraw images at new position
+            self.image_display._clear_foreground_images()
+            self.image_display._add_canvas_image(
+                self.current_hero_image, 
+                self.combat_hero_x, 
+                self.combat_y, 
+                self.hero_img_size, 
+                self.hero_img_size
+            )
+            self.image_display._add_canvas_image(
+                self.current_monster_image, 
+                self.combat_monster_x, 
+                self.combat_y, 
+                self.monster_img_size, 
+                self.monster_img_size
+            )
+            
+            # Schedule next step after 50ms
+            self.timer.after(50, lambda: self._jump_step(
+                new_x, total_distance - step_distance, total_steps, current_step + 1, 
+                attacker_type, callback))
+        else:
+            # Jump complete - call callback
+            callback()
 
     def _complete_hero_attack(self, damage, monster, message_template):
         """Complete hero attack after animation - show damage text"""
@@ -344,64 +408,61 @@ class CombatGUI:
             self.timer.after(1500, lambda: self._start_combat_round())
     
     def _show_monster_attack_animation(self, monster):
-        """Show monster attack animation - toggle between normal and attack 3 times"""
+        """Show monster attack animation with jump forward, attack, and jump back"""
+        # Start with jump forward animation
+        self._animate_monster_jump_forward(monster)
+    
+    def _animate_monster_jump_forward(self, monster):
+        """Animate monster jumping forward toward hero"""
+        # Calculate jump distance (move 30% toward hero)
+        jump_distance = int((self.combat_hero_x - self.combat_monster_x) * 0.3)
+        
+        # Store original position
+        self.monster_original_x = self.combat_monster_x
+        
+        # Animate jump in 3 steps (150ms total)
+        self._jump_step(self.combat_monster_x, jump_distance, 3, 0, 'monster', 
+                       lambda: self._start_monster_attack_after_jump(monster))
+    
+    def _start_monster_attack_after_jump(self, monster):
+        """Start monster attack animation after jump forward"""
         # Play monster attack sound at the start of animation (limited to 3 seconds)
         attack_sound = self._get_monster_attack_sound(monster)
         self.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
         
-        # Check for attack_art key first (preferred method)
+        # Get monster attack image if available
         if 'attack_art' in monster and monster['attack_art']:
-            attack_image_path = monster['attack_art']
-        # Special handling for Dragon boss attack image (legacy)
-        elif (getattr(self, 'current_monster_data', {}).get('finalboss', False) and 
-              'dragon_endboss' in self.current_monster_image.lower()):
-            attack_image_path = "art/dragon_endboss_attack.png"
-        # Use the art field to derive attack image path (fallback for backwards compatibility)
-        elif 'art' in monster and monster['art']:
-            base_art_path = monster['art']
-            # Try the direct replacement first (e.g., monster.png -> monster_attack.png)
-            attack_image_path = base_art_path.replace('.png', '_attack.png')
-            
-            # If that doesn't exist, try removing "_monster" from the path
-            import os
-            if not os.path.exists(attack_image_path):
-                # Try pattern like kraken_monster.png -> kraken_attack.png
-                alt_path = base_art_path.replace('_monster.png', '_attack.png')
-                if os.path.exists(alt_path):
-                    attack_image_path = alt_path
+            try:
+                import os
+                if os.path.exists(monster['attack_art']):
+                    # Start the toggle animation sequence
+                    self._toggle_monster_attack_animation(0, monster['attack_art'], self.current_monster_image)
+                else:
+                    # No attack art - jump back without animation
+                    self._animate_monster_jump_back()
+            except Exception as e:
+                # Fallback - jump back without animation
+                self._animate_monster_jump_back()
         else:
-            # Final fallback to old method if no art field
-            monster_name = monster.get('name', 'Unknown').lower()
-            attack_image_path = f"art/{monster_name}_attack.png"
-        
-        try:
-            import os
-            if os.path.exists(attack_image_path):
-                # Start the toggle animation sequence for monster
-                self._toggle_monster_attack_animation(0, attack_image_path, self.current_monster_image, self.current_hero_image)
-            else:
-                # Fallback - keep current display
-                self._display_combat_images_with_sizing()
-        except Exception as e:
-            # Fallback - keep current display
-            self._display_combat_images_with_sizing()
-
-    def _toggle_monster_attack_animation(self, toggle_count, attack_image, normal_image, hero_image):
-        """Toggle between normal and attack images for monster with quarter-second delay using custom sizing"""
+            # No attack art - jump back without animation
+            self._animate_monster_jump_back()
+    
+    def _toggle_monster_attack_animation(self, toggle_count, attack_image, normal_image):
+        """Toggle between normal and attack images for monster"""
         if toggle_count < 6:  # 3 complete toggles (normal->attack->normal = 6 steps)
             # Clear and redraw with appropriate image
             self.image_display._clear_foreground_images()
             
             if toggle_count % 2 == 0:
-                # Even count: show monster attack image
+                # Even count: show attack image
                 monster_image = attack_image
             else:
-                # Odd count: show normal monster image
+                # Odd count: show normal image
                 monster_image = normal_image
             
             # Display with custom sizing for Dragon boss
             self.image_display._add_canvas_image(
-                hero_image, 
+                self.current_hero_image, 
                 self.combat_hero_x, 
                 self.combat_y, 
                 self.hero_img_size, 
@@ -415,12 +476,21 @@ class CombatGUI:
                 self.monster_img_size
             )
             
-            # Schedule next toggle after 500ms (slower for visibility)
-            self.timer.after(500, lambda: self._toggle_monster_attack_animation(
-                toggle_count + 1, attack_image, normal_image, hero_image))
+            # Schedule next toggle after 250ms (quarter second)
+            self.timer.after(250, lambda: self._toggle_monster_attack_animation(
+                toggle_count + 1, attack_image, normal_image))
         else:
-            # Animation complete - ensure we end with normal monster image
-            self._display_combat_images_with_sizing()
+            # Animation complete - jump back
+            self._animate_monster_jump_back()
+    
+    def _animate_monster_jump_back(self):
+        """Animate monster jumping back to original position"""
+        # Calculate distance to jump back
+        jump_distance = self.monster_original_x - self.combat_monster_x
+        
+        # Animate jump back in 3 steps (150ms total)
+        self._jump_step(self.combat_monster_x, jump_distance, 3, 0, 'monster', 
+                       self._display_combat_images_with_sizing)
 
     def _complete_monster_attack_start_hero(self, monster_damage, hero_damage, monster, hero, message_template, round_num):
         """Complete monster attack and start hero counter-attack"""

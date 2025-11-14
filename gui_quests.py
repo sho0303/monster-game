@@ -183,9 +183,27 @@ class QuestManager:
     def get_active_quests(self, hero):
         """Get all active (non-completed) quests for hero"""
         self.initialize_hero_quests(hero)
-        # Filter dictionaries first, then convert to Quest objects
-        active_quest_dicts = [q for q in hero['quests'] if not q.get('completed', False)]
+        # Clean up completed quests from the list
+        self._cleanup_completed_quests(hero)
+        # Filter out completed quests AND quests for monsters in completed_quests list
+        completed_monsters = hero.get('completed_quests', [])
+        active_quest_dicts = [
+            q for q in hero['quests'] 
+            if not q.get('completed', False) and q.get('target') not in completed_monsters
+        ]
         return [Quest.from_dict(q) for q in active_quest_dicts]
+    
+    def _cleanup_completed_quests(self, hero):
+        """Remove completed quests from hero's quest list"""
+        if 'quests' not in hero:
+            return
+        
+        completed_monsters = hero.get('completed_quests', [])
+        # Keep only non-completed quests and quests not in completed_monsters list
+        hero['quests'] = [
+            q for q in hero['quests']
+            if not q.get('completed', False) and q.get('target') not in completed_monsters
+        ]
     
     def complete_quest(self, hero, quest):
         """Mark quest as completed and give rewards"""
