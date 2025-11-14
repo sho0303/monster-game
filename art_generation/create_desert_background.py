@@ -8,8 +8,8 @@ import random
 def create_desert_background():
     """Create a pixel art desert landscape with dunes and cacti"""
     # Create a wider canvas for background use (landscape format)
-    width = 64
-    height = 32
+    width = 128
+    height = 64
     canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
     # Desert color palette (warm, sandy tones)
@@ -58,11 +58,11 @@ def create_desert_background():
         for x in range(width):
             canvas[y, x] = sky_color
     
-    # CLOUDS - sparse desert clouds
+    # CLOUDS - sparse desert clouds (scaled for doubled resolution)
     cloud_positions = [
-        (10, 5, 6, 3),   # x, y, width, height - small cloud
-        (45, 8, 8, 2),   # larger wispy cloud
-        (25, 3, 4, 2),   # tiny cloud
+        (20, 10, 12, 6),   # x, y, width, height - small cloud
+        (90, 16, 16, 4),   # larger wispy cloud
+        (50, 6, 8, 4),     # tiny cloud
     ]
     
     for cloud_x, cloud_y, cloud_w, cloud_h in cloud_positions:
@@ -89,11 +89,11 @@ def create_desert_background():
     # Create sand dune undulations using sine waves
     import math
     
-    # Multiple dune layers for depth
+    # Multiple dune layers for depth (amplitudes doubled for resolution)
     dune_layers = [
-        (0.1, 3, SAND_LIGHT),    # frequency, amplitude, color - background dunes
-        (0.15, 2, SAND_GOLD),    # mid-ground dunes
-        (0.2, 4, SAND_DARK),     # foreground dune shadows
+        (0.1, 6, SAND_LIGHT),    # frequency, amplitude, color - background dunes
+        (0.15, 4, SAND_GOLD),    # mid-ground dunes
+        (0.2, 8, SAND_DARK),     # foreground dune shadows
     ]
     
     for frequency, amplitude, sand_color in dune_layers:
@@ -109,18 +109,18 @@ def create_desert_background():
                     if random.random() < 0.8:
                         canvas[y, x] = sand_color
     
-    # DESERT VEGETATION - sparse cacti and desert plants
+    # DESERT VEGETATION - sparse cacti and desert plants (scaled for doubled resolution)
     cactus_positions = [
-        (15, ground_start_y + 5, 'tall'),    # x, y, type
-        (35, ground_start_y + 3, 'short'),
-        (50, ground_start_y + 6, 'tall'),
-        (8, ground_start_y + 4, 'short'),
+        (30, ground_start_y + 10, 'tall'),    # x, y, type
+        (70, ground_start_y + 6, 'short'),
+        (100, ground_start_y + 12, 'tall'),
+        (16, ground_start_y + 8, 'short'),
     ]
     
     for cactus_x, cactus_y, cactus_type in cactus_positions:
         if cactus_type == 'tall':
-            # Tall saguaro-style cactus
-            cactus_height = 8
+            # Tall saguaro-style cactus (doubled height)
+            cactus_height = 16
             # Main trunk
             for dy in range(cactus_height):
                 y = min(cactus_y + dy, height - 1)
@@ -130,27 +130,29 @@ def create_desert_background():
                     if cactus_x + 1 < width:
                         canvas[y, cactus_x + 1] = CACTUS_DARK
             
-            # Cactus arms
-            arm_y = cactus_y + 3
+            # Cactus arms (doubled size)
+            arm_y = cactus_y + 6
             if 0 <= arm_y < height:
-                # Left arm
-                for dx in range(-2, 0):
+                # Left arm (larger)
+                for dx in range(-4, 0):
                     x = cactus_x + dx
                     if 0 <= x < width:
                         canvas[arm_y, x] = CACTUS_GREEN
                         canvas[arm_y + 1, x] = CACTUS_GREEN
+                        canvas[arm_y + 2, x] = CACTUS_GREEN
                 
-                # Right arm
-                for dx in range(2, 4):
+                # Right arm (larger)
+                for dx in range(2, 6):
                     x = cactus_x + dx
                     if 0 <= x < width:
-                        canvas[arm_y + 1, x] = CACTUS_GREEN
                         canvas[arm_y + 2, x] = CACTUS_GREEN
+                        canvas[arm_y + 3, x] = CACTUS_GREEN
+                        canvas[arm_y + 4, x] = CACTUS_GREEN
         
         elif cactus_type == 'short':
-            # Small barrel cactus
-            for dy in range(3):
-                for dx in range(2):
+            # Small barrel cactus (doubled size)
+            for dy in range(6):
+                for dx in range(4):
                     x = cactus_x + dx
                     y = cactus_y + dy
                     if 0 <= x < width and 0 <= y < height:
@@ -159,12 +161,12 @@ def create_desert_background():
                         else:
                             canvas[y, x] = CACTUS_DARK
     
-    # DESERT ROCKS - scattered rock formations
+    # DESERT ROCKS - scattered rock formations (scaled for doubled resolution)
     rock_positions = [
-        (22, ground_start_y + 2, 3, 2),   # x, y, width, height
-        (42, ground_start_y + 4, 2, 3),
-        (58, ground_start_y + 1, 4, 2),
-        (5, ground_start_y + 3, 2, 2),
+        (44, ground_start_y + 4, 6, 4),   # x, y, width, height
+        (84, ground_start_y + 8, 4, 6),
+        (116, ground_start_y + 2, 8, 4),
+        (10, ground_start_y + 6, 4, 4),
     ]
     
     for rock_x, rock_y, rock_w, rock_h in rock_positions:
@@ -178,22 +180,30 @@ def create_desert_background():
                     else:
                         canvas[y, x] = ROCK_GRAY   # Rock highlights
     
-    # DESERT DETAILS - bones, crystals, small details
+    # DESERT DETAILS - bones, crystals, small details (scaled for doubled resolution)
     detail_positions = [
-        (28, ground_start_y + 7, 'bone'),
-        (18, ground_start_y + 2, 'crystal'),
-        (48, ground_start_y + 8, 'bone'),
+        (56, ground_start_y + 14, 'bone'),
+        (36, ground_start_y + 4, 'crystal'),
+        (96, ground_start_y + 16, 'bone'),
+        (120, ground_start_y + 10, 'crystal'),
+        (20, ground_start_y + 18, 'bone'),
     ]
     
     for detail_x, detail_y, detail_type in detail_positions:
         if detail_type == 'bone' and 0 <= detail_x < width and 0 <= detail_y < height:
-            # Small skull or bone
+            # Small skull or bone (doubled size for better detail)
             canvas[detail_y, detail_x] = BONE_WHITE
             if detail_x + 1 < width:
                 canvas[detail_y, detail_x + 1] = BONE_WHITE
+            if detail_y + 1 < height:
+                canvas[detail_y + 1, detail_x] = BONE_WHITE
+            if detail_x + 1 < width and detail_y + 1 < height:
+                canvas[detail_y + 1, detail_x + 1] = BONE_WHITE
         elif detail_type == 'crystal' and 0 <= detail_x < width and 0 <= detail_y < height:
-            # Rare desert crystal
+            # Rare desert crystal (doubled size)
             canvas[detail_y, detail_x] = CRYSTAL_BLUE
+            if detail_y - 1 >= 0:
+                canvas[detail_y - 1, detail_x] = CRYSTAL_BLUE
     
     # HEAT SHIMMER EFFECT - add some distortion to simulate desert heat
     # Randomly lighten some sand pixels to create heat shimmer
@@ -222,8 +232,8 @@ def main():
     # Convert to PIL Image
     desert_img = Image.fromarray(desert_data, 'RGBA')
     
-    # Scale up for final output (8x scaling for pixel art effect)
-    scale_factor = 8
+    # Scale up for final output (4x scaling for pixel art effect)
+    scale_factor = 4
     final_width = desert_data.shape[1] * scale_factor
     final_height = desert_data.shape[0] * scale_factor
     

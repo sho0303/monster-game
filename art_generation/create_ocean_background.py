@@ -4,161 +4,191 @@ Create a pixel art ocean biome background PNG
 from PIL import Image, ImageDraw
 import numpy as np
 import random
+import math
 
 def create_ocean_background():
-    """Create a pixel art ocean landscape with waves and underwater elements"""
+    """Create a pixel art ocean landscape with waves on bottom half and sky with sun on top half"""
     # Create a wider canvas for background use (landscape format)
-    width = 64
-    height = 32
+    width = 128
+    height = 64
     canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    # Ocean color palette (blue, aqua, and sea tones)
-    # Sky colors - ocean sky
-    SKY_LIGHT_BLUE = [135, 206, 235, 255]   # Light blue sky
-    SKY_BLUE = [70, 130, 180, 255]          # Steel blue
-    CLOUD_WHITE = [248, 248, 255, 255]      # White clouds
-    CLOUD_GRAY = [192, 192, 192, 255]       # Gray cloud shading
+    # Color palette
+    # Sky colors
+    SKY_LIGHT_BLUE = [135, 206, 250, 255]   # Light sky blue
+    SKY_BLUE = [100, 149, 237, 255]         # Cornflower blue
+    SKY_HORIZON = [176, 196, 222, 255]      # Light steel blue near horizon
     
-    # Water colors - various shades for depth
-    WATER_SURFACE = [0, 191, 255, 255]      # Bright surface water
-    WATER_LIGHT = [30, 144, 255, 255]       # Light blue water
-    WATER_MEDIUM = [0, 100, 200, 255]       # Medium blue water
-    WATER_DEEP = [0, 50, 150, 255]          # Deep blue water
-    WATER_DARK = [0, 30, 100, 255]          # Very deep water
+    # Sun colors
+    SUN_YELLOW = [255, 223, 0, 255]         # Bright yellow sun
+    SUN_ORANGE = [255, 200, 0, 255]         # Orange sun glow
+    SUN_LIGHT = [255, 255, 200, 255]        # Light yellow glow
+    
+    # Cloud colors
+    CLOUD_WHITE = [248, 248, 255, 255]      # White clouds
+    CLOUD_GRAY = [220, 220, 228, 255]       # Light gray cloud shading
+    CLOUD_SHADOW = [192, 192, 200, 255]     # Cloud shadow
+    
+    # Ocean colors
+    OCEAN_DARK = [0, 68, 119, 255]          # Dark ocean
+    OCEAN_MEDIUM = [0, 105, 148, 255]       # Medium ocean
+    OCEAN_LIGHT = [0, 134, 179, 255]        # Light ocean
+    OCEAN_SURFACE = [64, 164, 223, 255]     # Surface shimmer
     
     # Wave colors
-    WAVE_WHITE = [255, 255, 255, 255]       # Wave foam
-    WAVE_LIGHT = [240, 248, 255, 255]       # Light wave foam
+    WAVE_WHITE = [255, 255, 255, 255]       # White foam
+    WAVE_FOAM = [230, 245, 255, 255]        # Light foam
+    WAVE_CREST = [200, 230, 255, 255]       # Wave crest
     
-    # Underwater elements
-    CORAL_PINK = [255, 127, 80, 255]        # Coral reefs
-    CORAL_ORANGE = [255, 69, 0, 255]        # Orange coral
-    SEAWEED_GREEN = [46, 125, 50, 255]      # Dark seaweed
-    SEAWEED_LIGHT = [76, 175, 80, 255]      # Light seaweed
+    # DRAW SKY (top half - lines 0 to 31)
+    sky_height = height // 2  # Top 32 pixels
+    # DRAW SKY (top half - lines 0 to 31)
+    sky_height = height // 2  # Top 32 pixels
     
-    # Sand and seafloor
-    SAND_LIGHT = [238, 203, 173, 255]       # Light sand
-    SAND_MEDIUM = [205, 133, 63, 255]       # Medium sand
-    SHELL_WHITE = [255, 228, 196, 255]      # Shells and pearls
-    
-    # Special ocean elements
-    BUBBLE_BLUE = [173, 216, 230, 255]      # Water bubbles
-    STARFISH_ORANGE = [255, 99, 71, 255]    # Starfish
-    
-    # SKY GRADIENT (top 40% of image)
-    sky_height = int(height * 0.4)  # Sky takes up top 40%
-    
+    # Create sky gradient from lighter at top to horizon color at bottom
     for y in range(sky_height):
-        # Create vertical gradient from light blue at top to steel blue near water
         gradient_ratio = y / sky_height
         
-        # Blend between sky colors for ocean atmosphere
         for x in range(width):
-            if gradient_ratio < 0.7:
+            if gradient_ratio < 0.5:
                 # Upper sky - light blue
                 canvas[y][x] = SKY_LIGHT_BLUE
-            else:
-                # Lower sky near horizon - darker blue
+            elif gradient_ratio < 0.8:
+                # Middle sky
                 canvas[y][x] = SKY_BLUE
+            else:
+                # Near horizon - lighter
+                canvas[y][x] = SKY_HORIZON
     
-    # Add some clouds in the sky
-    cloud_positions = [(10, 3), (45, 5), (25, 2), (55, 4)]
-    for cloud_x, cloud_y in cloud_positions:
-        if cloud_y < sky_height and 0 <= cloud_x < width:
-            # Small puffy clouds
-            for dy in range(-1, 2):
-                for dx in range(-2, 3):
-                    cy, cx = cloud_y + dy, cloud_x + dx
-                    if 0 <= cy < sky_height and 0 <= cx < width:
-                        if abs(dx) <= 1 or abs(dy) == 0:  # Cloud shape
-                            canvas[cy][cx] = CLOUD_WHITE
+    # DRAW SUN (positioned in upper left quadrant)
+    sun_center_x = 25
+    sun_center_y = 12
+    sun_radius = 8
     
-    # WATER SURFACE AND WAVES (middle section)
-    water_start = sky_height
-    water_surface_height = 3  # Height of surface wave area
-    
-    # Create animated-looking waves on the surface
-    for y in range(water_start, water_start + water_surface_height):
-        wave_intensity = (y - water_start) / water_surface_height
-        
-        for x in range(width):
-            # Create wave pattern using sine-like function
-            wave_offset = int(2 * np.sin(x * 0.3) + random.uniform(-0.5, 0.5))
+    # Draw sun with glow effect
+    for y in range(max(0, sun_center_y - sun_radius - 3), min(sky_height, sun_center_y + sun_radius + 3)):
+        for x in range(max(0, sun_center_x - sun_radius - 3), min(width, sun_center_x + sun_radius + 3)):
+            distance = math.sqrt((x - sun_center_x)**2 + (y - sun_center_y)**2)
             
-            if y == water_start and (x + wave_offset) % 8 < 3:
-                # Wave crests with white foam
-                canvas[y][x] = WAVE_WHITE
-            elif y == water_start + 1 and (x + wave_offset) % 8 < 2:
-                # Secondary foam
-                canvas[y][x] = WAVE_LIGHT
-            else:
-                # Regular surface water
-                canvas[y][x] = WATER_SURFACE
+            if distance <= sun_radius - 2:
+                # Sun core
+                canvas[y][x] = SUN_YELLOW
+            elif distance <= sun_radius:
+                # Sun edge
+                canvas[y][x] = SUN_ORANGE
+            elif distance <= sun_radius + 2:
+                # Sun glow
+                canvas[y][x] = SUN_LIGHT
     
-    # UNDERWATER GRADIENT (bottom section)
-    water_depth_start = water_start + water_surface_height
-    underwater_height = height - water_depth_start
+    # DRAW CLOUDS (scattered across sky)
+    cloud_data = [
+        # (x, y, width, height)
+        (60, 8, 20, 8),
+        (95, 14, 16, 6),
+        (40, 22, 18, 7),
+        (110, 5, 14, 5),
+    ]
     
-    for y in range(water_depth_start, height):
-        depth_ratio = (y - water_depth_start) / underwater_height
+    for cloud_x, cloud_y, cloud_w, cloud_h in cloud_data:
+        # Draw fluffy cloud shape
+        for dy in range(cloud_h):
+            for dx in range(cloud_w):
+                x = cloud_x + dx
+                y = cloud_y + dy
+                
+                if 0 <= x < width and 0 <= y < sky_height:
+                    # Create rounded cloud edges
+                    is_edge = (dy == 0 and (dx < 3 or dx >= cloud_w - 3)) or \
+                             (dy >= cloud_h - 1 and (dx < 2 or dx >= cloud_w - 2)) or \
+                             (dx == 0 and dy < 2) or \
+                             (dx >= cloud_w - 1 and dy < 2)
+                    
+                    is_bottom = dy >= cloud_h - 2
+                    
+                    if not is_edge:
+                        if is_bottom:
+                            # Cloud shadow at bottom
+                            canvas[y][x] = CLOUD_SHADOW
+                        elif dy < 2 or dx < 3:
+                            # Cloud highlight at top
+                            canvas[y][x] = CLOUD_WHITE
+                        else:
+                            # Cloud body
+                            canvas[y][x] = CLOUD_GRAY
+    
+    # DRAW OCEAN (bottom half - lines 32 to 63)
+    ocean_start = sky_height
+    
+    # Create ocean with depth gradient
+    for y in range(ocean_start, height):
+        depth_ratio = (y - ocean_start) / (height - ocean_start)
         
         for x in range(width):
-            # Create depth gradient
-            if depth_ratio < 0.3:
-                canvas[y][x] = WATER_LIGHT
-            elif depth_ratio < 0.6:
-                canvas[y][x] = WATER_MEDIUM
-            elif depth_ratio < 0.8:
-                canvas[y][x] = WATER_DEEP
+            # Base ocean color based on depth
+            if depth_ratio < 0.2:
+                base_color = OCEAN_SURFACE
+            elif depth_ratio < 0.5:
+                base_color = OCEAN_LIGHT
+            elif depth_ratio < 0.75:
+                base_color = OCEAN_MEDIUM
             else:
-                canvas[y][x] = WATER_DARK
+                base_color = OCEAN_DARK
+            
+            canvas[y][x] = base_color
     
-    # Add underwater elements - seaweed
-    seaweed_positions = [(8, height-4), (15, height-5), (35, height-6), (50, height-4), (58, height-3)]
-    for seaweed_x, seaweed_base_y in seaweed_positions:
-        if 0 <= seaweed_x < width:
-            # Tall swaying seaweed
-            for i in range(4):  # Height of seaweed
-                sy = seaweed_base_y - i
-                sx = seaweed_x + int(np.sin(i * 0.8) * 1)  # Slight sway
-                if 0 <= sy < height and 0 <= sx < width:
-                    canvas[sy][sx] = SEAWEED_GREEN
-                    # Add some lighter seaweed details
-                    if i % 2 == 0 and sx + 1 < width:
-                        canvas[sy][sx + 1] = SEAWEED_LIGHT
+    # DRAW WAVES (multiple wave layers for depth)
+    # Wave layer 1 - large distant waves
+    for x in range(width):
+        wave_height = int(3 * math.sin(x * 0.1) + 2)
+        wave_y = ocean_start + 2 + wave_height
+        
+        if 0 <= wave_y < height:
+            # Wave crest
+            canvas[wave_y][x] = WAVE_CREST
+            if wave_height > 2 and wave_y + 1 < height:
+                canvas[wave_y + 1][x] = OCEAN_LIGHT
     
-    # Add coral formations on the seafloor
-    coral_positions = [(12, height-2), (25, height-3), (40, height-2), (55, height-1)]
-    for coral_x, coral_y in coral_positions:
-        if 0 <= coral_x < width and 0 <= coral_y < height:
-            # Small coral clusters
-            canvas[coral_y][coral_x] = CORAL_PINK
-            if coral_x + 1 < width:
-                canvas[coral_y][coral_x + 1] = CORAL_ORANGE
-            if coral_y - 1 >= 0:
-                canvas[coral_y - 1][coral_x] = CORAL_PINK
+    # Wave layer 2 - medium waves
+    for x in range(width):
+        wave_height = int(2 * math.sin(x * 0.2 + 1.5) + 1)
+        wave_y = ocean_start + 8 + wave_height
+        
+        if 0 <= wave_y < height:
+            # White foam on peaks
+            if int(x * 0.2) % 3 == 0:
+                canvas[wave_y][x] = WAVE_FOAM
+            else:
+                canvas[wave_y][x] = WAVE_CREST
     
-    # Add some sandy seafloor patches
-    for y in range(height - 2, height):
-        for x in range(0, width, 8):
-            for dx in range(min(4, width - x)):
-                if x + dx < width:
-                    canvas[y][x + dx] = SAND_LIGHT
+    # Wave layer 3 - close foreground waves with foam
+    for x in range(width):
+        wave_height = int(4 * math.sin(x * 0.15 + 3) + 2)
+        wave_y = ocean_start + 18 + wave_height
+        
+        if 0 <= wave_y < height:
+            # Large wave with white foam
+            if wave_height >= 4:
+                canvas[wave_y][x] = WAVE_WHITE
+                if wave_y + 1 < height:
+                    canvas[wave_y + 1][x] = WAVE_FOAM
+            else:
+                canvas[wave_y][x] = WAVE_FOAM
     
-    # Add scattered shells and starfish
-    detail_positions = [(20, height-1), (45, height-1), (32, height-2)]
-    for detail_x, detail_y in detail_positions:
-        if 0 <= detail_x < width and 0 <= detail_y < height:
-            if detail_x == 32:  # Starfish
-                canvas[detail_y][detail_x] = STARFISH_ORANGE
-            else:  # Shells
-                canvas[detail_y][detail_x] = SHELL_WHITE
+    # Add some scattered wave foam details
+    foam_positions = [
+        (15, ocean_start + 12), (35, ocean_start + 15), (55, ocean_start + 10),
+        (75, ocean_start + 14), (95, ocean_start + 11), (110, ocean_start + 16),
+        (25, ocean_start + 22), (68, ocean_start + 24), (100, ocean_start + 20),
+    ]
     
-    # Add some floating bubbles for atmosphere
-    bubble_positions = [(18, water_depth_start + 3), (42, water_depth_start + 5), (28, water_depth_start + 7)]
-    for bubble_x, bubble_y in bubble_positions:
-        if 0 <= bubble_x < width and 0 <= bubble_y < height:
-            canvas[bubble_y][bubble_x] = BUBBLE_BLUE
+    for foam_x, foam_y in foam_positions:
+        if 0 <= foam_x < width and 0 <= foam_y < height:
+            # Small foam patches (2-3 pixels)
+            canvas[foam_y][foam_x] = WAVE_WHITE
+            if foam_x + 1 < width:
+                canvas[foam_y][foam_x + 1] = WAVE_FOAM
+            if foam_y + 1 < height and foam_x < width:
+                canvas[foam_y + 1][foam_x] = WAVE_FOAM
     
     return canvas
 
@@ -172,8 +202,8 @@ def save_ocean_background():
     # Convert to PIL Image
     ocean_img = Image.fromarray(ocean_canvas, 'RGBA')
     
-    # Scale up for better visibility (8x scale)
-    scale_factor = 8
+    # Scale up for better visibility (4x scale for doubled base resolution)
+    scale_factor = 4
     final_width = ocean_canvas.shape[1] * scale_factor
     final_height = ocean_canvas.shape[0] * scale_factor
     
