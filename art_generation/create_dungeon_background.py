@@ -75,28 +75,28 @@ def create_dungeon_background(width=512, height=256, scale_factor=4):
     ]
     
     for torch_x, torch_y in torch_positions:
-        # Metal bracket
-        draw.rectangle([torch_x - 2, torch_y + 3, torch_x + 2, torch_y + 10], 
+        # Metal bracket (smaller)
+        draw.rectangle([torch_x - 1, torch_y + 2, torch_x + 1, torch_y + 6], 
                       fill=colors['torch_metal'])
         
-        # Wooden handle
-        draw.rectangle([torch_x - 1, torch_y, torch_x + 1, torch_y + 12], 
+        # Wooden handle (shorter)
+        draw.rectangle([torch_x, torch_y, torch_x, torch_y + 8], 
                       fill=colors['torch_wood'])
         
-        # Flame (layered)
+        # Flame (smaller, layered)
         # Outer flame
-        draw.ellipse([torch_x - 4, torch_y - 7, torch_x + 4, torch_y + 1], 
+        draw.ellipse([torch_x - 3, torch_y - 5, torch_x + 3, torch_y], 
                     fill=colors['torch_flame'])
         # Inner bright core
-        draw.ellipse([torch_x - 2, torch_y - 5, torch_x + 2, torch_y - 1], 
+        draw.ellipse([torch_x - 1, torch_y - 3, torch_x + 1, torch_y - 1], 
                     fill=colors['torch_flame_core'])
         
-        # Glow effect around torch
-        for glow_y in range(torch_y - 10, torch_y + 15):
-            for glow_x in range(torch_x - 10, torch_x + 10):
+        # Glow effect around torch (smaller radius)
+        for glow_y in range(torch_y - 7, torch_y + 10):
+            for glow_x in range(torch_x - 7, torch_x + 7):
                 if 0 <= glow_x < base_width and 0 <= glow_y < mid_height:
                     distance = math.sqrt((glow_x - torch_x)**2 + (glow_y - torch_y)**2)
-                    if 5 < distance < 10:
+                    if 4 < distance < 7:
                         if random.random() < 0.15:
                             draw.point((glow_x, glow_y), fill=colors['torch_glow'])
     
@@ -109,7 +109,8 @@ def create_dungeon_background(width=512, height=256, scale_factor=4):
     
     for chain_x, chain_y in chain_positions:
         # Chain links going down
-        for i in range(20):
+        chain_length = 24
+        for i in range(chain_length):
             y_pos = chain_y + i
             if y_pos < mid_height:
                 # Alternate dark and light for link effect
@@ -123,6 +124,19 @@ def create_dungeon_background(width=512, height=256, scale_factor=4):
         # Chain anchor at top
         draw.rectangle([chain_x - 1, chain_y - 1, chain_x + 2, chain_y + 1], 
                       fill=colors['chain_light'])
+        
+        # Wrist shackle at bottom of chain
+        shackle_y = chain_y + chain_length
+        if shackle_y < mid_height:
+            # Shackle metal ring
+            draw.ellipse([chain_x - 3, shackle_y, chain_x + 4, shackle_y + 5], 
+                        fill=colors['chain_dark'])
+            # Inner opening (hollow center)
+            draw.ellipse([chain_x - 1, shackle_y + 1, chain_x + 2, shackle_y + 3], 
+                        fill=colors['wall_dark'])
+            # Shackle highlight
+            draw.point((chain_x - 2, shackle_y + 1), fill=colors['chain_light'])
+            draw.point((chain_x + 3, shackle_y + 1), fill=colors['chain_light'])
     
     # ===== DRAW BOTTOM HALF - STONE FLOOR =====
     
@@ -145,78 +159,6 @@ def create_dungeon_background(width=512, height=256, scale_factor=4):
                     draw.point((x, y), fill=colors['floor_medium'])
                 else:
                     draw.point((x, y), fill=colors['floor_dark'])
-    
-    # Draw skeleton on floor (positioned lower-center)
-    skeleton_x = base_width // 2 - 10
-    skeleton_y = mid_height + 15
-    
-    # Skull
-    skull_x = skeleton_x + 8
-    skull_y = skeleton_y
-    # Skull oval
-    draw.ellipse([skull_x, skull_y, skull_x + 8, skull_y + 8], 
-                fill=colors['bone_white'])
-    # Eye sockets
-    draw.rectangle([skull_x + 2, skull_y + 2, skull_x + 3, skull_y + 3], 
-                  fill=colors['bone_dark'])
-    draw.rectangle([skull_x + 5, skull_y + 2, skull_x + 6, skull_y + 3], 
-                  fill=colors['bone_dark'])
-    # Jaw
-    draw.rectangle([skull_x + 2, skull_y + 6, skull_x + 6, skull_y + 7], 
-                  fill=colors['bone_shadow'])
-    
-    # Spine/ribcage
-    spine_x = skeleton_x + 10
-    spine_y = skeleton_y + 9
-    # Vertebrae
-    for i in range(8):
-        draw.point((spine_x, spine_y + i), fill=colors['bone_white'])
-        draw.point((spine_x + 1, spine_y + i), fill=colors['bone_white'])
-    
-    # Ribs (simplified)
-    for i in range(3):
-        rib_y = spine_y + 2 + i * 2
-        # Left ribs
-        draw.line([spine_x - 1, rib_y, spine_x - 3, rib_y + 1], 
-                 fill=colors['bone_shadow'])
-        # Right ribs
-        draw.line([spine_x + 2, rib_y, spine_x + 4, rib_y + 1], 
-                 fill=colors['bone_shadow'])
-    
-    # Left arm bones
-    arm_y = spine_y + 2
-    draw.line([spine_x - 3, arm_y, spine_x - 8, arm_y + 3], 
-             fill=colors['bone_white'])
-    # Left hand
-    draw.point((spine_x - 8, arm_y + 4), fill=colors['bone_shadow'])
-    draw.point((spine_x - 9, arm_y + 4), fill=colors['bone_shadow'])
-    
-    # Right arm bones
-    draw.line([spine_x + 4, arm_y, spine_x + 9, arm_y + 3], 
-             fill=colors['bone_white'])
-    # Right hand
-    draw.point((spine_x + 9, arm_y + 4), fill=colors['bone_shadow'])
-    draw.point((spine_x + 10, arm_y + 4), fill=colors['bone_shadow'])
-    
-    # Pelvis
-    pelvis_y = spine_y + 8
-    draw.rectangle([spine_x - 2, pelvis_y, spine_x + 3, pelvis_y + 2], 
-                  fill=colors['bone_white'])
-    
-    # Left leg bones
-    leg_y = pelvis_y + 3
-    draw.line([spine_x - 1, leg_y, spine_x - 3, leg_y + 8], 
-             fill=colors['bone_white'])
-    # Left foot
-    draw.rectangle([spine_x - 5, leg_y + 8, spine_x - 3, leg_y + 9], 
-                  fill=colors['bone_shadow'])
-    
-    # Right leg bones
-    draw.line([spine_x + 2, leg_y, spine_x + 4, leg_y + 8], 
-             fill=colors['bone_white'])
-    # Right foot
-    draw.rectangle([spine_x + 4, leg_y + 8, spine_x + 6, leg_y + 9], 
-                  fill=colors['bone_shadow'])
     
     # Scale up the image for final output
     img_scaled = img.resize((width, height), Image.Resampling.NEAREST)
@@ -244,10 +186,9 @@ def main():
     print("Dungeon background creation complete!")
     print("\nFeatures created:")
     print("- Stone block dungeon walls (top half)")
-    print("- Two flickering wall torches with glow effects")
-    print("- Three hanging chains from ceiling")
+    print("- Two smaller flickering wall torches with glow effects")
+    print("- Three hanging chains with wrist shackles")
     print("- Stone tile floor (bottom half)")
-    print("- Complete skeleton lying on floor")
 
 if __name__ == "__main__":
     main()
