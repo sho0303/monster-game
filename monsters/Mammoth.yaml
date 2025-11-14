@@ -1,0 +1,13 @@
+Mammoth:
+  name: Miscreant Mammoth
+  hp: 100
+  maxhp: 100
+  attack: 15
+  defense: 40
+  gold: 80
+  level: 8
+  xp: 8
+  art: art/mammoth_monster.png
+  art_attack: art/mammoth_monster_attack.png
+  attack_sound: mammoth-attack.mp3
+  biome: grassland
