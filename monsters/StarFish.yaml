@@ -1,0 +1,13 @@
+Sketchy Starfish:
+  name: Sketchy Starfish
+  hp: 11
+  maxhp: 11
+  attack: 3
+  defense: 2
+  gold: 10
+  level: 1
+  xp: 1
+  art: art/starfish_monster.png
+  attack_sound: starfish-attack.mp3
+  biome: ocean
+  attack_art: art/starfish_monster_attack.png 
