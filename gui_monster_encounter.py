@@ -363,6 +363,26 @@ class MonsterEncounterGUI:
             monster_level = monster.get('level', 1)
             damage = self.gui.combat.calculate_damage(monster['attack'], hero['defense'], monster_level, hero_level)
             
+            # Initialize combat position variables for animation (same logic as _animate_character_entrances)
+            canvas_width, canvas_height = self.gui._get_canvas_dimensions()
+            base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
+            
+            # Special handling for Dragon boss
+            is_dragon_boss = (monster.get('finalboss', False) and 
+                             'dragon_endboss' in self.current_monster_image.lower())
+            hero_img_size = base_img_size
+            monster_img_size = int(base_img_size * 1.8) if is_dragon_boss else base_img_size
+            
+            spacing_x = canvas_width // 3
+            start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
+            
+            # Set combat positions for animation
+            self.gui.combat.combat_hero_x = spacing_x - hero_img_size // 2
+            self.gui.combat.combat_monster_x = 2 * spacing_x - monster_img_size // 2
+            self.gui.combat.combat_y = start_y
+            self.gui.combat.hero_img_size = hero_img_size
+            self.gui.combat.monster_img_size = monster_img_size
+            
             # Show monster attack animation
             self.gui.combat.current_hero_image = self.current_hero_image
             self.gui.combat.current_monster_image = self.current_monster_image
