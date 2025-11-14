@@ -211,6 +211,12 @@ class SaveLoadManager:
         else:
             hero_data['item'] = None
         
+        # Handle completed_quests tracking
+        if 'completed_quests' in hero:
+            hero_data['completed_quests'] = hero['completed_quests']
+        else:
+            hero_data['completed_quests'] = []
+        
         # Handle quests - ensure they're serializable
         if 'quests' in hero and hero['quests']:
             hero_data['quests'] = []
@@ -253,7 +259,8 @@ class SaveLoadManager:
             'armour': 'Basic Armour',
             'item': None,
             'items': {},
-            'quests': []
+            'quests': [],
+            'completed_quests': []
         }
         
         # Fill in missing fields
@@ -287,6 +294,12 @@ class SaveLoadManager:
         # Ensure quests is a list
         if not isinstance(validated_data['quests'], list):
             validated_data['quests'] = []
+        
+        # Ensure completed_quests is a list
+        if 'completed_quests' not in validated_data:
+            validated_data['completed_quests'] = []
+        if not isinstance(validated_data['completed_quests'], list):
+            validated_data['completed_quests'] = []
         
         # Migrate old single item system to new multi-item system
         if 'item' in validated_data and validated_data['item'] is not None:

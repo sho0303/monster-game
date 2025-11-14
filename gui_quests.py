@@ -60,6 +60,10 @@ class QuestManager:
         if 'quests' not in hero:
             hero['quests'] = []
         
+        # Initialize completed_quests to track quest types that have been completed
+        if 'completed_quests' not in hero:
+            hero['completed_quests'] = []
+        
         # Ensure all quests are stored as dictionaries for consistency
         normalized_quests = []
         for quest_item in hero['quests']:
@@ -91,6 +95,10 @@ class QuestManager:
         if hasattr(self.gui.game_state, 'hero') and self.gui.game_state.hero:
             active_quests = self.get_active_quests(self.gui.game_state.hero)
             existing_quest_targets = {quest.target for quest in active_quests if quest.quest_type == 'kill_monster'}
+            
+            # Also exclude monsters that have already been completed as quests
+            completed_quest_targets = set(hero.get('completed_quests', []))
+            existing_quest_targets.update(completed_quest_targets)
         
         # Filter monsters by:
         # 1. Current biome
@@ -192,6 +200,13 @@ class QuestManager:
                 
                 # Give XP reward
                 hero['xp'] += quest.reward_xp
+                
+                # Track this quest type as completed (for kill_monster quests, track the monster name)
+                if quest.quest_type == 'kill_monster':
+                    if 'completed_quests' not in hero:
+                        hero['completed_quests'] = []
+                    if quest.target not in hero['completed_quests']:
+                        hero['completed_quests'].append(quest.target)
                 
                 return True
         

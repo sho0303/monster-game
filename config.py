@@ -80,9 +80,9 @@ BOUNTY_COLLECTOR_MIN_KILLS = 3   # Minimum kills for collector bounties
 BOUNTY_COLLECTOR_MAX_KILLS = 7   # Maximum kills for collector bounties
 
 # Achievement System
-ACHIEVEMENT_REWARD_BRONZE = 100  # Bronze tier achievement reward (gold)
-ACHIEVEMENT_REWARD_SILVER = 250  # Silver tier achievement reward (gold)
-ACHIEVEMENT_REWARD_GOLD = 400    # Gold tier achievement reward (gold)
+ACHIEVEMENT_REWARD_BRONZE = 20  # Bronze tier achievement reward (gold)
+ACHIEVEMENT_REWARD_SILVER = 50  # Silver tier achievement reward (gold)
+ACHIEVEMENT_REWARD_GOLD = 100    # Gold tier achievement reward (gold)
 
 # ============================================================================
 # AUDIO CONFIGURATION

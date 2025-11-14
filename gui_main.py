@@ -1132,7 +1132,7 @@ class GameGUI:
         self._print_colored_parts(location_parts)
         self.print_text("")
         
-        # Display active quests
+        # Display active quests (only show non-completed quests)
         active_quests = self.quest_manager.get_active_quests(self.game_state.hero)
         if active_quests:
             self.print_text("\n📜 Active Quests:")

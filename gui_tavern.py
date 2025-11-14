@@ -239,12 +239,12 @@ class TavernGUI:
         self.gui.root.after(2000, self.gui.town.enter_town)
     
     def _show_achievements(self):
-        """Display player's achievements"""
+        """Display player's achievements and completed quests"""
         self.gui.clear_text()
         
         # Check if achievements system exists
         if not hasattr(self.gui, 'achievements') or not self.gui.achievements:
-            self.gui.print_text("\n REMINISCE ")
+            self.gui.print_text("\n🏆 REMINISCE 🏆")
             self.gui.print_text("=" * 60)
             self.gui.print_text("\nYou sit by the fire and reflect on your adventures...")
             self.gui.print_text("But your memory seems a bit hazy.")
@@ -253,25 +253,59 @@ class TavernGUI:
             def go_back(choice):
                 self._show_drinks()
             
-            self.gui.set_buttons([" Back"], go_back)
+            self.gui.set_buttons(["🔙 Back"], go_back)
             return
         
-        # Display achievements header
-        self.gui.print_text("\n REMINISCE - YOUR ACHIEVEMENTS ")
+        # Display reminisce header
+        self.gui.print_text("\n🏆 REMINISCE - YOUR JOURNEY 🏆")
         self.gui.print_text("=" * 60)
         self.gui.print_text("\nYou sit by the fireplace with a mug in hand,")
         self.gui.print_text("reminiscing about your adventures and accomplishments...")
         self.gui.print_text("")
         
+        # Get completed quests
+        hero = self.gui.game_state.hero
+        completed_quest_targets = hero.get('completed_quests', [])
+        
+        # Show completed quests section
+        if completed_quest_targets:
+            self.gui.print_text("=" * 60)
+            self.gui.print_text("\n📜 COMPLETED QUESTS 📜")
+            self.gui.print_text("")
+            
+            quest_count_parts = [
+                ("   You have completed ", "#ffffff"),
+                (f"{len(completed_quest_targets)}", "#ffdd00"),
+                (" quest(s)!", "#ffffff")
+            ]
+            self.gui._print_colored_parts(quest_count_parts)
+            self.gui.print_text("")
+            
+            # Show completed quest monsters
+            for i, monster_name in enumerate(completed_quest_targets, 1):
+                quest_parts = [
+                    (f"   {i}. ", "#ffffff"),
+                    ("Defeated ", "#aaaaaa"),
+                    (monster_name, "#00ff00")
+                ]
+                self.gui._print_colored_parts(quest_parts)
+            
+            self.gui.print_text("")
+        
         # Get all visible achievements
         visible_achievements = self.gui.achievements.get_visible_achievements()
         completed_achievements = [ach for ach in visible_achievements if ach.completed]
+        
+        # Show achievement section header
+        self.gui.print_text("=" * 60)
+        self.gui.print_text("\n🏆 ACHIEVEMENTS 🏆")
+        self.gui.print_text("")
         
         # Show completion stats
         completion_percentage = self.gui.achievements.get_completion_percentage()
         
         stats_parts = [
-            (" Progress: ", "#ffffff"),
+            ("   Progress: ", "#ffffff"),
             (f"{len(completed_achievements)}/{len(visible_achievements)}", "#ffdd00"),
             (f" ({completion_percentage:.1f}%)", "#00ff00")
         ]
@@ -279,8 +313,7 @@ class TavernGUI:
         self.gui.print_text("")
         
         if not completed_achievements:
-            self.gui.print_text("=" * 60)
-            self.gui.print_text("\n You haven't unlocked any achievements yet!")
+            self.gui.print_text("   You haven't unlocked any achievements yet!")
             self.gui.print_text("   Go on adventures to earn your first achievement!")
             self.gui.print_text("")
         else:
@@ -301,27 +334,33 @@ class TavernGUI:
             }
             
             for category, achievements in sorted(categories.items()):
-                emoji = category_emojis.get(category, '')
-                self.gui.print_text("=" * 60)
-                self.gui.print_text(f"\n{emoji} {category.upper()} ACHIEVEMENTS {emoji}")
+                emoji = category_emojis.get(category, '🏆')
+                self.gui.print_text("")
+                
+                category_header = [
+                    (f"{emoji} ", "#ffdd00"),
+                    (category.upper(), "#00ff00"),
+                    (f" {emoji}", "#ffdd00")
+                ]
+                self.gui._print_colored_parts(category_header)
                 self.gui.print_text("")
                 
                 for ach in sorted(achievements, key=lambda x: x.completed_at or ""):
                     achievement_parts = [
-                        (" ", "#ffdd00"),
+                        ("   ✓ ", "#ffdd00"),
                         (ach.name, "#00ff00")
                     ]
                     self.gui._print_colored_parts(achievement_parts)
                     
-                    self.gui.print_text(f"   {ach.description}")
+                    self.gui.print_text(f"      {ach.description}")
                     
                     # Show reward if applicable
                     if ach.reward_type == "gold" and ach.reward_value > 0:
-                        self.gui.print_text(f"    Reward: {ach.reward_value} gold")
+                        self.gui.print_text(f"      Reward: {ach.reward_value} gold")
                     elif ach.reward_type == "stat_bonus" and ach.reward_value > 0:
-                        self.gui.print_text(f"    Reward: +{ach.reward_value} permanent stat bonus")
+                        self.gui.print_text(f"      Reward: +{ach.reward_value} permanent stat bonus")
                     elif ach.reward_type == "title":
-                        self.gui.print_text(f"    Reward: Title earned")
+                        self.gui.print_text(f"      Reward: Title earned")
                     
                     self.gui.print_text("")
         
@@ -332,5 +371,5 @@ class TavernGUI:
         def go_back(choice):
             self._show_drinks()
         
-        self.gui.set_buttons([" Back"], go_back)
+        self.gui.set_buttons(["🔙 Back"], go_back)
 
