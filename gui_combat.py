@@ -721,11 +721,13 @@ class CombatGUI:
         # Get canvas dimensions for positioning
         canvas_width, canvas_height = self.image_display._get_canvas_dimensions()
         
+        # Get hero class for death image later
+        hero_class = hero.get('class', 'Warrior').lower()
+        
         # Display hero on the left (normal position)
         hero_image_path = hero.get('art', '')
         if not hero_image_path:
             # Fallback to class-based path if art field missing
-            hero_class = hero.get('class', 'Warrior').lower()
             hero_image_path = f'art/{hero_class}.png'
         
         # Calculate base image size (same as combat)
