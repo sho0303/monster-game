@@ -8,4 +8,7 @@ Destroyer Dan:
   defense: 5
   level: 1
   class: 'Warrior'
+  art: art/Warrior.png
+  art_attack: art/warrior_attack.png
+  art_death: art/warrior_death.png
   attack_sound: sword-clash.mp3

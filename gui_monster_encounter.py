@@ -441,11 +441,15 @@ class MonsterEncounterGUI:
         """Display hero and monster images side by side in top frame"""
         image_paths = []
         
-        # Get hero image path
-        hero_class = hero.get('class', 'Warrior').lower()
-        hero_image_path = f"art/{hero_class.capitalize()}.png"
+        # Get hero image path from YAML or construct fallback
+        hero_image_path = hero.get('art', '')
         
         try:
+            if not hero_image_path:
+                # Fallback to class-based path if art field missing
+                hero_class = hero.get('class', 'Warrior').lower()
+                hero_image_path = f"art/{hero_class.capitalize()}.png"
+            
             # Check if hero image exists
             if os.path.exists(hero_image_path):
                 image_paths.append(hero_image_path)

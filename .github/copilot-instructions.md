@@ -37,6 +37,10 @@ Shadow Billy Bob:  # Top-level key is hero name
     defense: 10
     level: 1
     class: 'Ninja'  # Must be Warrior, Ninja, or Magician
+    art: art/Ninja.png  # Default hero image
+    art_attack: art/ninja_attack.png  # Attack animation image
+    art_death: art/ninja_death.png  # Death animation image
+    attack_sound: ninja-attack.mp3  # Sound file in sounds/
 ```
 
 ### Monsters (`monsters/*.yaml`)

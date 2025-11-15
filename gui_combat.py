@@ -130,16 +130,21 @@ class CombatGUI:
     
     def _display_combat_images(self, hero, monster):
         """Display hero and monster images side by side for combat with Dragon boss special sizing"""
-        # Get hero image path
-        hero_class = hero.get('class', 'Warrior').lower()
-        hero_image_path = f"art/{hero_class.capitalize()}.png"
+        # Get hero image path from YAML or construct fallback
+        hero_image_path = hero.get('art', '')
         
         try:
             import os
-            if os.path.exists(hero_image_path):
+            if hero_image_path and os.path.exists(hero_image_path):
                 self.current_hero_image = hero_image_path
             else:
-                self.current_hero_image = 'art/crossed_swords.png'
+                # Fallback to class-based path if art field missing
+                hero_class = hero.get('class', 'Warrior').lower()
+                fallback_path = f"art/{hero_class.capitalize()}.png"
+                if os.path.exists(fallback_path):
+                    self.current_hero_image = fallback_path
+                else:
+                    self.current_hero_image = 'art/crossed_swords.png'
         except (OSError, TypeError) as e:
             logger.debug(f"Could not access hero image, using fallback: {e}")
             self.current_hero_image = 'art/crossed_swords.png'
@@ -255,11 +260,16 @@ class CombatGUI:
         hero_attack_sound = self._get_hero_attack_sound(hero)
         self.audio.play_sound_effect(hero_attack_sound)
         
-        hero_class = hero.get('class', 'Warrior').lower()
-        attack_image_path = f"art/{hero_class}_attack.png"
+        # Get attack image from YAML or construct fallback
+        attack_image_path = hero.get('art_attack', '')
         
         try:
             import os
+            if not attack_image_path:
+                # Fallback to class-based path if art_attack field missing
+                hero_class = hero.get('class', 'Warrior').lower()
+                attack_image_path = f"art/{hero_class}_attack.png"
+            
             if os.path.exists(attack_image_path):
                 # Start the toggle animation sequence
                 self._toggle_hero_attack_animation(0, attack_image_path, self.current_hero_image)
@@ -666,11 +676,16 @@ class CombatGUI:
     def _show_hero_death_in_combat(self, hero):
         """Replace hero image with death image in combat display, keeping monster visible"""
         try:
-            hero_class = hero.get('class', 'Warrior').lower()
-            death_image_path = f"art/{hero_class}_death.png"
+            # Get death image from YAML or construct fallback
+            death_image_path = hero.get('art_death', '')
+            
+            import os
+            if not death_image_path:
+                # Fallback to class-based path if art_death field missing
+                hero_class = hero.get('class', 'Warrior').lower()
+                death_image_path = f"art/{hero_class}_death.png"
             
             # Check if death image exists
-            import os
             if not os.path.exists(death_image_path):
                 logger.debug(f"Death image not found: {death_image_path}, using generic")
                 death_image_path = 'art/you_lost.png'
@@ -708,8 +723,11 @@ class CombatGUI:
         canvas_width, canvas_height = self.image_display._get_canvas_dimensions()
         
         # Display hero on the left (normal position)
-        hero_class = hero.get('class', 'Warrior').lower()
-        hero_image_path = f'art/{hero_class}.png'
+        hero_image_path = hero.get('art', '')
+        if not hero_image_path:
+            # Fallback to class-based path if art field missing
+            hero_class = hero.get('class', 'Warrior').lower()
+            hero_image_path = f'art/{hero_class}.png'
         
         # Calculate base image size (same as combat)
         base_img_size = min(canvas_width // 3, canvas_height // 2, 120)
@@ -775,14 +793,16 @@ class CombatGUI:
         
         self.text_display.text_area.config(state='disabled')
         
-        # Get the appropriate death image based on class
-        death_images = {
-            'warrior': 'art/warrior_death.png',
-            'ninja': 'art/ninja_death.png',
-            'magician': 'art/magician_death.png'
-        }
-        
-        death_image_path = death_images.get(hero_class, 'art/warrior_death.png')
+        # Get death image from hero YAML or use fallback
+        death_image_path = hero.get('art_death', '')
+        if not death_image_path:
+            # Fallback to class-based path if art_death field missing
+            death_images = {
+                'warrior': 'art/warrior_death.png',
+                'ninja': 'art/ninja_death.png',
+                'magician': 'art/magician_death.png'
+            }
+            death_image_path = death_images.get(hero_class, 'art/warrior_death.png')
         
         # Remove hero image and replace with death image
         canvas = self.image_display.image_canvas

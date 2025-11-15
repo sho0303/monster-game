@@ -8,4 +8,7 @@ Eduardo the wise:
   defense: 5
   level: 1
   class: 'Magician'
+  art: art/magician_hero.png
+  art_attack: art/magician_hero_attack.png
+  art_death: art/magician_hero_death.png
   attack_sound: fireball.mp3

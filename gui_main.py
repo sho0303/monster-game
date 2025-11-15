@@ -994,7 +994,9 @@ class GameGUI:
         self.reset_background()
         
         self.clear_text()
-        self.show_image(f"art/{self.game_state.hero['class']}.png")
+        # Use hero art field from YAML or fallback to class-based path
+        hero_image = self.game_state.hero.get('art', f"art/{self.game_state.hero['class']}.png")
+        self.show_image(hero_image)
         
         self.print_text("\n" + "=" * 60)
         self.print_text("⚔️  Hero Stats ⚔️")
@@ -1413,11 +1415,16 @@ class GameGUI:
     def _show_hero_death_game_over(self):
         """Show hero-specific death image during game over"""
         try:
-            hero_class = self.game_state.hero.get('class', 'Warrior').lower()
-            death_image_path = f"art/{hero_class}_death.png"
+            # Get death image from YAML or construct fallback
+            death_image_path = self.game_state.hero.get('art_death', '')
+            
+            import os
+            if not death_image_path:
+                # Fallback to class-based path if art_death field missing
+                hero_class = self.game_state.hero.get('class', 'Warrior').lower()
+                death_image_path = f"art/{hero_class}_death.png"
             
             # Try to load class-specific death image
-            import os
             if os.path.exists(death_image_path):
                 self.show_image(death_image_path)
             else:
