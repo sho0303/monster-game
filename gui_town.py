@@ -200,7 +200,7 @@ class TownGUI:
         self.gui.lock_interface()
         
         # Create goblin monster from game data
-        if 'Goblin Thief' not in self.gui.game_state.monsters:
+        if 'Goblin' not in self.gui.game_state.monsters:
             self.gui.print_text("Error: Goblin data not found!")
             self.gui.root.after(2000, self.gui.main_menu)
             return
@@ -217,7 +217,7 @@ class TownGUI:
         self.gui.clear_text()
         
         # Create a copy of the goblin monster
-        goblin_template = self.gui.game_state.monsters['Goblin Thief']
+        goblin_template = self.gui.game_state.monsters['Goblin']
         goblin = {
             'name': f'Goblin Raider #{goblin_number}',
             'hp': goblin_template['hp'],
@@ -243,8 +243,8 @@ class TownGUI:
         # Start combat
         hero = self.gui.game_state.hero
         
-        def on_goblin_defeat(won):
-            if won:
+        def on_goblin_defeat(result):
+            if result == 'won':
                 self._handle_goblin_victory(goblin_number)
             else:
                 self._handle_goblin_defeat()
@@ -327,13 +327,59 @@ class TownGUI:
     def _handle_goblin_defeat(self):
         """Handle defeat by goblins"""
         self.goblin_assault_active = False
+        hero = self.gui.game_state.hero
         
-        # Normal death behavior applies (handled by combat system)
-        # Just return to main menu
-        self.gui.print_text("\n💀 The goblins have overwhelmed you...")
-        self.gui.print_text("You retreat from the town in shame.")
+        # Apply standard death penalties
+        # Check if hero has Miser Coin Purse for reduced gold loss
+        has_coin_purse = False
+        if 'items' in hero and hero['items']:
+            has_coin_purse = 'Miser Coin Purse' in hero['items']
         
-        self.gui.root.after(3000, self.gui.main_menu)
+        original_gold = hero['gold']
+        if has_coin_purse and original_gold > 0:
+            # Only lose 50% of gold with coin purse
+            gold_lost = original_gold // 2
+            hero['gold'] = original_gold - gold_lost
+            
+            self.gui.print_text("\n💀 The goblins have overwhelmed you...")
+            
+            # Show protected gold message
+            protection_parts = [
+                ("\nYour ", "#ffffff"),
+                ("Miser Coin Purse", "#ffdd00"),
+                (" protected you!", "#ffffff")
+            ]
+            self.gui._print_colored_parts(protection_parts)
+            
+            loss_parts = [
+                ("💰 Lost ", "#ffffff"),
+                (f"{gold_lost} gold", "#ff6666"),
+                (f" (kept {hero['gold']} gold)", "#ffdd00")
+            ]
+            self.gui._print_colored_parts(loss_parts)
+        else:
+            # Lose all gold without protection
+            self.gui.print_text("\n💀 The goblins have overwhelmed you...")
+            self.gui.print_text("You lost all your gold!")
+            hero['gold'] = 0
+        
+        # Deduct a life
+        hero['lives_left'] -= 1
+        
+        # Restore HP to max for next attempt
+        hero['hp'] = hero['maxhp']
+        
+        # Check for game over
+        self.gui.root.after(3000, lambda: self._check_game_over_after_goblin_defeat())
+    
+    def _check_game_over_after_goblin_defeat(self):
+        """Check if game is over after goblin defeat, or return to main menu"""
+        if self.gui.check_game_over():
+            # Game over screen will be shown
+            return
+        else:
+            # Still have lives, return to main menu
+            self.gui.main_menu()
     
     def _run_from_assault(self):
         """Run away from the goblin assault"""

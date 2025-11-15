@@ -1009,7 +1009,7 @@ class GameGUI:
         for key, value in self.game_state.hero.items():
             # Skip displaying quests in hero stats - they have their own section
             # Also skip internal/technical fields and titles (shown in tavern)
-            if key in ('quests', 'completed_quests', 'attack_sound', 'titles', 'earned_titles'):
+            if key in ('quests', 'completed_quests', 'attack_sound', 'titles', 'earned_titles', 'art', 'art_attack', 'art_death'):
                 continue
             elif key == 'hp':
                 # Display HP as "hp: current/max" with color coding
