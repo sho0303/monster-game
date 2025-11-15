@@ -1,13 +1,12 @@
-Giant Spider:
-  name: The Spider Queen
-  hp: 15
-  maxhp: 15
-  attack: 6
-  defense: 9
-  gold: 20
-  level: 2
-  xp: 2
-  art: art/spider_queen_monster.png
-  attack_art: art/spider_queen_monster_attack.png
-  attack_sound: snake-attack.mp3
+Spider:
+  name: The Itsy Bitsy Spider
+  hp: 1
+  maxhp: 1
+  attack: 9
+  defense: 0
+  gold: 10
+  level: 1
+  xp: 1
+  art: art/spider_monster.png
+  attack_art: art/spider_monster_attack.png
   biome: grassland
