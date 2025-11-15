@@ -9,6 +9,7 @@ import yaml
 
 import config
 from logger_utils import get_logger
+from resource_utils import get_resource_path, resource_exists
 from game_state import initialize_game_state
 from gui_audio import Audio
 from gui_combat import CombatGUI
@@ -826,7 +827,7 @@ class GameGUI:
         """Display the story prologue before the title screen"""
         try:
             # Load story from YAML file
-            with open('story.yaml', 'r', encoding='utf-8') as f:
+            with open(get_resource_path('story.yaml'), 'r', encoding='utf-8') as f:
                 story_data = yaml.safe_load(f)
             
             prologue_lines = story_data.get('Prologue', [])
@@ -1418,14 +1419,13 @@ class GameGUI:
             # Get death image from YAML or construct fallback
             death_image_path = self.game_state.hero.get('art_death', '')
             
-            import os
             if not death_image_path:
                 # Fallback to class-based path if art_death field missing
                 hero_class = self.game_state.hero.get('class', 'Warrior').lower()
                 death_image_path = f"art/{hero_class}_death.png"
             
             # Try to load class-specific death image
-            if os.path.exists(death_image_path):
+            if resource_exists(death_image_path):
                 self.show_image(death_image_path)
             else:
                 # Fallback to generic you_lost image if class-specific doesn't exist

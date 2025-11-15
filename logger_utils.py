@@ -18,6 +18,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Optional
+from resource_utils import ensure_writable_dir
 
 
 # Track if logging is already configured to avoid duplicate handlers
@@ -48,12 +49,12 @@ def setup_logging(log_dir: str = "logs", log_level: int = logging.INFO) -> str:
     if _logging_configured:
         return _log_file_path
     
-    # Create logs directory if it doesn't exist
-    os.makedirs(log_dir, exist_ok=True)
+    # Ensure writable logs directory (handles PyInstaller bundle)
+    log_dir_path = ensure_writable_dir(log_dir)
     
     # Create timestamped log file
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    log_file = os.path.join(log_dir, f'game_{timestamp}.log')
+    log_file = os.path.join(log_dir_path, f'game_{timestamp}.log')
     _log_file_path = log_file
     
     # Configure root logger

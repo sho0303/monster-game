@@ -4,6 +4,7 @@ Shop system for GUI
 import yaml
 import os
 from typing import TYPE_CHECKING
+from resource_utils import get_resource_path, resource_exists
 
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
@@ -43,7 +44,7 @@ class ShopGUI:
     def _load_store(self):
         """Load store data from YAML"""
         try:
-            with open('store.yaml', 'r', encoding='utf-8') as f:
+            with open(get_resource_path('store.yaml'), 'r', encoding='utf-8') as f:
                 self.store_data = yaml.safe_load(f)
         except Exception as e:
             self.gui.print_text(f"❌ Error loading store: {e}")
@@ -109,7 +110,7 @@ class ShopGUI:
         # Show multiple images of available items using the same logic as show_category_preview
         item_images = []
         for item in available_items:
-            if 'ascii_art' in item and os.path.exists(item['ascii_art']):
+            if 'ascii_art' in item and resource_exists(item['ascii_art']):
                 item_images.append(item['ascii_art'])
         
         if item_images:
@@ -141,7 +142,7 @@ class ShopGUI:
             if choice <= len(available_items):
                 # Buy selected item and show its image
                 selected_item = available_items[choice - 1]
-                if 'ascii_art' in selected_item and os.path.exists(selected_item['ascii_art']):
+                if 'ascii_art' in selected_item and resource_exists(selected_item['ascii_art']):
                     self.gui.show_image(selected_item['ascii_art'])
                 self._purchase_item(selected_item)
             elif choice == len(available_items) + 1:
@@ -179,7 +180,7 @@ class ShopGUI:
         hero['gold'] -= item_cost
         
         # Show item art if available
-        if 'ascii_art' in item and os.path.exists(item['ascii_art']):
+        if 'ascii_art' in item and resource_exists(item['ascii_art']):
             self.gui.show_image(item['ascii_art'])
         
         self.gui.clear_text()

@@ -5,6 +5,7 @@ import random
 from typing import Callable, Dict, Any, Optional
 from gui_interfaces import GameContextProtocol
 from logger_utils import get_logger
+from resource_utils import resource_exists, get_resource_path
 
 logger = get_logger(__name__)
 
@@ -134,14 +135,13 @@ class CombatGUI:
         hero_image_path = hero.get('art', '')
         
         try:
-            import os
-            if hero_image_path and os.path.exists(hero_image_path):
+            if hero_image_path and resource_exists(hero_image_path):
                 self.current_hero_image = hero_image_path
             else:
                 # Fallback to class-based path if art field missing
                 hero_class = hero.get('class', 'Warrior').lower()
                 fallback_path = f"art/{hero_class.capitalize()}.png"
-                if os.path.exists(fallback_path):
+                if resource_exists(fallback_path):
                     self.current_hero_image = fallback_path
                 else:
                     self.current_hero_image = 'art/crossed_swords.png'
@@ -152,7 +152,7 @@ class CombatGUI:
         # Get monster image path
         if 'art' in monster and monster['art']:
             try:
-                if os.path.exists(monster['art']):
+                if resource_exists(monster['art']):
                     self.current_monster_image = monster['art']
                 else:
                     self.current_monster_image = 'art/crossed_swords.png'
@@ -264,13 +264,12 @@ class CombatGUI:
         attack_image_path = hero.get('art_attack', '')
         
         try:
-            import os
             if not attack_image_path:
                 # Fallback to class-based path if art_attack field missing
                 hero_class = hero.get('class', 'Warrior').lower()
                 attack_image_path = f"art/{hero_class}_attack.png"
             
-            if os.path.exists(attack_image_path):
+            if resource_exists(attack_image_path):
                 # Start the toggle animation sequence
                 self._toggle_hero_attack_animation(0, attack_image_path, self.current_hero_image)
             else:
@@ -445,8 +444,7 @@ class CombatGUI:
         
         if attack_art_path:
             try:
-                import os
-                if os.path.exists(attack_art_path):
+                if resource_exists(attack_art_path):
                     # Start the toggle animation sequence
                     self._toggle_monster_attack_animation(0, attack_art_path, self.current_monster_image)
                 else:
@@ -681,14 +679,13 @@ class CombatGUI:
             # Get death image from YAML or construct fallback
             death_image_path = hero.get('art_death', '')
             
-            import os
             if not death_image_path:
                 # Fallback to class-based path if art_death field missing
                 hero_class = hero.get('class', 'Warrior').lower()
                 death_image_path = f"art/{hero_class}_death.png"
             
             # Check if death image exists
-            if not os.path.exists(death_image_path):
+            if not resource_exists(death_image_path):
                 logger.debug(f"Death image not found: {death_image_path}, using generic")
                 death_image_path = 'art/you_lost.png'
             
@@ -860,7 +857,7 @@ class CombatGUI:
         
         try:
             # Load story from YAML file
-            with open('story.yaml', 'r', encoding='utf-8') as f:
+            with open(get_resource_path('story.yaml'), 'r', encoding='utf-8') as f:
                 story_data = yaml.safe_load(f)
             
             isekai_lines = story_data.get('Isekai', [])

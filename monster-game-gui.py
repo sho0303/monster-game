@@ -8,6 +8,7 @@ import warnings
 from pathlib import Path
 from datetime import datetime
 from logger_utils import setup_logging, get_logger
+from resource_utils import get_resource_path, resource_exists
 
 # Suppress pygame's pkg_resources deprecation warning
 # This is a pygame internal issue that will be fixed in future pygame versions
@@ -70,37 +71,58 @@ def check_dependencies():
 
 def check_working_directory():
     """Verify we're running from the correct directory"""
-    current_dir = Path.cwd()
-    required_files = ['gui_main.py', 'game_state.py', 'store.yaml']
-    required_dirs = ['heros', 'monsters', 'sounds', 'art']
+    # In bundled mode, skip .py file checks (they're compiled to bytecode)
+    # Only check data files
+    if hasattr(sys, '_MEIPASS'):
+        logger.info(f"Running in bundled mode: {sys._MEIPASS}")
+        # Only check for data files that should be bundled
+        required_files = ['store.yaml']
+        required_dirs = ['heros', 'monsters', 'sounds', 'art']
+    else:
+        # In dev mode, check Python source files too
+        required_files = ['gui_main.py', 'game_state.py', 'store.yaml']
+        required_dirs = ['heros', 'monsters', 'sounds', 'art']
     
     missing_items = []
     
-    # Check files
+    # Check files using resource_utils
     for file_name in required_files:
-        if not (current_dir / file_name).exists():
+        if not resource_exists(file_name):
             missing_items.append(f"File: {file_name}")
+            logger.warning(f"Missing file: {file_name}")
     
-    # Check directories
+    # Check directories using resource_utils
     for dir_name in required_dirs:
-        dir_path = current_dir / dir_name
-        if not dir_path.exists():
+        if not resource_exists(dir_name):
             missing_items.append(f"Directory: {dir_name}")
-        elif not any(dir_path.iterdir()):
-            missing_items.append(f"Directory: {dir_name} (empty)")
+            logger.warning(f"Missing directory: {dir_name}")
     
     if missing_items:
-        error_msg = (
-            f"Game files not found in current directory:\n{current_dir}\n\n"
-            "Missing items:\n" +
-            "\n".join(f"• {item}" for item in missing_items) +
-            "\n\nPlease ensure you're running the game from the correct directory.\n"
-            "The game directory should contain gui_main.py and the game folders."
-        )
+        # Check if we're running in bundled mode
+        if hasattr(sys, '_MEIPASS'):
+            logger.error(f"Running in bundled mode, but missing resources: {missing_items}")
+            error_msg = (
+                f"Game resources not found in bundled executable.\n\n"
+                "Missing items:\n" +
+                "\n".join(f"• {item}" for item in missing_items) +
+                "\n\nThis may be a packaging error. Please contact the developer."
+            )
+        else:
+            current_dir = Path.cwd()
+            error_msg = (
+                f"Game files not found in current directory:\n{current_dir}\n\n"
+                "Missing items:\n" +
+                "\n".join(f"• {item}" for item in missing_items) +
+                "\n\nPlease ensure you're running the game from the correct directory.\n"
+                "The game directory should contain gui_main.py and the game folders."
+            )
         show_error("Missing Game Files", error_msg)
         return False
     
-    logger.info(f"Working directory check passed: {current_dir}")
+    if hasattr(sys, '_MEIPASS'):
+        logger.info(f"Working directory check passed (bundled mode): {sys._MEIPASS}")
+    else:
+        logger.info(f"Working directory check passed: {Path.cwd()}")
     return True
 
 def check_gui_main_module():

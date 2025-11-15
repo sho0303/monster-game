@@ -11,6 +11,7 @@ import random
 
 import config
 from logger_utils import get_logger
+from resource_utils import get_resource_path
 
 logger = get_logger(__name__)
 
@@ -107,12 +108,15 @@ class BackgroundManager:
             fallback_color: Hex color to use if image loading fails
         """
         try:
+            # Resolve resource path for bundled execution
+            resolved_path = get_resource_path(background_path)
+            
             # Use fixed canvas dimensions
             canvas_width = config.CANVAS_WIDTH
             canvas_height = config.CANVAS_HEIGHT
                 
             # Load and resize the background image
-            bg_img = Image.open(background_path)
+            bg_img = Image.open(resolved_path)
             bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)
             self.bg_photo = ImageTk.PhotoImage(bg_img_resized)
             
@@ -384,12 +388,15 @@ class BackgroundManager:
     def initialize_default_background(self):
         """Initialize the default background (called during startup)"""
         try:
+            # Resolve resource path for bundled execution
+            resolved_path = get_resource_path('art/grassy_background.png')
+            
             # Use fixed canvas dimensions (800x400)
             canvas_width = 800
             canvas_height = 400
                 
             # Load the grassy background image
-            bg_img = Image.open('art/grassy_background.png')
+            bg_img = Image.open(resolved_path)
             
             # Resize to fixed canvas dimensions
             bg_img_resized = bg_img.resize((canvas_width, canvas_height), Image.Resampling.NEAREST)

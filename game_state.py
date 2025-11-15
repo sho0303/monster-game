@@ -1,6 +1,7 @@
 import os
 import yaml
 from logger_utils import get_logger
+from resource_utils import get_resource_path, list_resource_files
 
 logger = get_logger(__name__)
 
@@ -15,9 +16,11 @@ class GameState:
 
 
 def _get_project_path(*parts):
-    """Get path relative to project root."""
-    base = os.path.dirname(__file__)
-    return os.path.join(base, *parts)
+    """Get path relative to project root.
+    
+    This function now uses resource_utils to work with PyInstaller bundles.
+    """
+    return get_resource_path(os.path.join(*parts))
 
 
 def yaml_file_to_dictionary(file, target_dict):
@@ -31,7 +34,7 @@ def yaml_file_to_dictionary(file, target_dict):
         The updated target_dict
     """
     try:
-        with open(file, encoding='utf-8') as fh:
+        with open(get_resource_path(file), encoding='utf-8') as fh:
             fh_yaml = yaml.safe_load(fh)
             if fh_yaml and isinstance(fh_yaml, dict):
                 target_dict.update(fh_yaml)
@@ -77,11 +80,11 @@ def initialize_game_state():
             logger.error(f"Monsters directory not found: {monsters_dir}")
             return state
         
-        files = os.listdir(monsters_dir)
+        # Use resource_utils to list YAML files
+        files = list_resource_files('monsters', '.yaml') + list_resource_files('monsters', '.yml')
         for file in files:
-            if file.endswith('.yaml') or file.endswith('.yml'):
-                file_path = os.path.join(monsters_dir, file)
-                state.monsters = yaml_file_to_dictionary(file_path, state.monsters)
+            file_path = os.path.join(monsters_dir, file)
+            state.monsters = yaml_file_to_dictionary(file_path, state.monsters)
     except OSError as e:
         logger.error(f"Error accessing monsters directory: {e}")
         return state
@@ -96,11 +99,11 @@ def initialize_game_state():
             logger.error(f"Heros directory not found: {heros_dir}")
             return state
         
-        files = os.listdir(heros_dir)
+        # Use resource_utils to list YAML files
+        files = list_resource_files('heros', '.yaml') + list_resource_files('heros', '.yml')
         for file in files:
-            if file.endswith('.yaml') or file.endswith('.yml'):
-                file_path = os.path.join(heros_dir, file)
-                state.heros = yaml_file_to_dictionary(file_path, state.heros)
+            file_path = os.path.join(heros_dir, file)
+            state.heros = yaml_file_to_dictionary(file_path, state.heros)
     except OSError as e:
         logger.error(f"Error accessing heros directory: {e}")
         return state

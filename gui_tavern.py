@@ -4,6 +4,7 @@ Tavern system for GUI - drink purchasing and atmosphere
 import yaml
 import os
 from typing import TYPE_CHECKING
+from resource_utils import resource_exists, get_resource_path
 
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
@@ -47,7 +48,7 @@ class TavernGUI:
     def _load_tavern(self):
         """Load tavern data from YAML"""
         try:
-            with open('tavern.yaml', 'r', encoding='utf-8') as f:
+            with open(get_resource_path('tavern.yaml'), 'r', encoding='utf-8') as f:
                 self.tavern_data = yaml.safe_load(f)
         except Exception as e:
             self.gui.print_text(f"❌ Error loading tavern menu: {e}")
@@ -76,9 +77,9 @@ class TavernGUI:
         for drink in drinks:
             # Use sudsy beer image for beer drinks, or fallback to any art specified
             if 'beer' in drink['name'].lower():
-                if os.path.exists('art/sudsy_beer.png'):
+                if resource_exists('art/sudsy_beer.png'):
                     drink_images.append('art/sudsy_beer.png')
-            elif 'ascii_art' in drink and os.path.exists(drink['ascii_art']):
+            elif 'ascii_art' in drink and resource_exists(drink['ascii_art']):
                 drink_images.append(drink['ascii_art'])
         
         if drink_images:
@@ -115,9 +116,9 @@ class TavernGUI:
                 # Buy selected drink and show its image
                 selected_drink = drinks[choice - 1]
                 # Show beer image for beer drinks
-                if 'beer' in selected_drink['name'].lower() and os.path.exists('art/sudsy_beer.png'):
+                if 'beer' in selected_drink['name'].lower() and resource_exists('art/sudsy_beer.png'):
                     self.gui.show_image('art/sudsy_beer.png')
-                elif 'ascii_art' in selected_drink and os.path.exists(selected_drink['ascii_art']):
+                elif 'ascii_art' in selected_drink and resource_exists(selected_drink['ascii_art']):
                     self.gui.show_image(selected_drink['ascii_art'])
                 self._purchase_drink(selected_drink)
             elif choice == len(drinks) + 1:
@@ -160,9 +161,9 @@ class TavernGUI:
         hero['gold'] -= drink_cost
         
         # Show drink art if available
-        if 'beer' in drink['name'].lower() and os.path.exists('art/sudsy_beer.png'):
+        if 'beer' in drink['name'].lower() and resource_exists('art/sudsy_beer.png'):
             self.gui.show_image('art/sudsy_beer.png')
-        elif 'ascii_art' in drink and os.path.exists(drink['ascii_art']):
+        elif 'ascii_art' in drink and resource_exists(drink['ascii_art']):
             self.gui.show_image(drink['ascii_art'])
         
         self.gui.clear_text()

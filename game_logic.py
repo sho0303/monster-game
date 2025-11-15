@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 import config
 from logger_utils import get_logger
+from resource_utils import get_resource_path
 
 logger = get_logger(__name__)
 
@@ -27,8 +28,8 @@ def load_yaml_dir(dir_path: str) -> Dict[str, Any]:
     for fname in os.listdir(full_dir):
         if not (fname.endswith('.yaml') or fname.endswith('.yml')):
             continue
-        path = os.path.join(full_dir, fname)
-        with open(path, 'r', encoding='utf-8') as fh:
+        path = os.path.join(dir_path, fname)
+        with open(get_resource_path(path), 'r', encoding='utf-8') as fh:
             data = yaml.safe_load(fh) or {}
             # data is expected to be a mapping; update the result
             result.update(data)
@@ -36,10 +37,10 @@ def load_yaml_dir(dir_path: str) -> Dict[str, Any]:
 
 
 def load_store(file_path: str = 'store.yaml') -> Dict[str, Any]:
-    full = _join_repo_path(file_path)
-    if not os.path.isfile(full):
+    resolved_path = get_resource_path(file_path)
+    if not os.path.isfile(resolved_path):
         return {}
-    with open(full, 'r', encoding='utf-8') as fh:
+    with open(resolved_path, 'r', encoding='utf-8') as fh:
         return yaml.safe_load(fh) or {}
 
 

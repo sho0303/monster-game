@@ -8,6 +8,7 @@ from tkinter import scrolledtext
 import random
 import os
 from typing import TYPE_CHECKING
+from resource_utils import resource_exists
 
 import config
 
@@ -157,7 +158,7 @@ class TownGUI:
         goblin_image_path = 'art/goblin_monster.png'
         
         # Check if goblin image exists
-        if os.path.exists(goblin_image_path):
+        if resource_exists(goblin_image_path):
             # Display two goblins using the same method as monster encounters
             self.gui.image_manager.show_images([goblin_image_path, goblin_image_path])
         

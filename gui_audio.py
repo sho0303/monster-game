@@ -8,6 +8,7 @@ from pathlib import Path
 
 import config
 from logger_utils import get_logger
+from resource_utils import get_resource_path
 
 logger = get_logger(__name__)
 
@@ -50,8 +51,9 @@ class Audio:
             return False
             
         try:
-            music_path = f'./sounds/{music_file}'
-            if not Path(music_path).exists():
+            # Resolve resource path for bundled execution
+            music_path = get_resource_path(f'sounds/{music_file}')
+            if not os.path.exists(music_path):
                 logger.error(f"Music file not found: {music_path}")
                 return False
             
@@ -111,8 +113,9 @@ class Audio:
             return False
             
         try:
-            sound_path = f'./sounds/{sound_file}'
-            if not Path(sound_path).exists():
+            # Resolve resource path for bundled execution
+            sound_path = get_resource_path(f'sounds/{sound_file}')
+            if not os.path.exists(sound_path):
                 logger.error(f"Sound file not found: {sound_path}")
                 return False
             

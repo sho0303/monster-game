@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import config
 from logger_utils import get_logger
+from resource_utils import resource_exists
 
 logger = get_logger(__name__)
 
@@ -451,7 +452,7 @@ class MonsterEncounterGUI:
                 hero_image_path = f"art/{hero_class.capitalize()}.png"
             
             # Check if hero image exists
-            if os.path.exists(hero_image_path):
+            if resource_exists(hero_image_path):
                 image_paths.append(hero_image_path)
             else:
                 # Use crossed swords as fallback for hero
@@ -463,7 +464,7 @@ class MonsterEncounterGUI:
         # Get monster image path
         if 'art' in monster and monster['art']:
             try:
-                if os.path.exists(monster['art']):
+                if resource_exists(monster['art']):
                     image_paths.append(monster['art'])
                 else:
                     # Use crossed swords as fallback for monster

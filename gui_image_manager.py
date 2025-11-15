@@ -10,6 +10,7 @@ from PIL import Image, ImageTk
 
 import config
 from logger_utils import get_logger
+from resource_utils import get_resource_path
 
 logger = get_logger(__name__)
 
@@ -54,12 +55,15 @@ class ImageManager:
         self.clear_foreground_images()
         
         try:
+            # Resolve resource path for bundled execution
+            resolved_path = get_resource_path(image_path)
+            
             # Get current canvas dimensions
             canvas_width, canvas_height = self.get_canvas_dimensions()
             
             # Handle text files (ASCII art) - convert to image or display as text
             if image_path.endswith('.txt'):
-                with open(image_path, 'r', encoding='utf-8') as f:
+                with open(resolved_path, 'r', encoding='utf-8') as f:
                     ascii_art = f.read()
                 # Create text on canvas (centered)
                 self.image_canvas.create_text(canvas_width//2, canvas_height//2, text=ascii_art, 
@@ -69,7 +73,7 @@ class ImageManager:
             
             # Handle image files - center the image on the canvas at natural size
             # First, get the original image dimensions
-            with Image.open(image_path) as img:
+            with Image.open(resolved_path) as img:
                 img_width, img_height = img.size
             
             # Calculate center position based on actual canvas size
@@ -169,8 +173,11 @@ class ImageManager:
             Canvas item ID or None if failed
         """
         try:
+            # Resolve resource path for bundled execution
+            resolved_path = get_resource_path(image_path)
+            
             # Load image
-            img = Image.open(image_path)
+            img = Image.open(resolved_path)
             
             # Resize only if dimensions are specified
             if width is not None and height is not None:

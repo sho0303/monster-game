@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from logger_utils import get_logger
+from resource_utils import ensure_writable_dir
 
 logger = get_logger(__name__)
 
@@ -24,7 +25,9 @@ class SaveLoadManager:
             gui: Game context providing UI, state, and subsystem access
         """
         self.gui = gui
-        self.saves_dir = Path("saves")
+        # Ensure writable saves directory (handles PyInstaller bundle)
+        saves_path = ensure_writable_dir("saves")
+        self.saves_dir = Path(saves_path)
         self._ensure_saves_directory()
     
     def _ensure_saves_directory(self):
