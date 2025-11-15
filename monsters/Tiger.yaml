@@ -7,7 +7,7 @@ Sabertooth Tiger:
   gold: 20
   level: 2
   xp: 2
-  art: art/tiger_monster.png
-  art_attack: art/tiger_monster_attack.png
+  art: art/sabertooth_tiger_monster.png
+  art_attack: art/sabertooth_tiger_attack.png
   attack_sound: kraken-attack.mp3
   biome: grassland
