@@ -1,0 +1,13 @@
+Viper:
+  name: Venemous Viper
+  hp: 45
+  maxhp: 45
+  attack: 8
+  defense: 8
+  gold: 45
+  level: 4
+  xp: 4
+  art: art/viper_monster.png
+  art_attack: art/viper_monster_attack.png
+  attack_sound: snake-attack.mp3
+  biome: desert

@@ -42,15 +42,15 @@ def create_vampire_default():
     COLLAR_DARK = [10, 10, 15, 255]           # Dark collar
     
     center_x = 32
-    base_y = 60
+    base_y = 62
     
     # === CAPE (flowing behind) ===
     # Left cape wing
-    for cy in range(20):
-        cape_width = 8 + cy // 3
+    for cy in range(30):
+        cape_width = 12 + cy // 2
         for cx in range(cape_width):
-            cape_x = center_x - 8 - cx
-            cape_y = base_y - 45 + cy
+            cape_x = center_x - 12 - cx
+            cape_y = base_y - 58 + cy
             if 0 <= cape_x < width and 0 <= cape_y < height:
                 if cx < 2:
                     canvas[cape_y][cape_x] = CAPE_RED if cy % 2 == 0 else CAPE_RED_DARK
@@ -58,11 +58,11 @@ def create_vampire_default():
                     canvas[cape_y][cape_x] = CAPE_BLACK if cx % 2 == 0 else CAPE_DARK
     
     # Right cape wing
-    for cy in range(20):
-        cape_width = 8 + cy // 3
+    for cy in range(30):
+        cape_width = 12 + cy // 2
         for cx in range(cape_width):
-            cape_x = center_x + 8 + cx
-            cape_y = base_y - 45 + cy
+            cape_x = center_x + 12 + cx
+            cape_y = base_y - 58 + cy
             if 0 <= cape_x < width and 0 <= cape_y < height:
                 if cx < 2:
                     canvas[cape_y][cape_x] = CAPE_RED if cy % 2 == 0 else CAPE_RED_DARK
@@ -70,81 +70,81 @@ def create_vampire_default():
                     canvas[cape_y][cape_x] = CAPE_BLACK if cx % 2 == 0 else CAPE_DARK
     
     # Cape collar/shoulders
-    for cy in range(8):
-        for cx in range(-10, 11):
-            collar_y = base_y - 38 + cy
+    for cy in range(12):
+        for cx in range(-15, 16):
+            collar_y = base_y - 50 + cy
             collar_x = center_x + cx
             if 0 <= collar_x < width and 0 <= collar_y < height:
-                if abs(cx) > 5:
-                    canvas[collar_y][collar_x] = COLLAR_DARK if cy < 3 else CAPE_BLACK
+                if abs(cx) > 7:
+                    canvas[collar_y][collar_x] = COLLAR_DARK if cy < 4 else CAPE_BLACK
     
     # === BOOTS ===
     # Left boot
-    for dy in range(6):
-        for dx in range(-3, 4):
-            boot_x = center_x - 4 + dx
+    for dy in range(8):
+        for dx in range(-4, 5):
+            boot_x = center_x - 6 + dx
             boot_y = base_y + dy
             if 0 <= boot_x < width and 0 <= boot_y < height:
                 canvas[boot_y][boot_x] = BOOT_BLACK if dx < 0 else CAPE_DARK
     
     # Right boot
-    for dy in range(6):
-        for dx in range(-3, 4):
-            boot_x = center_x + 4 + dx
+    for dy in range(8):
+        for dx in range(-4, 5):
+            boot_x = center_x + 6 + dx
             boot_y = base_y + dy
             if 0 <= boot_x < width and 0 <= boot_y < height:
                 canvas[boot_y][boot_x] = BOOT_BLACK if dx < 0 else CAPE_DARK
     
     # === LEGS ===
-    for dy in range(18):
-        leg_width = 3
+    for dy in range(26):
+        leg_width = 4
         # Left leg
         for dx in range(-leg_width, leg_width + 1):
-            leg_x = center_x - 4 + dx
+            leg_x = center_x - 6 + dx
             leg_y = base_y - 6 + dy
             if 0 <= leg_x < width and 0 <= leg_y < height:
                 canvas[leg_y][leg_x] = PANTS_BLACK
         
         # Right leg
         for dx in range(-leg_width, leg_width + 1):
-            leg_x = center_x + 4 + dx
-            leg_y = base_y - 6 + dy
+            leg_x = center_x + 6 + dx
+            leg_y = base_y - 8 + dy
             if 0 <= leg_x < width and 0 <= leg_y < height:
                 canvas[leg_y][leg_x] = PANTS_BLACK
     
     # === TORSO ===
-    torso_y = base_y - 28
+    torso_y = base_y - 38
     
     # Vest
-    for dy in range(12):
-        torso_width = 7 - dy // 5
+    for dy in range(18):
+        torso_width = 10 - dy // 7
         for dx in range(-torso_width, torso_width + 1):
             tx = center_x + dx
             ty = torso_y + dy
             if 0 <= tx < width and 0 <= ty < height:
-                if abs(dx) < 3:
+                if abs(dx) < 5:
                     # Shirt front
-                    canvas[ty][tx] = SHIRT_WHITE if abs(dx) < 2 else SHIRT_SHADOW
+                    canvas[ty][tx] = SHIRT_WHITE if abs(dx) < 3 else SHIRT_SHADOW
                 else:
                     # Vest
                     canvas[ty][tx] = VEST_PURPLE if dx < 0 else VEST_DARK
     
     # Cape front drape
-    for dy in range(15):
-        for dx in [-8, -7, 7, 8]:
+    for dy in range(22):
+        for dx in [-12, -11, -10, 10, 11, 12]:
             drape_x = center_x + dx
             drape_y = torso_y + dy
             if 0 <= drape_x < width and 0 <= drape_y < height:
-                canvas[drape_y][drape_x] = CAPE_BLACK if abs(dx) == 8 else CAPE_DARK
+                canvas[drape_y][drape_x] = CAPE_BLACK if abs(dx) == 12 else CAPE_DARK
     
     # === ARMS ===
     # Left arm (slightly forward)
-    for dy in range(14):
-        for dx in range(-2, 3):
-            arm_x = center_x - 8 + dx
-            arm_y = torso_y + 2 + dy
+    for dy in range(20):
+        for dx in range(-3, 4):
+            arm_x = center_x - 12 + dx
+            arm_y = torso_y + 3 + dy
             if 0 <= arm_x < width and 0 <= arm_y < height:
-                if dy > 8:
+                if dy > 12:
                     # Hand/sleeve
                     canvas[arm_y][arm_x] = CAPE_BLACK
                 else:
@@ -152,126 +152,127 @@ def create_vampire_default():
                     canvas[arm_y][arm_x] = CAPE_BLACK if dx < 0 else CAPE_DARK
     
     # Left hand (pale skin)
-    for dy in range(4):
-        for dx in range(-2, 3):
-            hand_x = center_x - 8 + dx
-            hand_y = torso_y + 16 + dy
+    for dy in range(6):
+        for dx in range(-3, 4):
+            hand_x = center_x - 12 + dx
+            hand_y = torso_y + 23 + dy
             if 0 <= hand_x < width and 0 <= hand_y < height:
-                if abs(dx) + abs(dy) < 4:
+                if abs(dx) + abs(dy) < 6:
                     canvas[hand_y][hand_x] = SKIN_PALE if dx > 0 else SKIN_SHADOW
     
     # Clawed fingers (left hand)
-    for fx in [center_x - 9, center_x - 7]:
-        for dy in range(2):
-            finger_y = torso_y + 20 + dy
+    for fx in [center_x - 14, center_x - 12, center_x - 10]:
+        for dy in range(3):
+            finger_y = torso_y + 29 + dy
             if 0 <= fx < width and 0 <= finger_y < height:
                 canvas[finger_y][fx] = SKIN_DARK
     
     # Right arm
-    for dy in range(14):
-        for dx in range(-2, 3):
-            arm_x = center_x + 8 + dx
-            arm_y = torso_y + 2 + dy
+    for dy in range(20):
+        for dx in range(-3, 4):
+            arm_x = center_x + 12 + dx
+            arm_y = torso_y + 3 + dy
             if 0 <= arm_x < width and 0 <= arm_y < height:
-                if dy > 8:
+                if dy > 12:
                     canvas[arm_y][arm_x] = CAPE_BLACK
                 else:
                     canvas[arm_y][arm_x] = CAPE_BLACK if dx < 0 else CAPE_DARK
     
     # Right hand
-    for dy in range(4):
-        for dx in range(-2, 3):
-            hand_x = center_x + 8 + dx
-            hand_y = torso_y + 16 + dy
+    for dy in range(6):
+        for dx in range(-3, 4):
+            hand_x = center_x + 12 + dx
+            hand_y = torso_y + 23 + dy
             if 0 <= hand_x < width and 0 <= hand_y < height:
-                if abs(dx) + abs(dy) < 4:
+                if abs(dx) + abs(dy) < 6:
                     canvas[hand_y][hand_x] = SKIN_PALE if dx > 0 else SKIN_SHADOW
     
     # Clawed fingers (right hand)
-    for fx in [center_x + 7, center_x + 9]:
-        for dy in range(2):
-            finger_y = torso_y + 20 + dy
+    for fx in [center_x + 10, center_x + 12, center_x + 14]:
+        for dy in range(3):
+            finger_y = torso_y + 29 + dy
             if 0 <= fx < width and 0 <= finger_y < height:
                 canvas[finger_y][fx] = SKIN_DARK
     
     # === NECK ===
-    neck_y = torso_y - 2
-    for dy in range(4):
-        for dx in range(-2, 3):
+    neck_y = torso_y - 3
+    for dy in range(6):
+        for dx in range(-3, 4):
             nx = center_x + dx
             ny = neck_y + dy
             if 0 <= nx < width and 0 <= ny < height:
-                canvas[ny][nx] = SKIN_PALE if abs(dx) < 2 else SKIN_SHADOW
+                canvas[ny][nx] = SKIN_PALE if abs(dx) < 3 else SKIN_SHADOW
     
     # === HEAD ===
-    head_y = neck_y - 8
+    head_y = neck_y - 12
     
     # Face
-    for dy in range(-6, 8):
-        for dx in range(-5, 6):
-            if abs(dx) * 1.2 + abs(dy) * 0.9 < 7:
+    for dy in range(-8, 10):
+        for dx in range(-7, 8):
+            if abs(dx) * 1.2 + abs(dy) * 0.9 < 10:
                 hx = center_x + dx
                 hy = head_y + dy
                 if 0 <= hx < width and 0 <= hy < height:
                     if dy < 0:
                         # Upper face
-                        canvas[hy][hx] = SKIN_PALE if abs(dx) < 3 else SKIN_SHADOW
+                        canvas[hy][hx] = SKIN_PALE if abs(dx) < 4 else SKIN_SHADOW
                     else:
                         # Lower face
-                        canvas[hy][hx] = SKIN_PALE if abs(dx) < 4 else SKIN_SHADOW
+                        canvas[hy][hx] = SKIN_PALE if abs(dx) < 5 else SKIN_SHADOW
     
     # Hair (slicked back, dark)
-    for dy in range(8):
-        for dx in range(-5, 6):
-            if abs(dx) * 1.3 + dy * 0.8 < 8:
+    for dy in range(12):
+        for dx in range(-7, 8):
+            if abs(dx) * 1.3 + dy * 0.8 < 11:
                 hair_x = center_x + dx
-                hair_y = head_y - 6 + dy
+                hair_y = head_y - 8 + dy
                 if 0 <= hair_x < width and 0 <= hair_y < height:
                     canvas[hair_y][hair_x] = HAIR_BLACK if dx < 0 else HAIR_DARK
     
     # Eyes (red glowing)
     # Left eye
-    for dy in range(-1, 2):
-        for dx in range(-1, 2):
-            eye_x = center_x - 2 + dx
+    for dy in range(-2, 3):
+        for dx in range(-2, 3):
+            eye_x = center_x - 3 + dx
             eye_y = head_y - 1 + dy
             if 0 <= eye_x < width and 0 <= eye_y < height:
-                if abs(dx) + abs(dy) < 2:
-                    canvas[eye_y][eye_x] = EYE_RED if dx == 0 and dy == 0 else EYE_DARK
+                if abs(dx) + abs(dy) < 3:
+                    canvas[eye_y][eye_x] = EYE_RED if abs(dx) + abs(dy) < 2 else EYE_DARK
     
     # Right eye
-    for dy in range(-1, 2):
-        for dx in range(-1, 2):
-            eye_x = center_x + 2 + dx
+    for dy in range(-2, 3):
+        for dx in range(-2, 3):
+            eye_x = center_x + 3 + dx
             eye_y = head_y - 1 + dy
             if 0 <= eye_x < width and 0 <= eye_y < height:
-                if abs(dx) + abs(dy) < 2:
-                    canvas[eye_y][eye_x] = EYE_RED if dx == 0 and dy == 0 else EYE_DARK
+                if abs(dx) + abs(dy) < 3:
+                    canvas[eye_y][eye_x] = EYE_RED if abs(dx) + abs(dy) < 2 else EYE_DARK
     
     # Nose
-    for dy in range(2):
+    for dy in range(3):
         nose_x = center_x
-        nose_y = head_y + 1 + dy
+        nose_y = head_y + 2 + dy
         if 0 <= nose_x < width and 0 <= nose_y < height:
             canvas[nose_y][nose_x] = SKIN_DARK
     
     # Mouth (slight smirk with fangs)
-    for mx in range(center_x - 2, center_x + 3):
-        mouth_y = head_y + 4
+    for mx in range(center_x - 3, center_x + 4):
+        mouth_y = head_y + 6
         if 0 <= mx < width and 0 <= mouth_y < height:
             canvas[mouth_y][mx] = SKIN_DARK
     
     # Fangs
-    fang_y = head_y + 5
-    for fx in [center_x - 1, center_x + 1]:
-        if 0 <= fx < width and 0 <= fang_y < height:
-            canvas[fang_y][fx] = FANG_WHITE
+    for fang_dy in range(2):
+        fang_y = head_y + 7 + fang_dy
+        for fx in [center_x - 2, center_x + 2]:
+            if 0 <= fx < width and 0 <= fang_y < height:
+                canvas[fang_y][fx] = FANG_WHITE if fang_dy == 0 else SKIN_SHADOW
     
     # High collar
-    for dy in range(4):
-        for dx in [-6, -5, 5, 6]:
+    for dy in range(6):
+        for dx in [-9, -8, -7, 7, 8, 9]:
             collar_x = center_x + dx
-            collar_y = neck_y + 1 + dy
+            collar_y = neck_y + 2 + dy
             if 0 <= collar_x < width and 0 <= collar_y < height:
                 canvas[collar_y][collar_x] = COLLAR_DARK if abs(dx) == 6 else CAPE_BLACK
     
@@ -316,15 +317,15 @@ def create_vampire_attack():
     ENERGY_DARK = [150, 30, 30, 180]          # Dark energy
     
     center_x = 32
-    base_y = 60
+    base_y = 62
     
     # === CAPE (billowing dramatically) ===
     # Left cape wing (swept back)
-    for cy in range(22):
-        cape_width = 10 + cy // 2
+    for cy in range(32):
+        cape_width = 14 + cy // 2
         for cx in range(cape_width):
-            cape_x = center_x - 6 - cx
-            cape_y = base_y - 48 + cy
+            cape_x = center_x - 8 - cx
+            cape_y = base_y - 60 + cy
             if 0 <= cape_x < width and 0 <= cape_y < height:
                 if cx < 3:
                     canvas[cape_y][cape_x] = CAPE_RED if cy % 2 == 0 else CAPE_RED_DARK
@@ -332,11 +333,11 @@ def create_vampire_attack():
                     canvas[cape_y][cape_x] = CAPE_BLACK if cx % 2 == 0 else CAPE_DARK
     
     # Right cape wing (swept back)
-    for cy in range(22):
-        cape_width = 10 + cy // 2
+    for cy in range(32):
+        cape_width = 14 + cy // 2
         for cx in range(cape_width):
-            cape_x = center_x + 6 + cx
-            cape_y = base_y - 48 + cy
+            cape_x = center_x + 8 + cx
+            cape_y = base_y - 60 + cy
             if 0 <= cape_x < width and 0 <= cape_y < height:
                 if cx < 3:
                     canvas[cape_y][cape_x] = CAPE_RED if cy % 2 == 0 else CAPE_RED_DARK
@@ -345,151 +346,151 @@ def create_vampire_attack():
     
     # === LEGS (in lunge position) ===
     # Left leg forward
-    for dy in range(20):
-        leg_width = 3
+    for dy in range(28):
+        leg_width = 4
         for dx in range(-leg_width, leg_width + 1):
-            leg_x = center_x - 6 + dx
-            leg_y = base_y - 8 + dy
+            leg_x = center_x - 8 + dx
+            leg_y = base_y - 10 + dy
             if 0 <= leg_x < width and 0 <= leg_y < height:
                 canvas[leg_y][leg_x] = PANTS_BLACK
     
     # Right leg back
-    for dy in range(18):
-        leg_width = 3
+    for dy in range(26):
+        leg_width = 4
         for dx in range(-leg_width, leg_width + 1):
-            leg_x = center_x + 8 + dx
-            leg_y = base_y - 6 + dy
+            leg_x = center_x + 10 + dx
+            leg_y = base_y - 8 + dy
             if 0 <= leg_x < width and 0 <= leg_y < height:
                 canvas[leg_y][leg_x] = PANTS_BLACK
     
     # Boots
-    for boot_offset in [-6, 8]:
-        for dy in range(6):
-            for dx in range(-3, 4):
+    for boot_offset in [-8, 10]:
+        for dy in range(8):
+            for dx in range(-4, 5):
                 boot_x = center_x + boot_offset + dx
                 boot_y = base_y + dy
                 if 0 <= boot_x < width and 0 <= boot_y < height:
                     canvas[boot_y][boot_x] = BOOT_BLACK if dx < 0 else CAPE_DARK
     
     # === TORSO (leaning forward) ===
-    torso_y = base_y - 28
+    torso_y = base_y - 40
     
-    for dy in range(12):
-        torso_width = 7 - dy // 5
+    for dy in range(18):
+        torso_width = 10 - dy // 7
         for dx in range(-torso_width, torso_width + 1):
             tx = center_x + dx
             ty = torso_y + dy
             if 0 <= tx < width and 0 <= ty < height:
-                if abs(dx) < 3:
-                    canvas[ty][tx] = SHIRT_WHITE if abs(dx) < 2 else SHIRT_SHADOW
+                if abs(dx) < 5:
+                    canvas[ty][tx] = SHIRT_WHITE if abs(dx) < 3 else SHIRT_SHADOW
                 else:
                     canvas[ty][tx] = VEST_PURPLE if dx < 0 else VEST_DARK
     
     # === ARMS (reaching forward aggressively) ===
     # Left arm (extended forward with claws)
-    for i in range(16):
-        for dx in range(-2, 3):
-            arm_x = center_x - 10 - i // 2
+    for i in range(22):
+        for dx in range(-3, 4):
+            arm_x = center_x - 14 - i // 2
             arm_y = torso_y + i
             if 0 <= arm_x < width and 0 <= arm_y < height:
-                if i > 10:
+                if i > 14:
                     canvas[arm_y][arm_x] = SKIN_PALE if dx > 0 else SKIN_SHADOW
                 else:
                     canvas[arm_y][arm_x] = CAPE_BLACK if dx < 0 else CAPE_DARK
     
     # Left hand/claws
-    left_hand_x = center_x - 18
-    left_hand_y = torso_y + 16
-    for dy in range(4):
-        for dx in range(-2, 3):
+    left_hand_x = center_x - 25
+    left_hand_y = torso_y + 22
+    for dy in range(6):
+        for dx in range(-3, 4):
             hx = left_hand_x + dx
             hy = left_hand_y + dy
             if 0 <= hx < width and 0 <= hy < height:
-                if abs(dx) + abs(dy) < 4:
+                if abs(dx) + abs(dy) < 6:
                     canvas[hy][hx] = SKIN_PALE if dx > 0 else SKIN_SHADOW
     
     # Claws extended
-    for claw_offset in [-2, 0, 2]:
-        for dy in range(3):
+    for claw_offset in [-3, -1, 1, 3]:
+        for dy in range(4):
             claw_x = left_hand_x + claw_offset
-            claw_y = left_hand_y + 4 + dy
+            claw_y = left_hand_y + 6 + dy
             if 0 <= claw_x < width and 0 <= claw_y < height:
                 canvas[claw_y][claw_x] = SKIN_DARK
     
     # Right arm
-    for i in range(16):
-        for dx in range(-2, 3):
-            arm_x = center_x - 8 - i // 2
-            arm_y = torso_y + 2 + i
+    for i in range(22):
+        for dx in range(-3, 4):
+            arm_x = center_x - 11 - i // 2
+            arm_y = torso_y + 3 + i
             if 0 <= arm_x < width and 0 <= arm_y < height:
-                if i > 10:
+                if i > 14:
                     canvas[arm_y][arm_x] = SKIN_PALE if dx > 0 else SKIN_SHADOW
                 else:
                     canvas[arm_y][arm_x] = CAPE_BLACK if dx < 0 else CAPE_DARK
     
     # Right hand/claws
-    right_hand_x = center_x - 16
-    right_hand_y = torso_y + 18
-    for dy in range(4):
-        for dx in range(-2, 3):
+    right_hand_x = center_x - 22
+    right_hand_y = torso_y + 25
+    for dy in range(6):
+        for dx in range(-3, 4):
             hx = right_hand_x + dx
             hy = right_hand_y + dy
             if 0 <= hx < width and 0 <= hy < height:
-                if abs(dx) + abs(dy) < 4:
+                if abs(dx) + abs(dy) < 6:
                     canvas[hy][hx] = SKIN_PALE if dx > 0 else SKIN_SHADOW
     
     # Claws extended
-    for claw_offset in [-2, 0, 2]:
-        for dy in range(3):
+    for claw_offset in [-3, -1, 1, 3]:
+        for dy in range(4):
             claw_x = right_hand_x + claw_offset
-            claw_y = right_hand_y + 4 + dy
+            claw_y = right_hand_y + 6 + dy
             if 0 <= claw_x < width and 0 <= claw_y < height:
                 canvas[claw_y][claw_x] = SKIN_DARK
     
     # === NECK ===
-    neck_y = torso_y - 2
-    for dy in range(4):
-        for dx in range(-2, 3):
+    neck_y = torso_y - 3
+    for dy in range(6):
+        for dx in range(-3, 4):
             nx = center_x + dx
             ny = neck_y + dy
             if 0 <= nx < width and 0 <= ny < height:
-                canvas[ny][nx] = SKIN_PALE if abs(dx) < 2 else SKIN_SHADOW
+                canvas[ny][nx] = SKIN_PALE if abs(dx) < 3 else SKIN_SHADOW
     
     # === HEAD (fierce expression) ===
-    head_y = neck_y - 8
+    head_y = neck_y - 12
     
     # Face
-    for dy in range(-6, 8):
-        for dx in range(-5, 6):
-            if abs(dx) * 1.2 + abs(dy) * 0.9 < 7:
+    for dy in range(-8, 10):
+        for dx in range(-7, 8):
+            if abs(dx) * 1.2 + abs(dy) * 0.9 < 10:
                 hx = center_x + dx
                 hy = head_y + dy
                 if 0 <= hx < width and 0 <= hy < height:
-                    canvas[hy][hx] = SKIN_PALE if abs(dx) < 3 else SKIN_SHADOW
+                    canvas[hy][hx] = SKIN_PALE if abs(dx) < 5 else SKIN_SHADOW
     
     # Hair
-    for dy in range(8):
-        for dx in range(-5, 6):
-            if abs(dx) * 1.3 + dy * 0.8 < 8:
+    for dy in range(12):
+        for dx in range(-7, 8):
+            if abs(dx) * 1.3 + dy * 0.8 < 11:
                 hair_x = center_x + dx
-                hair_y = head_y - 6 + dy
+                hair_y = head_y - 8 + dy
                 if 0 <= hair_x < width and 0 <= hair_y < height:
                     canvas[hair_y][hair_x] = HAIR_BLACK if dx < 0 else HAIR_DARK
     
     # Eyes (intense red glow)
-    for eye_offset in [-2, 2]:
-        for dy in range(-1, 2):
-            for dx in range(-1, 2):
+    for eye_offset in [-3, 3]:
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
                 eye_x = center_x + eye_offset + dx
                 eye_y = head_y - 1 + dy
                 if 0 <= eye_x < width and 0 <= eye_y < height:
-                    if abs(dx) + abs(dy) < 2:
-                        canvas[eye_y][eye_x] = EYE_RED if dx == 0 and dy == 0 else EYE_DARK
+                    if abs(dx) + abs(dy) < 3:
+                        canvas[eye_y][eye_x] = EYE_RED if abs(dx) + abs(dy) < 2 else EYE_DARK
     
     # Mouth (open with fangs)
-    for my in range(3):
-        for mx in range(center_x - 3, center_x + 4):
-            mouth_y = head_y + 3 + my
+    for my in range(4):
+        for mx in range(center_x - 4, center_x + 5):
+            mouth_y = head_y + 4 + my
             if 0 <= mx < width and 0 <= mouth_y < height:
                 if my == 0:
                     canvas[mouth_y][mx] = SKIN_DARK
@@ -497,9 +498,9 @@ def create_vampire_attack():
                     canvas[mouth_y][mx] = HAIR_BLACK
     
     # Large fangs
-    for fx in [center_x - 2, center_x + 2]:
-        for dy in range(3):
-            fang_y = head_y + 5 + dy
+    for fx in [center_x - 3, center_x + 3]:
+        for dy in range(4):
+            fang_y = head_y + 7 + dy
             if 0 <= fx < width and 0 <= fang_y < height:
                 canvas[fang_y][fx] = FANG_WHITE if dy < 2 else SKIN_SHADOW
     
@@ -535,14 +536,14 @@ def main():
     # Default pose
     img_default = Image.fromarray(vampire_default, 'RGBA')
     img_default_scaled = img_default.resize((64 * scale, 64 * scale), Image.Resampling.NEAREST)
-    img_default_scaled.save('../art/vampire_monster.png')
-    print(f"✓ Saved: ../art/vampire_monster.png ({64 * scale}x{64 * scale})")
+    img_default_scaled.save('art/vampire_monster.png')
+    print(f"✓ Saved: art/vampire_monster.png ({64 * scale}x{64 * scale})")
     
     # Attack animation
     img_attack = Image.fromarray(vampire_attack, 'RGBA')
     img_attack_scaled = img_attack.resize((64 * scale, 64 * scale), Image.Resampling.NEAREST)
-    img_attack_scaled.save('../art/vampire_monster_attack.png')
-    print(f"✓ Saved: ../art/vampire_monster_attack.png ({64 * scale}x{64 * scale})")
+    img_attack_scaled.save('art/vampire_monster_attack.png')
+    print(f"✓ Saved: art/vampire_monster_attack.png ({64 * scale}x{64 * scale})")
     
     print("\n✅ Vampire monster creation complete!")
     print("\nFeatures:")
