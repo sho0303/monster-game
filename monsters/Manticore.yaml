@@ -9,4 +9,5 @@ Manticore:
   xp: 4
   art: art/manticore_monster.png
   art_attack: art/manticore_monster_attack.png
+  attack_sound: manticore_monster.mp3
   biome: desert
