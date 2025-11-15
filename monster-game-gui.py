@@ -192,10 +192,10 @@ def initialize_game():
 
 def main():
     """Main entry point with comprehensive startup checks"""
-    print("PyQuest Monster Game - Starting up...")
+    print("Monster Game - Starting up...")
     
     try:
-        logger.info("=== PyQuest Monster Game Startup ===")
+        logger.info("=== Monster Game Startup ===")
         logger.info(f"Python version: {sys.version}")
         logger.info(f"Working directory: {Path.cwd()}")
         
@@ -237,7 +237,7 @@ def main():
         return False
     
     finally:
-        logger.info("=== PyQuest Monster Game Shutdown ===")
+        logger.info("=== Monster Game Shutdown ===")
 
 if __name__ == '__main__':
     try:

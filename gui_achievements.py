@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Achievement System for PyQuest Monster Game
+Achievement System for Monster Game
 Tracks player accomplishments, collections, and milestones
 """
 

@@ -33,7 +33,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='PyQuest-Monster-Game',
+    name='Monster-Game',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
