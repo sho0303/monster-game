@@ -8,7 +8,7 @@ Shadow Billy Bob:
     defense: 10
     level: 1
     class: 'Ninja'
-    art: art/Ninja.png
-    art_attack: art/ninja_attack.png
-    art_death: art/ninja_death.png
+    art: art/ninja_hero.png
+    art_attack: art/ninja_hero_attack.png
+    art_death: art/ninja_hero_death.png
     attack_sound: ninja-attack.mp3

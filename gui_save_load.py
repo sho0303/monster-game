@@ -181,9 +181,10 @@ class SaveLoadManager:
         # Create a clean copy of hero data
         hero_data = {}
         
-        # Copy all basic fields
+        # Copy all basic fields including art paths
         basic_fields = ['name', 'class', 'level', 'xp', 'hp', 'maxhp', 'attack', 'defense', 
-                       'gold', 'lives_left', 'age', 'weapon', 'armour']
+                       'gold', 'lives_left', 'age', 'weapon', 'armour',
+                       'art', 'art_attack', 'art_death', 'attack_sound']
         
         for field in basic_fields:
             if field in hero:
@@ -267,21 +268,41 @@ class SaveLoadManager:
         validated_data = defaults.copy()
         validated_data.update(hero_data)
         
-        # Restore attack_sound from hero template if missing
-        # This ensures loaded saves get the correct class-specific attack sound
-        if 'attack_sound' not in validated_data or not validated_data['attack_sound']:
+        # Restore art fields and attack_sound from hero template if missing
+        # This ensures loaded saves get the correct class-specific assets
+        art_fields_to_restore = ['art', 'art_attack', 'art_death', 'attack_sound']
+        missing_art_fields = [field for field in art_fields_to_restore 
+                             if field not in validated_data or not validated_data[field]]
+        
+        if missing_art_fields:
             hero_name = validated_data.get('name', '')
-            # Look up the hero template from game_state to get attack_sound
+            # Look up the hero template from game_state to get art fields
             if hasattr(self.gui, 'game_state') and hasattr(self.gui.game_state, 'heros'):
                 for template_name, template_data in self.gui.game_state.heros.items():
                     if template_name == hero_name:
-                        validated_data['attack_sound'] = template_data.get('attack_sound', 'punch.mp3')
+                        # Restore all missing art fields from template
+                        for field in missing_art_fields:
+                            if field == 'attack_sound':
+                                validated_data[field] = template_data.get(field, 'punch.mp3')
+                            else:
+                                # For art fields, use template or fallback to class-based defaults
+                                validated_data[field] = template_data.get(field, '')
                         break
                 else:
-                    # Fallback: use default based on class
-                    validated_data['attack_sound'] = 'punch.mp3'
+                    # Fallback: set defaults if hero template not found
+                    if 'attack_sound' in missing_art_fields:
+                        validated_data['attack_sound'] = 'punch.mp3'
+                    # Leave other art fields empty if template not found
+                    for field in ['art', 'art_attack', 'art_death']:
+                        if field in missing_art_fields:
+                            validated_data[field] = ''
             else:
-                validated_data['attack_sound'] = 'punch.mp3'
+                # No game_state available, use defaults
+                if 'attack_sound' in missing_art_fields:
+                    validated_data['attack_sound'] = 'punch.mp3'
+                for field in ['art', 'art_attack', 'art_death']:
+                    if field in missing_art_fields:
+                        validated_data[field] = ''
         
         # Ensure numeric fields are actually numeric
         numeric_fields = ['level', 'xp', 'hp', 'maxhp', 'attack', 'defense', 'gold', 'lives_left', 'age']

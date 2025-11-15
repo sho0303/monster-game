@@ -440,13 +440,15 @@ class CombatGUI:
         attack_sound = self._get_monster_attack_sound(monster)
         self.audio.play_sound_effect(attack_sound, max_duration_ms=3000)
         
-        # Get monster attack image if available
-        if 'attack_art' in monster and monster['attack_art']:
+        # Get monster attack image if available - check both field names for compatibility
+        attack_art_path = monster.get('art_attack') or monster.get('attack_art')
+        
+        if attack_art_path:
             try:
                 import os
-                if os.path.exists(monster['attack_art']):
+                if os.path.exists(attack_art_path):
                     # Start the toggle animation sequence
-                    self._toggle_monster_attack_animation(0, monster['attack_art'], self.current_monster_image)
+                    self._toggle_monster_attack_animation(0, attack_art_path, self.current_monster_image)
                 else:
                     # No attack art - jump back without animation
                     self._animate_monster_jump_back()
