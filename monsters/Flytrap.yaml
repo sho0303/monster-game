@@ -1,12 +1,12 @@
-Mutant Venus Flytrap:
-  name: Mutant Venus Flytrap
-  hp: 23
-  maxhp: 23
-  attack: 8
-  defense: 2
-  gold: 20
-  level: 2
-  xp: 2
+Flytrap:
+  name: Flytrap
+  hp: 35
+  maxhp: 35
+  attack: 6
+  defense: 8
+  gold: 35
+  level: 3
+  xp: 3
   art: art/flytrap_monster.png
   art_attack: art/flytrap_monster_attack.png
   attack_sound: flytrap-attack.mp3
