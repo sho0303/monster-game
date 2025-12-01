@@ -140,7 +140,9 @@ class Audio:
                 def stop_after_delay():
                     import time
                     time.sleep(max_duration_ms / 1000.0)
-                    if channel.get_busy():
+                    # Only stop if the channel is still playing THIS sound
+                    # (prevents cutting off a new sound if channel was reused)
+                    if channel.get_busy() and channel.get_sound() == sound:
                         channel.fadeout(100)  # 100ms fadeout
                 threading.Thread(target=stop_after_delay, daemon=True).start()
             

@@ -128,29 +128,40 @@ class TownGUI:
         self.gui.print_text("creating gentle ripples across the surface.")
         self.gui.print_text("Local legend says this fountain has healing properties.")
         
-        # Small HP restoration
+        # Small HP restoration logic with level cap
         hero = self.gui.game_state.hero
-        if hero['hp'] < hero['maxhp']:
-            heal_amount = min(config.FOUNTAIN_HEAL_AMOUNT, hero['maxhp'] - hero['hp'])
-            hero['hp'] += heal_amount
-            
-            heal_parts = [
-                ("\n✨ The magical waters restore ", "#00ff00"),
-                (str(heal_amount), "#ffdd00"),
-                (" HP! ✨", "#00ff00")
-            ]
-            self.gui._print_colored_parts(heal_parts)
-            
-            hp_parts = [
-                ("Your HP: ", "#00ff00"),
-                (str(hero['hp']), "#00ff00"),
-                ("/", "#ffffff"),
-                (str(hero['maxhp']), "#00ff00")
-            ]
-            self.gui._print_colored_parts(hp_parts)
+        current_level = hero.get('level', 1)
+        last_fountain_level = hero.get('last_fountain_level', 0)
+        
+        if current_level > last_fountain_level:
+            if hero['hp'] < hero['maxhp']:
+                heal_amount = min(config.FOUNTAIN_HEAL_AMOUNT, hero['maxhp'] - hero['hp'])
+                hero['hp'] += heal_amount
+                
+                # Record usage for this level
+                hero['last_fountain_level'] = current_level
+                
+                heal_parts = [
+                    ("\n✨ The magical waters restore ", "#00ff00"),
+                    (str(heal_amount), "#ffdd00"),
+                    (" HP! ✨", "#00ff00")
+                ]
+                self.gui._print_colored_parts(heal_parts)
+                
+                hp_parts = [
+                    ("Your HP: ", "#00ff00"),
+                    (str(hero['hp']), "#00ff00"),
+                    ("/", "#ffffff"),
+                    (str(hero['maxhp']), "#00ff00")
+                ]
+                self.gui._print_colored_parts(hp_parts)
+            else:
+                self.gui.print_text("\n💚 You are already at full health.")
+                self.gui.print_text("You decide to save the fountain's magic for later.")
         else:
-            self.gui.print_text("\n💚 You are already at full health.")
-            self.gui.print_text("The fountain's magic has no effect.")
+            self.gui.print_text("\n❌ The fountain's magic is dormant.")
+            self.gui.print_text(f"You have already used the fountain at level {current_level}.")
+            self.gui.print_text("Gain a level to restore its power!")
         
         self.gui.print_text("\nYou feel refreshed by the peaceful atmosphere.")
         
