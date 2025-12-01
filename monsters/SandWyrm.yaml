@@ -1,0 +1,13 @@
+SandWyrm:
+  name: Terry Tremor
+  hp: 199
+  maxhp: 199
+  attack: 19
+  defense: 40
+  gold: 90
+  level: 9
+  xp: 9
+  art: art/sandwyrm_monster.png
+  attack_sound: sandwyrm-attack.mp3
+  biome: ocean
+  attack_art: art/sandwyrm_monster_attack.png
