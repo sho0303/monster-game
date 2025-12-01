@@ -7,7 +7,7 @@ SandWyrm:
   gold: 90
   level: 9
   xp: 9
-  art: art/sandwyrm_monster.png
+  art: art/sand_wyrm_monster.png
   attack_sound: sandwyrm-attack.mp3
-  biome: ocean
-  attack_art: art/sandwyrm_monster_attack.png
+  biome: desert
+  attack_art: art/sand_wyrm_monster_attack.png
