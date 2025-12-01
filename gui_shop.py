@@ -65,26 +65,26 @@ class ShopGUI:
                 self.gui.print_text(f"{i}. {category}")
             
             self.gui.print_text("\n" + "=" * 60)
-            self.gui.print_text("Tip: Use the '🏠 Main Menu' button to exit shop")
+            self.gui.print_text("Tip: Use the '🚪 Leave Shop' button to exit shop")
             
             def on_category_select(choice):
                 if choice <= len(categories):
                     self.current_category = categories[choice - 1]
                     self._show_items()
                 elif choice == len(categories) + 1:
-                    # Main menu button is always the last button
-                    self.gui.main_menu()
+                    # Leave shop button is always the last button
+                    self.gui.town.enter_town()
             
-            # Set buttons for categories - add all categories plus main menu button
+            # Set buttons for categories - add all categories plus leave shop button
             button_labels = []
             for category in categories:
                 button_labels.append(category)
-            button_labels.append("🏠 Main Menu")
+            button_labels.append("🚪 Leave Shop")
             
             self.gui.set_buttons(button_labels, on_category_select)
         else:
             self.gui.print_text("❌ Store is empty!")
-            self.gui.root.after(2000, self.gui.main_menu)
+            self.gui.root.after(2000, self.gui.town.enter_town)
     
     def _show_items(self):
         """Display items in selected category"""

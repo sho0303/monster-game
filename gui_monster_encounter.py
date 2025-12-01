@@ -187,6 +187,11 @@ class MonsterEncounterGUI:
         def after_fight(result):
             if result == 'won':
                 self._handle_victory(monster, monster_type)
+            elif result == 'run':
+                # Handle run from combat
+                self.gui.print_text("\n🏃 You ran away safely!")
+                self.gui.root.after(1500, self.gui.main_menu)
+                return
             else:
                 self._handle_defeat()
             

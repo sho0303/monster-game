@@ -53,6 +53,7 @@ class CombatGUI:
         self.current_hero = hero
         self.current_monster = monster
         self.round_num = 1
+        self.rounds_since_pause = 0
         
         # Start the first round
         self._start_combat_round()
@@ -129,6 +130,136 @@ class CombatGUI:
                 # Hold death scene for 3 seconds, then transition
                 self.timer.after(3000, lambda: self._complete_death_sequence(result))
     
+    def _show_combat_options(self):
+        """Show combat options menu after auto-combat rounds"""
+        self.interface_control.unlock_interface()
+        self.text_display.print_text("\n❓ What will you do?")
+        
+        options = [
+            ("⚔️ Attack", self._resume_auto_combat),
+            ("🎒 Item", self._show_combat_inventory),
+            ("🏃 Run", self._attempt_run)
+        ]
+        
+        labels = [opt[0] for opt in options]
+        callbacks = [opt[1] for opt in options]
+        
+        def on_select(choice):
+            if 1 <= choice <= len(callbacks):
+                callbacks[choice-1]()
+        
+        self.interface_control.set_buttons(labels, on_select)
+
+    def _resume_auto_combat(self):
+        """Resume auto-combat for another batch of rounds"""
+        self.interface_control.lock_interface()
+        self.rounds_since_pause = 0
+        self._start_combat_round()
+
+    def _show_combat_inventory(self):
+        """Show inventory for combat item usage"""
+        hero = self.current_hero
+        # Use 'items' key which stores dictionary of item data and quantity
+        inventory = hero.get('items', {})
+        
+        options = []
+        for item_name, item_info in inventory.items():
+            # Get quantity from item info dictionary
+            count = item_info.get('quantity', 0)
+            if count > 0:
+                options.append((f"{item_name} ({count})", lambda n=item_name: self._use_combat_item(n)))
+        
+        options.append(("🔙 Back", self._show_combat_options))
+        
+        labels = [opt[0] for opt in options]
+        callbacks = [opt[1] for opt in options]
+        
+        def on_select(choice):
+            if 1 <= choice <= len(callbacks):
+                callbacks[choice-1]()
+
+        self.interface_control.set_buttons(labels, on_select)
+        self.text_display.print_text("\n🎒 Choose an item to use:")
+
+    def _use_combat_item(self, item_name):
+        """Use an item during combat with 50% risk of monster attack"""
+        hero = self.current_hero
+        monster = self.current_monster
+        
+        # Check if item exists in inventory
+        if 'items' not in hero or item_name not in hero['items']:
+            self.text_display.print_text(f"\n❌ You don't have {item_name}!")
+            self.timer.after(1500, self._show_combat_inventory)
+            return
+
+        # Deduct item
+        hero['items'][item_name]['quantity'] -= 1
+        if hero['items'][item_name]['quantity'] <= 0:
+            del hero['items'][item_name]
+        
+        # Apply effect
+        effect_msg = ""
+        if "Health Potion" in item_name:
+            # Full heal to match main menu behavior
+            old_hp = hero['hp']
+            hero['hp'] = hero['maxhp']
+            healed = hero['hp'] - old_hp
+            effect_msg = f"You used {item_name} and recovered {healed} HP!"
+            self.audio.play_sound_effect('gulp.mp3')
+        else:
+            effect_msg = f"You used {item_name}!"
+            
+        self.text_display.print_text(f"\n{effect_msg}")
+        
+        # Update status display
+        self._finish_round_status(hero, monster, self.round_num)
+        
+        # 50% chance of monster attack response
+        if random.random() < 0.5:
+            self.text_display.print_text(f"\n⚠️ {monster['name']} seizes the moment to attack!")
+            self.timer.after(1000, self._monster_attack_response)
+        else:
+            self.text_display.print_text(f"\nSafe! {monster['name']} hesitates.")
+            self.timer.after(1000, self._show_combat_options)
+
+    def _monster_attack_response(self):
+        """Monster attacks as a response to item usage or failed run"""
+        monster = self.current_monster
+        hero = self.current_hero
+        
+        # Calculate damage
+        monster_level = monster.get('level', 1)
+        hero_level = hero.get('level', 1)
+        damage = self.calculate_damage(monster['attack'], hero['defense'], monster_level, hero_level)
+        
+        # Animate and apply
+        self._show_monster_attack_animation(monster)
+        
+        # We need a custom completion for this specific attack
+        self.timer.after(1500, lambda: self._complete_monster_response_attack(damage, monster, hero))
+
+    def _complete_monster_response_attack(self, damage, monster, hero):
+        """Complete the monster's response attack"""
+        self.text_display.print_combat_damage("💀 {monster} attacks for {damage} damage!", damage, monster['name'])
+        hero['hp'] = max(0, hero['hp'] - damage)
+        
+        self._finish_round_status(hero, monster, self.round_num)
+        
+        if hero['hp'] <= 0:
+            self.timer.after(1000, lambda: self._end_combat())
+        else:
+            self.timer.after(1500, self._show_combat_options)
+
+    def _attempt_run(self):
+        """Attempt to run from combat"""
+        if random.random() < 0.5:
+            self.text_display.print_text("\n🏃 You escaped successfully!")
+            self.interface_control.unlock_interface()
+            self.fight_callback('run')
+        else:
+            self.text_display.print_text("\n🚫 Failed to escape!")
+            self._monster_attack_response()
+
     def _display_combat_images(self, hero, monster):
         """Display hero and monster images side by side for combat with Dragon boss special sizing"""
         # Get hero image path from YAML or construct fallback
@@ -418,7 +549,12 @@ class CombatGUI:
             self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.timer.after(1500, lambda: self._start_combat_round())
+            self.rounds_since_pause += 1
+            
+            if self.rounds_since_pause >= 2:
+                self.timer.after(1500, self._show_combat_options)
+            else:
+                self.timer.after(1500, lambda: self._start_combat_round())
     
     def _show_monster_attack_animation(self, monster):
         """Show monster attack animation with jump forward, attack, and jump back"""
@@ -546,7 +682,12 @@ class CombatGUI:
             self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.timer.after(1500, lambda: self._start_combat_round())
+            self.rounds_since_pause += 1
+            
+            if self.rounds_since_pause >= 2:
+                self.timer.after(1500, self._show_combat_options)
+            else:
+                self.timer.after(1500, lambda: self._start_combat_round())
     
     def _complete_monster_counter_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster counter-attack and finish the round"""
@@ -564,7 +705,12 @@ class CombatGUI:
             self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.timer.after(1500, lambda: self._start_combat_round())
+            self.rounds_since_pause += 1
+            
+            if self.rounds_since_pause >= 2:
+                self.timer.after(1500, self._show_combat_options)
+            else:
+                self.timer.after(1500, lambda: self._start_combat_round())
     
     def _complete_monster_attack_finish_round(self, monster_damage, monster, hero, message_template, round_num):
         """Complete monster attack and finish the round (legacy method for single attack rounds)"""
@@ -582,7 +728,12 @@ class CombatGUI:
             self.timer.after(1000, lambda: self._end_combat())
         else:
             self.round_num += 1
-            self.timer.after(1500, lambda: self._start_combat_round())
+            self.rounds_since_pause += 1
+            
+            if self.rounds_since_pause >= 2:
+                self.timer.after(1500, self._show_combat_options)
+            else:
+                self.timer.after(1500, lambda: self._start_combat_round())
 
     def _finish_round_status(self, hero, monster, round_num):
         """Show round status and return to normal display"""

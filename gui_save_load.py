@@ -59,7 +59,14 @@ class SaveLoadManager:
                 try:
                     # Load basic info from save file
                     with open(file_path, 'r', encoding='utf-8') as f:
-                        save_data = yaml.safe_load(f)
+                        # Use UnsafeLoader to handle legacy saves with python tags if necessary
+                        # But prefer SafeLoader for security. If SafeLoader fails, try FullLoader
+                        try:
+                            save_data = yaml.safe_load(f)
+                        except yaml.constructor.ConstructorError:
+                            # Fallback for saves with python objects (like BiomeType enum)
+                            f.seek(0)
+                            save_data = yaml.load(f, Loader=yaml.Loader)
                     
                     save_info = {
                         'filename': file_path.name,
@@ -93,11 +100,20 @@ class SaveLoadManager:
                 save_name += '.yaml'
             
             # Prepare save data structure
+            # Ensure Enums are converted to strings for YAML serialization
+            current_biome_val = current_biome or getattr(self.gui, 'current_biome', 'grassland')
+            if hasattr(current_biome_val, 'value'):
+                current_biome_val = current_biome_val.value
+                
+            last_biome_val = getattr(self.gui, 'last_biome', 'grassland')
+            if hasattr(last_biome_val, 'value'):
+                last_biome_val = last_biome_val.value
+            
             save_data = {
                 'hero': self._prepare_hero_data(hero),
                 'game_state': {
-                    'current_biome': current_biome or getattr(self.gui, 'current_biome', 'grassland'),
-                    'last_biome': getattr(self.gui, 'last_biome', 'grassland')
+                    'current_biome': str(current_biome_val),
+                    'last_biome': str(last_biome_val)
                 },
                 'save_metadata': {
                     'save_date': datetime.now().isoformat(),
@@ -138,7 +154,12 @@ class SaveLoadManager:
         """Load game state from YAML file"""
         try:
             with open(save_path, 'r', encoding='utf-8') as f:
-                save_data = yaml.safe_load(f)
+                try:
+                    save_data = yaml.safe_load(f)
+                except yaml.constructor.ConstructorError:
+                    # Fallback for saves with python objects
+                    f.seek(0)
+                    save_data = yaml.load(f, Loader=yaml.Loader)
             
             # Validate save data structure
             if not isinstance(save_data, dict):
