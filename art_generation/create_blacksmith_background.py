@@ -1,286 +1,283 @@
+"""
+Create a pixel art blacksmith background PNG
+"""
 from PIL import Image, ImageDraw
+import numpy as np
 import random
+import math
 
-def create_blacksmith_background(width=512, height=256, scale_factor=8):
-    """Create a pixel art medieval blacksmith background"""
+def create_blacksmith_background():
+    """Create a pixel art fantasy blacksmith shop based on stone forge inspiration"""
+    width = 128
+    height = 64
+    canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    # Create base image at lower resolution for pixel art effect
-    base_width = width // scale_factor
-    base_height = height // scale_factor
-    img = Image.new('RGB', (base_width, base_height), (0, 0, 0))
-    draw = ImageDraw.Draw(img)
+    # === COLORS ===
+    # Stone (Walls, Forge, Floor)
+    STONE_DARK = [40, 40, 45, 255]
+    STONE_MID = [70, 70, 75, 255]
+    STONE_LIGHT = [100, 100, 105, 255]
+    STONE_HIGHLIGHT = [130, 130, 135, 255]
     
-    # Color palette for medieval blacksmith
-    colors = {
-        'wall_stone': (80, 80, 90),          # Dark stone walls
-        'wall_stone_light': (100, 100, 110), # Lighter stone
-        'floor_stone': (60, 60, 70),         # Stone floor
-        'floor_stone_light': (75, 75, 85),   # Lighter floor stones
-        'forge': (40, 20, 20),               # Dark forge base
-        'forge_brick': (120, 60, 40),        # Forge bricks
-        'fire_orange': (255, 140, 0),        # Fire orange
-        'fire_red': (255, 69, 0),            # Fire red
-        'fire_yellow': (255, 255, 100),      # Fire yellow core
-        'coal': (30, 30, 30),                # Coal/charcoal
-        'metal_iron': (100, 100, 100),       # Iron tools
-        'metal_steel': (150, 150, 150),      # Steel/bright metal
-        'metal_hot': (255, 100, 100),        # Hot glowing metal
-        'anvil': (80, 80, 80),               # Anvil dark metal
-        'anvil_top': (120, 120, 120),        # Anvil top surface
-        'hammer_wood': (139, 115, 85),       # Hammer handle wood
-        'hammer_head': (90, 90, 90),         # Hammer head
-        'barrel_water': (40, 80, 120),       # Water barrel
-        'steam': (220, 220, 220),            # Steam/smoke
-        'rope': (139, 115, 85),              # Rope
-        'leather': (101, 67, 33),            # Leather apron/bellows
-        'chain': (110, 110, 110),            # Chains
-        'spark': (255, 255, 0),              # Flying sparks
-        'shadow': (20, 20, 25),              # Shadow areas
-        'wood_beam': (101, 67, 33),          # Wood support beams
-        'bellows': (80, 50, 30),             # Bellows leather
-    }
+    # Wood (Beams, Tools, Barrel)
+    WOOD_DARK = [50, 30, 15, 255]
+    WOOD_MID = [90, 50, 25, 255]
+    WOOD_LIGHT = [120, 70, 35, 255]
     
-    # Fill background with stone wall
-    draw.rectangle([0, 0, base_width, base_height], fill=colors['wall_stone'])
+    # Fire
+    FIRE_CORE = [255, 255, 200, 255]
+    FIRE_YELLOW = [255, 220, 50, 255]
+    FIRE_ORANGE = [255, 100, 20, 255]
+    FIRE_RED = [180, 50, 10, 255]
     
-    # Create stone wall texture
-    for y in range(0, base_height, 3):
-        for x in range(0, base_width, 6):
-            # Alternate stone blocks
-            if (x // 6 + y // 3) % 2 == 0:
-                draw.rectangle([x, y, x + 5, y + 2], fill=colors['wall_stone_light'])
-            # Add mortar lines
-            draw.line([x + 5, y, x + 5, y + 2], fill=colors['shadow'])
-            draw.line([x, y + 2, x + 5, y + 2], fill=colors['shadow'])
+    # Metal (Anvil, Tools)
+    METAL_DARK = [30, 35, 40, 255]
+    METAL_MID = [60, 70, 80, 255]
+    METAL_LIGHT = [100, 110, 120, 255]
     
-    # Create stone floor
-    floor_start_y = base_height - 10
-    for y in range(floor_start_y, base_height):
-        draw.rectangle([0, y, base_width, y], fill=colors['floor_stone'])
-        # Stone tile pattern
-        for x in range(0, base_width, 4):
-            if (x // 4 + y) % 2 == 0:
-                draw.rectangle([x, y, x + 3, y], fill=colors['floor_stone_light'])
+    # Helper to draw pixel
+    def draw_pixel(x, y, color):
+        if 0 <= x < width and 0 <= y < height:
+            if len(color) == 4 and color[3] < 255:
+                current = canvas[y][x]
+                alpha = color[3] / 255.0
+                for c in range(3):
+                    canvas[y][x][c] = int(current[c] * (1 - alpha) + color[c] * alpha)
+                canvas[y][x][3] = 255
+            else:
+                canvas[y][x] = color
+
+    # === 1. STRUCTURE (Walls & Floor) ===
+    floor_y = 45
     
-    # Create the forge (left side)
-    forge_x = 4
-    forge_y = floor_start_y - 12
-    forge_width = 16
-    forge_height = 12
+    # Back Wall (Stone Bricks)
+    for y in range(floor_y):
+        for x in range(width):
+            col = STONE_MID
+            # Brick pattern
+            if (y % 8 == 0) or ((y // 8) % 2 == 0 and x % 16 == 0) or ((y // 8) % 2 == 1 and (x + 8) % 16 == 0):
+                col = STONE_DARK
+            elif (x * y * 13) % 100 < 10:
+                col = STONE_LIGHT
+            draw_pixel(x, y, col)
+            
+    # Floor (Stone Tiles)
+    for y in range(floor_y, height):
+        for x in range(width):
+            col = STONE_MID
+            # Perspective lines
+            if (x - width/2) * (y - floor_y + 10) % 400 < 10 or y % 10 == 0:
+                col = STONE_DARK
+            draw_pixel(x, y, col)
+
+    # Roof Beams
+    # Main horizontal beam
+    beam_y = 15
+    for y in range(beam_y, beam_y + 6):
+        for x in range(width):
+            col = WOOD_MID
+            if y == beam_y + 5: col = WOOD_DARK # Shadow
+            if (x * 7) % 20 == 0: col = WOOD_DARK # Grain
+            draw_pixel(x, y, col)
+
+    # === 2. THE FORGE (Central Arch) ===
+    arch_cx = width // 2
+    arch_cy = 45
+    arch_w = 25
+    arch_h = 25
     
-    # Forge base structure
-    draw.rectangle([forge_x, forge_y, forge_x + forge_width, forge_y + forge_height], 
-                  fill=colors['forge'])
+    # Draw Arch Stones
+    for y in range(arch_cy - arch_h - 5, arch_cy + 1):
+        for x in range(arch_cx - arch_w - 5, arch_cx + arch_w + 5):
+            # Ellipse equation for arch
+            dx = (x - arch_cx)
+            dy = (y - arch_cy)
+            
+            # Outer curve
+            if (dx/(arch_w+4))**2 + (dy/(arch_h+4))**2 <= 1.0:
+                # Inner curve (hole)
+                if (dx/arch_w)**2 + (dy/arch_h)**2 > 1.0 or y > arch_cy:
+                    # This is the stone frame
+                    col = STONE_LIGHT
+                    # Radial lines for arch stones
+                    angle = math.atan2(dy, dx)
+                    if int(angle * 10) % 4 == 0:
+                        col = STONE_DARK
+                    draw_pixel(x, y, col)
+                else:
+                    # Inside the forge (Fire background)
+                    # Brick interior
+                    col = [50, 30, 20, 255]
+                    if (x + y) % 5 == 0: col = [40, 20, 10, 255]
+                    draw_pixel(x, y, col)
+
+    # Fire (Realistic Flames: Blue -> White -> Yellow -> Red)
+    fire_base_y = arch_cy
+    FIRE_BLUE = [50, 100, 255, 255]
+    FIRE_WHITE = [255, 255, 255, 255]
     
-    # Forge brick pattern
-    for y in range(forge_y, forge_y + forge_height - 4, 2):
-        for x in range(forge_x, forge_x + forge_width, 3):
-            draw.rectangle([x, y, x + 2, y + 1], fill=colors['forge_brick'])
+    for x in range(arch_cx - 12, arch_cx + 13):
+        # Calculate flame height based on position (higher in middle) and randomness
+        dist = abs(x - arch_cx)
+        max_h = 18 - dist
+        if max_h < 2: max_h = 2
+        
+        h = random.randint(int(max_h * 0.7), max_h)
+        
+        for y in range(fire_base_y - h, fire_base_y + 1):
+            # Gradient
+            rel_h = (fire_base_y - y) / h # 0 at bottom, 1 at top
+            
+            if rel_h < 0.15: col = FIRE_BLUE
+            elif rel_h < 0.4: col = FIRE_WHITE
+            elif rel_h < 0.7: col = FIRE_YELLOW
+            else: col = FIRE_RED
+            
+            draw_pixel(x, y, col)
+            
+    # Glow on floor from fire
+    for i in range(20):
+        fx = random.randint(arch_cx - 15, arch_cx + 15)
+        fy = random.randint(arch_cy, arch_cy + 5)
+        if random.random() > 0.5:
+            draw_pixel(fx, fy, FIRE_ORANGE)
+
+    # === 3. ANVIL (Center Foreground) ===
+    anvil_x = width // 2
+    anvil_y = 52  # Moved down slightly
     
-    # Fire in forge
-    fire_x = forge_x + 6
-    fire_y = forge_y + 2
-    fire_width = 6
-    fire_height = 4
+    # Stone Base
+    for y in range(anvil_y + 4, anvil_y + 8):
+        for x in range(anvil_x - 10, anvil_x + 10):
+            # Circular base
+            if ((x - anvil_x)/10)**2 + ((y - (anvil_y+6))/3)**2 <= 1.0:
+                draw_pixel(x, y, STONE_LIGHT)
+                if x > anvil_x + 5: draw_pixel(x, y, STONE_DARK) # Shadow
+                
+    # Anvil Body
+    for y in range(anvil_y - 2, anvil_y + 5):
+        for x in range(anvil_x - 12, anvil_x + 12):
+            # Silhouette logic
+            draw = False
+            # Top
+            if y < anvil_y and abs(x - anvil_x) < 12: draw = True
+            # Neck
+            if y >= anvil_y and y < anvil_y + 3 and abs(x - anvil_x) < 5: draw = True
+            # Base
+            if y >= anvil_y + 3 and abs(x - anvil_x) < 8: draw = True
+            
+            if draw:
+                col = METAL_MID
+                if y == anvil_y - 2: col = METAL_LIGHT # Top surface
+                if x > anvil_x + 2: col = METAL_DARK # Shadow side
+                draw_pixel(x, y, col)
+
+    # === 4. CLUTTER & TOOLS ===
     
-    # Fire base (coal)
-    draw.rectangle([fire_x, fire_y + 2, fire_x + fire_width, fire_y + fire_height], 
-                  fill=colors['coal'])
+    # Barrel (Right)
+    barrel_x = width - 20
+    barrel_y = 45
+    for y in range(barrel_y, barrel_y + 15):
+        for x in range(barrel_x - 6, barrel_x + 6):
+            # Barrel curve
+            width_mod = 6
+            if y < barrel_y + 2 or y > barrel_y + 12: width_mod = 5
+            
+            if abs(x - barrel_x) < width_mod:
+                col = WOOD_MID
+                if x > barrel_x + 2: col = WOOD_DARK
+                # Metal bands
+                if y == barrel_y + 3 or y == barrel_y + 11:
+                    col = METAL_DARK
+                draw_pixel(x, y, col)
+                
+    # Stool (Left)
+    stool_x = 20
+    stool_y = 48
+    # Seat
+    for x in range(stool_x - 5, stool_x + 5):
+        draw_pixel(x, stool_y, WOOD_LIGHT)
+        draw_pixel(x, stool_y + 1, WOOD_DARK)
+    # Legs
+    for y in range(stool_y + 2, stool_y + 8):
+        draw_pixel(stool_x - 4, y, WOOD_MID)
+        draw_pixel(stool_x + 3, y, WOOD_MID)
     
-    # Fire flames
-    flame_points = [
-        (fire_x + 1, fire_y + 1, colors['fire_red']),
-        (fire_x + 2, fire_y, colors['fire_orange']),
-        (fire_x + 3, fire_y - 1, colors['fire_yellow']),
-        (fire_x + 4, fire_y, colors['fire_orange']),
-        (fire_x + 5, fire_y + 1, colors['fire_red']),
-    ]
-    
-    for fx, fy, color in flame_points:
-        if fy >= 0:
-            draw.point((fx, fy), fill=color)
-            draw.point((fx, fy + 1), fill=color)
-    
-    # Glowing hot metal in forge
-    draw.rectangle([fire_x + 2, fire_y + 2, fire_x + 4, fire_y + 3], fill=colors['metal_hot'])
-    
-    # Smoke/steam rising from forge
-    smoke_points = [(fire_x + 2, fire_y - 3), (fire_x + 4, fire_y - 4), (fire_x + 3, fire_y - 5)]
-    for sx, sy in smoke_points:
-        if sy >= 0:
-            draw.point((sx, sy), fill=colors['steam'])
-    
-    # Create anvil (center)
-    anvil_x = 25
-    anvil_y = floor_start_y - 6
-    
-    # Anvil base
-    draw.rectangle([anvil_x, anvil_y + 2, anvil_x + 6, anvil_y + 6], fill=colors['anvil'])
-    # Anvil top surface
-    draw.rectangle([anvil_x - 1, anvil_y, anvil_x + 7, anvil_y + 2], fill=colors['anvil_top'])
-    # Anvil horn
-    draw.rectangle([anvil_x + 6, anvil_y, anvil_x + 9, anvil_y + 1], fill=colors['anvil_top'])
-    
-    # Hammer on anvil
-    hammer_x = anvil_x + 2
-    hammer_y = anvil_y - 2
-    # Hammer head
-    draw.rectangle([hammer_x, hammer_y, hammer_x + 3, hammer_y + 1], fill=colors['hammer_head'])
-    # Hammer handle
-    draw.rectangle([hammer_x + 3, hammer_y, hammer_x + 7, hammer_y], fill=colors['hammer_wood'])
-    
-    # Hot metal being worked on anvil
-    draw.rectangle([anvil_x + 1, anvil_y - 1, anvil_x + 2, anvil_y], fill=colors['metal_hot'])
-    
-    # Flying sparks around anvil
-    spark_points = [(anvil_x - 2, anvil_y - 1), (anvil_x + 8, anvil_y - 2), (anvil_x + 3, anvil_y - 3)]
-    for spx, spy in spark_points:
-        if spy >= 0:
-            draw.point((spx, spy), fill=colors['spark'])
-    
-    # Tool rack on wall (right side)
-    rack_x = base_width - 18
-    rack_y = 8
-    
-    # Horizontal tool rack beam
-    draw.rectangle([rack_x, rack_y, rack_x + 14, rack_y + 1], fill=colors['wood_beam'])
-    
-    # Hanging tools
-    tools = [
-        # Tongs
-        (rack_x + 2, rack_y + 2, colors['metal_iron']),
-        # Hammers
-        (rack_x + 5, rack_y + 2, colors['hammer_head']),
-        (rack_x + 8, rack_y + 2, colors['hammer_head']),
-        # Files
-        (rack_x + 11, rack_y + 2, colors['metal_steel']),
-    ]
-    
-    for tool_x, tool_y, tool_color in tools:
-        # Hanging rope/chain
-        draw.line([tool_x, rack_y + 1, tool_x, tool_y], fill=colors['chain'])
-        # Tool
-        draw.rectangle([tool_x - 1, tool_y, tool_x + 1, tool_y + 4], fill=tool_color)
-    
-    # Water barrel and quenching station (right side)
-    barrel_x = base_width - 8
-    barrel_y = floor_start_y - 8
-    
-    # Water barrel
-    draw.ellipse([barrel_x, barrel_y, barrel_x + 6, barrel_y + 8], fill=colors['barrel_water'])
-    # Metal bands on barrel
-    draw.rectangle([barrel_x, barrel_y + 2, barrel_x + 6, barrel_y + 3], fill=colors['metal_iron'])
-    draw.rectangle([barrel_x, barrel_y + 5, barrel_x + 6, barrel_y + 6], fill=colors['metal_iron'])
-    
-    # Steam rising from quenching
-    steam_points = [(barrel_x + 2, barrel_y - 1), (barrel_x + 4, barrel_y - 2)]
-    for stx, sty in steam_points:
-        if sty >= 0:
-            draw.point((stx, sty), fill=colors['steam'])
-    
-    # Bellows (next to forge)
-    bellows_x = forge_x - 3
-    bellows_y = forge_y + 6
-    
-    # Bellows body
-    draw.polygon([(bellows_x, bellows_y), (bellows_x + 2, bellows_y - 2), 
-                  (bellows_x + 4, bellows_y - 2), (bellows_x + 6, bellows_y)], 
-                 fill=colors['bellows'])
-    # Bellows handle
-    draw.rectangle([bellows_x + 6, bellows_y - 1, bellows_x + 8, bellows_y], fill=colors['hammer_wood'])
-    
-    # Sword rack (left wall)
-    sword_rack_x = 2
-    sword_rack_y = 12
-    
-    # Rack
-    draw.rectangle([sword_rack_x, sword_rack_y, sword_rack_x + 1, sword_rack_y + 8], fill=colors['wood_beam'])
-    
-    # Swords in various stages
-    swords = [
-        (sword_rack_x + 2, sword_rack_y + 1, colors['metal_steel']),      # Finished sword
-        (sword_rack_x + 2, sword_rack_y + 3, colors['metal_iron']),       # Raw blade
-        (sword_rack_x + 2, sword_rack_y + 5, colors['metal_hot']),        # Hot blade
-    ]
-    
-    for sword_x, sword_y, sword_color in swords:
-        # Blade
-        draw.rectangle([sword_x, sword_y, sword_x + 8, sword_y], fill=sword_color)
+    # Swords on Wall (Display)
+    for sx in [15, width - 15]:
+        sy = 25
+        # Pommel
+        draw_pixel(sx, sy, METAL_DARK)
+        # Grip
+        draw_pixel(sx, sy + 1, WOOD_DARK)
+        draw_pixel(sx, sy + 2, WOOD_DARK)
         # Crossguard
-        draw.rectangle([sword_x + 6, sword_y - 1, sword_x + 6, sword_y + 1], fill=colors['metal_iron'])
-        # Handle
-        draw.rectangle([sword_x + 7, sword_y, sword_x + 9, sword_y], fill=colors['hammer_wood'])
-    
-    # Workbench (bottom right)
-    bench_x = base_width - 15
-    bench_y = floor_start_y - 4
-    
-    # Bench surface
-    draw.rectangle([bench_x, bench_y, bench_x + 12, bench_y + 4], fill=colors['wood_beam'])
-    # Bench legs
-    draw.rectangle([bench_x + 1, bench_y + 4, bench_x + 2, floor_start_y], fill=colors['wood_beam'])
-    draw.rectangle([bench_x + 10, bench_y + 4, bench_x + 11, floor_start_y], fill=colors['wood_beam'])
-    
-    # Tools on workbench
-    draw.rectangle([bench_x + 2, bench_y - 1, bench_x + 4, bench_y], fill=colors['hammer_head'])  # Small hammer
-    draw.rectangle([bench_x + 6, bench_y - 1, bench_x + 7, bench_y], fill=colors['metal_steel'])   # File
-    draw.rectangle([bench_x + 9, bench_y - 1, bench_x + 10, bench_y], fill=colors['metal_iron'])   # Punch
-    
-    # Coal pile (near forge)
-    coal_x = forge_x + forge_width + 2
-    coal_y = floor_start_y - 2
-    
-    for i in range(6):
-        cx = coal_x + (i % 3)
-        cy = coal_y - (i // 3)
-        draw.point((cx, cy), fill=colors['coal'])
-    
-    # Ambient lighting effects
-    # Forge glow on nearby surfaces
-    glow_areas = [
-        (forge_x - 2, forge_y + 4, 2, 4),  # Left wall glow
-        (forge_x + forge_width, forge_y + 6, 4, 2),  # Floor glow
-    ]
-    
-    for gx, gy, gw, gh in glow_areas:
-        if gx >= 0 and gy >= 0:
-            draw.rectangle([gx, gy, gx + gw, gy + gh], fill=colors['fire_red'])
-    
-    # Scale up the image for final output
-    img_scaled = img.resize((width, height), Image.Resampling.NEAREST)
-    
-    return img_scaled
+        draw_pixel(sx - 2, sy + 3, METAL_DARK)
+        draw_pixel(sx - 1, sy + 3, METAL_DARK)
+        draw_pixel(sx, sy + 3, METAL_MID)
+        draw_pixel(sx + 1, sy + 3, METAL_DARK)
+        draw_pixel(sx + 2, sy + 3, METAL_DARK)
+        # Blade
+        for i in range(12):
+            draw_pixel(sx, sy + 4 + i, METAL_LIGHT)
+            draw_pixel(sx - 1, sy + 4 + i, METAL_MID) # Shadow/Edge
+            
+    # Tongs hanging on wall (Left of arch)
+    tx = arch_cx - 20
+    ty = 30
+    for i in range(8):
+        draw_pixel(tx, ty + i, METAL_DARK)
+        draw_pixel(tx + 2, ty + i, METAL_DARK)
+    draw_pixel(tx + 1, ty + 2, METAL_DARK) # Hinge
 
-def main():
-    """Create and save the blacksmith background"""
-    print("Creating medieval blacksmith background...")
+    # === 5. LIGHTING ===
+    # Warm glow from the fire
+    for y in range(height):
+        for x in range(width):
+            # Distance from fire center
+            dist = ((x - arch_cx)**2 + (y - (arch_cy - 5))**2)**0.5
+            
+            if dist < 40:
+                intensity = int((40 - dist) * 4)
+                if intensity > 0:
+                    current = canvas[y][x]
+                    # Add orange/yellow tint
+                    # Cast to int to avoid overflow
+                    r = min(255, int(current[0]) + intensity)
+                    g = min(255, int(current[1]) + int(intensity * 0.6))
+                    b = min(255, int(current[2]) + int(intensity * 0.1))
+                    canvas[y][x] = [r, g, b, 255]
+
+    # Vignette
+    for y in range(height):
+        for x in range(width):
+            dist_center = ((x - width/2)**2 + (y - height/2)**2)**0.5
+            if dist_center > 45:
+                opacity = int((dist_center - 45) * 4)
+                if opacity > 180: opacity = 180
+                
+                current = canvas[y][x]
+                factor = (255 - opacity) / 255.0
+                canvas[y][x] = [
+                    int(current[0] * factor),
+                    int(current[1] * factor),
+                    int(current[2] * factor),
+                    255
+                ]
+
+    # Save image
+    img = Image.fromarray(canvas, 'RGBA')
     
-    # Create the background image
-    blacksmith_bg = create_blacksmith_background(512, 256, 8)
+    # Scale up 4x
+    scale_factor = 4
+    final_width = width * scale_factor
+    final_height = height * scale_factor
+    img = img.resize((final_width, final_height), Image.Resampling.NEAREST)
     
-    # Save the image
-    output_path = "art/blacksmith_background.png"
-    blacksmith_bg.save(output_path)
-    print(f"Blacksmith background saved to: {output_path}")
-    
-    # Also create a larger version for high-res displays
-    blacksmith_bg_large = create_blacksmith_background(1024, 512, 8)
-    output_path_large = "art/blacksmith_background_large.png"
-    blacksmith_bg_large.save(output_path_large)
-    print(f"Large blacksmith background saved to: {output_path_large}")
-    
-    print("Blacksmith background creation complete!")
-    print("\nFeatures created:")
-    print("- Stone brick walls and floor")
-    print("- Active forge with fire and hot metal")
-    print("- Anvil with hammer and sparks")
-    print("- Tool rack with hanging implements")
-    print("- Water barrel for quenching")
-    print("- Bellows for the forge")
-    print("- Sword rack with blades in progress")
-    print("- Workbench with small tools")
-    print("- Coal pile and ambient forge lighting")
-    print("- Steam and smoke effects")
+    img.save('art/blacksmith_background.png')
+    print(f"✓ Saved: art/blacksmith_background.png ({final_width}x{final_height})")
 
 if __name__ == "__main__":
-    main()
+    print("Creating blacksmith background...")
+    create_blacksmith_background()
+    print("✅ Blacksmith background creation complete!")
