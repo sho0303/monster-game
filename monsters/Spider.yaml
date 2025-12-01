@@ -7,6 +7,7 @@ SpiderQueen:
   gold: 60
   level: 6
   xp: 6
-  art: art/spider_monster.png
-  attack_art: art/spider_monster_attack.png
+  art: art/spider_queen.png
+  attack_art: art/spider_queen_attack.png
   biome: grassland
+  attack_sound: spider-queen.mp3

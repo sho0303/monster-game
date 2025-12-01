@@ -1,411 +1,360 @@
 """
-SpiderQueen Monster Generator
-Creates pixel art images for the SpiderQueen monster (default and attack poses).
-Inspired by: Horror spider with skull-like head, red/orange markings, tan/brown fur, menacing appearance with 8 hairy legs.
-Resolution: 64x64 scaled to 256x256
+Spider Queen Monster Creator
+Creates pixel art for a Spider Queen (Drider-like): Female upper body, spider lower body.
+Inspired by the concept of a pale-skinned queen with a red/brown armored spider body.
+
+Resolution: 64x64 pixels (scaled 4x to 256x256)
+Style: Pixel art
 """
 
 from PIL import Image
 import numpy as np
-
-# Color palette - realistic horror spider
-SKULL_BONE = np.array([220, 210, 190, 255])       # Skull bone color
-SKULL_SHADOW = np.array([160, 150, 130, 255])     # Skull shadows
-SKULL_DARK = np.array([100, 90, 75, 255])         # Dark skull areas
-SKULL_SOCKET = np.array([40, 35, 30, 255])        # Eye sockets/dark areas
-
-MARKING_RED = np.array([180, 60, 40, 255])        # Red markings
-MARKING_ORANGE = np.array([200, 90, 50, 255])     # Orange markings
-MARKING_DARK_RED = np.array([120, 40, 30, 255])   # Dark red markings
-
-BODY_BROWN = np.array([90, 70, 55, 255])          # Brown spider body
-BODY_TAN = np.array([140, 110, 85, 255])          # Tan body highlights
-BODY_DARK_BROWN = np.array([60, 45, 35, 255])     # Dark brown
-BODY_BLACK = np.array([30, 25, 20, 255])          # Black body areas
-
-FUR_TAN = np.array([170, 140, 110, 255])          # Tan fur
-FUR_BROWN = np.array([120, 95, 70, 255])          # Brown fur
-FUR_DARK = np.array([70, 55, 40, 255])            # Dark fur
-FUR_LIGHT = np.array([200, 170, 140, 255])        # Light fur highlights
-
-LEG_BLACK = np.array([35, 30, 25, 255])           # Black leg segments
-LEG_RED = np.array([160, 50, 35, 255])            # Red leg segments
-LEG_TAN = np.array([150, 120, 90, 255])           # Tan leg fur
-LEG_DARK = np.array([45, 35, 30, 255])            # Dark leg shadows
-LEG_JOINT = np.array([25, 20, 18, 255])           # Leg joints (darker)
-
-EYE_ORANGE = np.array([255, 140, 60, 255])        # Orange glowing eyes
-EYE_YELLOW = np.array([255, 200, 100, 255])       # Yellow eye glow
-EYE_RED = np.array([200, 60, 30, 255])            # Red eye base
-
-FANG_WHITE = np.array([240, 235, 220, 255])       # White fangs
-FANG_SHADOW = np.array([180, 175, 160, 255])      # Fang shadows
-
-SPINE_GRAY = np.array([120, 115, 105, 255])       # Gray spines on back
-SPINE_LIGHT = np.array([160, 155, 145, 255])      # Light spine highlights
-
-MOTION_BLUR = np.array([90, 70, 55, 120])         # Motion blur effect
-
-def draw_legs(canvas, leg_groups, width, height):
-    """Helper function to draw spider legs with fur texture"""
-    for legs_list in leg_groups:
-        for leg_points in legs_list:
-            for i in range(len(leg_points) - 1):
-                x1, y1 = leg_points[i]
-                x2, y2 = leg_points[i + 1]
-                
-                steps = max(abs(x2 - x1), abs(y2 - y1)) + 1
-                for step in range(steps):
-                    t = step / steps
-                    lx = int(x1 + (x2 - x1) * t)
-                    ly = int(y1 + (y2 - y1) * t)
-                    
-                    thickness = 3 if i == 0 else (2 if i == 1 else 1)
-                    segment_color = LEG_RED if (i % 2 == 0) else LEG_BLACK
-                    
-                    for dy in range(-thickness, thickness + 1):
-                        for dx in range(-thickness, thickness + 1):
-                            leg_x = lx + dx
-                            leg_y = ly + dy
-                            if 0 <= leg_x < width and 0 <= leg_y < height:
-                                if abs(dx) == thickness or abs(dy) == thickness:
-                                    canvas[leg_y][leg_x] = LEG_DARK
-                                elif abs(dx) == thickness - 1 or abs(dy) == thickness - 1:
-                                    canvas[leg_y][leg_x] = FUR_DARK if (lx + ly) % 3 == 0 else FUR_BROWN
-                                else:
-                                    canvas[leg_y][leg_x] = segment_color
-                
-                # Joint
-                if i < len(leg_points) - 1:
-                    jx, jy = leg_points[i + 1]
-                    for jdy in range(-2, 3):
-                        for jdx in range(-2, 3):
-                            joint_x = jx + jdx
-                            joint_y = jy + jdy
-                            if 0 <= joint_x < width and 0 <= joint_y < height:
-                                if abs(jdx) <= 1 and abs(jdy) <= 1:
-                                    canvas[joint_y][joint_x] = LEG_JOINT
-                                else:
-                                    canvas[joint_y][joint_x] = LEG_BLACK
+import random
 
 def create_spiderqueen_default():
-    """Create default SpiderQueen pose - horror spider with skull head, standing menacingly"""
+    """Create the default Spider Queen pose."""
     width, height = 64, 64
     canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    center_x = 32
-    body_y = 28
+    # --- Palette ---
+    # Spider Body (Red/Brown/Dark)
+    SPIDER_BASE = [80, 20, 20, 255]
+    SPIDER_MID = [120, 40, 40, 255]
+    SPIDER_HIGHLIGHT = [160, 60, 60, 255]
+    SPIDER_SHADOW = [40, 10, 10, 255]
+    SPIDER_GLOW = [255, 100, 50, 255] # Glowing sacs
     
-    # === SPIDER LEGS (8 legs, 4 per side - hairy, segmented) ===
-    back_left_legs = [
-        [(center_x - 10, body_y + 8), (center_x - 16, body_y + 14), (center_x - 23, body_y + 18), (center_x - 28, body_y + 24)],
-        [(center_x - 8, body_y + 5), (center_x - 14, body_y + 10), (center_x - 20, body_y + 14), (center_x - 24, body_y + 20)]
-    ]
+    # Legs
+    LEG_DARK = [50, 20, 20, 255]
+    LEG_MID = [100, 40, 40, 255]
+    LEG_TIP = [30, 10, 10, 255]
     
-    back_right_legs = [
-        [(center_x + 10, body_y + 8), (center_x + 16, body_y + 14), (center_x + 23, body_y + 18), (center_x + 28, body_y + 24)],
-        [(center_x + 8, body_y + 5), (center_x + 14, body_y + 10), (center_x + 20, body_y + 14), (center_x + 24, body_y + 20)]
-    ]
+    # Human Upper Body (Pale Blueish)
+    SKIN_BASE = [180, 200, 210, 255]
+    SKIN_SHADOW = [140, 160, 170, 255]
+    SKIN_HIGHLIGHT = [220, 230, 240, 255]
     
-    front_left_legs = [
-        [(center_x - 6, body_y + 2), (center_x - 11, body_y + 6), (center_x - 16, body_y + 10), (center_x - 20, body_y + 16)],
-        [(center_x - 5, body_y - 1), (center_x - 9, body_y + 3), (center_x - 13, body_y + 7), (center_x - 16, body_y + 13)]
-    ]
+    # Armor/Clothing (Red/Gold)
+    ARMOR_RED = [140, 30, 30, 255]
+    ARMOR_DARK = [80, 10, 10, 255]
+    ARMOR_TRIM = [180, 140, 60, 255] # Goldish
     
-    front_right_legs = [
-        [(center_x + 6, body_y + 2), (center_x + 11, body_y + 6), (center_x + 16, body_y + 10), (center_x + 20, body_y + 16)],
-        [(center_x + 5, body_y - 1), (center_x + 9, body_y + 3), (center_x + 13, body_y + 7), (center_x + 16, body_y + 13)]
-    ]
-    
-    # Draw back legs first (behind body)
-    draw_legs(canvas, [back_left_legs, back_right_legs], width, height)
-    
-    # === SPIDER ABDOMEN (large bulbous body with fur) ===
-    abdomen_y = body_y + 10
-    
-    for seg in range(14):
-        seg_y = abdomen_y + seg
-        seg_width = int(11 - abs(seg - 7) * 1.3)
-        
-        for sx in range(-seg_width, seg_width + 1):
-            abd_x = center_x + sx
-            abd_y = seg_y
-            if 0 <= abd_x < width and 0 <= abd_y < height:
-                if abs(sx) == seg_width or seg == 0 or seg == 13:
-                    canvas[abd_y][abd_x] = BODY_BLACK
-                elif abs(sx) == seg_width - 1:
-                    canvas[abd_y][abd_x] = FUR_DARK if (abd_x + abd_y) % 2 == 0 else FUR_BROWN
-                elif seg > 8 and abs(sx) < 4:
-                    canvas[abd_y][abd_x] = BODY_DARK_BROWN
-                elif sx < -seg_width // 2:
-                    canvas[abd_y][abd_x] = BODY_TAN if seg < 7 else BODY_BROWN
-                elif sx > seg_width // 2:
-                    canvas[abd_y][abd_x] = BODY_BROWN
-                else:
-                    canvas[abd_y][abd_x] = BODY_BROWN if seg < 7 else BODY_DARK_BROWN
-    
-    # Fur patches
-    for fx, fy in [(center_x - 8, abdomen_y + 3), (center_x + 8, abdomen_y + 3), (center_x - 6, abdomen_y + 8), (center_x + 6, abdomen_y + 8)]:
-        if 0 <= fx < width and 0 <= fy < height:
-            canvas[fy][fx] = FUR_TAN
-    
-    # === CEPHALOTHORAX ===
-    ceph_y = body_y - 4
-    
-    for cy in range(10):
-        ceph_width = int(8 - cy * 0.7)
-        for cx in range(-ceph_width, ceph_width + 1):
-            c_x = center_x + cx
-            c_y = ceph_y + cy
-            if 0 <= c_x < width and 0 <= c_y < height:
-                if abs(cx) == ceph_width or cy == 0 or cy == 9:
-                    canvas[c_y][c_x] = BODY_BLACK
-                elif abs(cx) == ceph_width - 1:
-                    canvas[c_y][c_x] = FUR_BROWN if (c_x + c_y) % 2 == 0 else FUR_DARK
-                elif cy < 5:
-                    canvas[c_y][c_x] = BODY_TAN if cx < 0 else BODY_BROWN
-                else:
-                    canvas[c_y][c_x] = BODY_BROWN if cx < 0 else BODY_DARK_BROWN
-    
-    # === SKULL HEAD ===
-    head_y = ceph_y - 8
-    
-    for hy in range(10):
-        head_width = int(6 - abs(hy - 5) * 0.8)
-        for hx in range(-head_width, head_width + 1):
-            h_x = center_x + hx
-            h_y = head_y + hy
-            if 0 <= h_x < width and 0 <= h_y < height:
-                if abs(hx) == head_width or hy == 0 or hy == 9:
-                    canvas[h_y][h_x] = SKULL_DARK
-                elif hy < 4:
-                    canvas[h_y][h_x] = SKULL_BONE if hx < 0 else SKULL_SHADOW
-                else:
-                    canvas[h_y][h_x] = SKULL_SHADOW if abs(hx) < 2 else (SKULL_BONE if hx < 0 else SKULL_SHADOW)
-    
-    # Red marking
-    for ry in range(8):
-        mark_y = head_y + 1 + ry
-        if 0 <= center_x < width and 0 <= mark_y < height:
-            canvas[mark_y][center_x] = MARKING_ORANGE if ry < 4 else MARKING_RED
+    # Hair/Horns
+    HAIR_DARK = [20, 20, 30, 255]
+    HORN_BONE = [200, 190, 180, 255]
     
     # Eyes
-    eye_y = head_y + 3
-    for eye_x in [center_x - 3, center_x + 3]:
-        for ey in range(3):
-            for ex in range(2):
-                e_x = eye_x + ex - 1
-                e_y = eye_y + ey
-                if 0 <= e_x < width and 0 <= e_y < height:
-                    if ey == 1 and ex == 0:
-                        canvas[e_y][e_x] = EYE_YELLOW
-                    elif ey == 1:
-                        canvas[e_y][e_x] = EYE_ORANGE
-                    else:
-                        canvas[e_y][e_x] = SKULL_SOCKET
+    EYE_GLOW = [220, 255, 50, 255] # Yellow/Green
     
-    # Small spider eyes
-    for sex, sey in [(center_x - 5, head_y + 2), (center_x + 5, head_y + 2), (center_x - 4, head_y + 1), (center_x + 4, head_y + 1)]:
-        if 0 <= sex < width and 0 <= sey < height:
-            canvas[sey][sex] = EYE_RED
+    center_x = 32
     
-    # Fangs
-    for side in [-1, 1]:
-        for fang_seg in range(5):
-            fang_x = center_x + side * 2
-            fang_y = head_y + 8 + fang_seg
-            if 0 <= fang_x < width and 0 <= fang_y < height:
-                canvas[fang_y][fang_x] = FANG_WHITE if fang_seg < 3 else FANG_SHADOW
-                if fang_seg < 3 and 0 <= fang_x - side < width:
-                    canvas[fang_y][fang_x - side] = FANG_SHADOW
+    # === 1. Spider Lower Body ===
+    # Bulbous abdomen at the back
+    abdomen_center_x = 32
+    abdomen_center_y = 45
     
-    # Spines
-    for spx, spy in [(center_x - 6, ceph_y + 2), (center_x - 4, ceph_y + 1), (center_x - 2, ceph_y), (center_x + 2, ceph_y), (center_x + 4, ceph_y + 1), (center_x + 6, ceph_y + 2)]:
-        for sp in range(3):
-            spine_y = spy - sp
-            if 0 <= spx < width and 0 <= spine_y < height:
-                canvas[spine_y][spx] = SPINE_LIGHT if sp == 0 else SPINE_GRAY
+    for y in range(35, 60):
+        for x in range(15, 50):
+            dx = x - abdomen_center_x
+            dy = y - abdomen_center_y
+            
+            # Abdomen shape (oval)
+            if (dx*dx)/(16*16) + (dy*dy)/(12*12) <= 1.0:
+                # Base color
+                color = SPIDER_BASE
+                
+                # Shading (bottom darker)
+                if dy > 3: color = SPIDER_SHADOW
+                # Highlight (top)
+                elif dy < -3: color = SPIDER_MID
+                
+                # Glowing sacs/spots on the abdomen
+                if (x % 6 == 0 and y % 5 == 0) and dy > 0:
+                    color = SPIDER_GLOW
+                
+                canvas[y, x] = color
+
+    # === 2. Spider Legs ===
+    # 8 legs coming out from the "waist" area (around y=40)
+    # We'll draw 4 on each side.
     
-    # Draw front legs last
-    draw_legs(canvas, [front_left_legs, front_right_legs], width, height)
+    leg_origins = [
+        (24, 42), (22, 44), (20, 46), (18, 48), # Left side origins
+        (40, 42), (42, 44), (44, 46), (46, 48)  # Right side origins
+    ]
     
+    # Leg paths (simplified jointed legs)
+    # Left legs
+    leg_paths_left = [
+        [(-5, -5), (-5, 10)], # Front-ish
+        [(-8, -2), (-4, 12)],
+        [(-8, 2), (-2, 10)],
+        [(-6, 5), (-1, 8)]    # Back-ish
+    ]
+    
+    # Draw Left Legs
+    for i, (ox, oy) in enumerate(leg_origins[:4]):
+        path = leg_paths_left[i]
+        # Segment 1: Body to Joint
+        jx, jy = ox + path[0][0], oy + path[0][1]
+        _draw_line(canvas, ox, oy, jx, jy, LEG_MID)
+        # Segment 2: Joint to Tip
+        tx, ty = jx + path[1][0], jy + path[1][1]
+        _draw_line(canvas, jx, jy, tx, ty, LEG_DARK)
+        # Tip
+        if 0 <= tx < width and 0 <= ty < height:
+            canvas[ty, tx] = LEG_TIP
+
+    # Draw Right Legs (Mirrored logic)
+    for i, (ox, oy) in enumerate(leg_origins[4:]):
+        path = leg_paths_left[i] # Reuse relative offsets but mirror X
+        # Segment 1
+        jx, jy = ox - path[0][0], oy + path[0][1]
+        _draw_line(canvas, ox, oy, jx, jy, LEG_MID)
+        # Segment 2
+        tx, ty = jx - path[1][0], jy + path[1][1]
+        _draw_line(canvas, jx, jy, tx, ty, LEG_DARK)
+        # Tip
+        if 0 <= tx < width and 0 <= ty < height:
+            canvas[ty, tx] = LEG_TIP
+
+    # === 3. Human Upper Body ===
+    # Rising from y=40
+    waist_y = 40
+    head_y = 18
+    
+    # Torso
+    for y in range(head_y + 8, waist_y + 2):
+        width_at_y = 4
+        if y < head_y + 12: width_at_y = 5 # Chest
+        elif y > waist_y - 4: width_at_y = 5 # Hips/Waist connection
+        
+        for x in range(center_x - width_at_y // 2, center_x + width_at_y // 2 + 1):
+            if 0 <= x < width:
+                canvas[y, x] = SKIN_BASE
+                # Armor/Clothing (Corset style)
+                if y > head_y + 12:
+                    if x == center_x - width_at_y // 2 or x == center_x + width_at_y // 2:
+                        canvas[y, x] = ARMOR_RED
+                    if y % 3 == 0 and abs(x - center_x) < 2:
+                        canvas[y, x] = ARMOR_TRIM # Laces/Gold
+
+    # Head
+    for y in range(head_y, head_y + 9):
+        for x in range(center_x - 3, center_x + 4):
+            # Oval head
+            if (x-center_x)**2 + (y-(head_y+4))**2 <= 16:
+                canvas[y, x] = SKIN_BASE
+    
+    # Face
+    canvas[head_y + 4, center_x - 1] = EYE_GLOW # Left Eye
+    canvas[head_y + 4, center_x + 1] = EYE_GLOW # Right Eye
+    canvas[head_y + 7, center_x] = [100, 50, 50, 255] # Mouth
+
+    # Hair
+    for y in range(head_y - 2, head_y + 10):
+        for x in range(center_x - 5, center_x + 6):
+            if canvas[y, x][3] == 0: # If empty
+                # Hair volume
+                if (x-center_x)**2 + (y-(head_y+2))**2 <= 25:
+                     canvas[y, x] = HAIR_DARK
+    
+    # Crown/Horns
+    # Left Horn
+    _draw_line(canvas, center_x - 2, head_y, center_x - 5, head_y - 6, HORN_BONE)
+    # Right Horn
+    _draw_line(canvas, center_x + 2, head_y, center_x + 5, head_y - 6, HORN_BONE)
+    # Center Crown
+    canvas[head_y-1, center_x] = ARMOR_RED
+    canvas[head_y-2, center_x] = ARMOR_RED
+
+    # Arms
+    # Left Arm (raised slightly)
+    _draw_line(canvas, center_x - 4, head_y + 10, center_x - 8, head_y + 14, SKIN_BASE) # Upper
+    _draw_line(canvas, center_x - 8, head_y + 14, center_x - 10, head_y + 8, SKIN_BASE) # Lower (raised hand)
+    # Hand glow
+    canvas[head_y + 7, center_x - 10] = [255, 50, 50, 200] # Magic glow
+
+    # Right Arm (down/holding something?)
+    _draw_line(canvas, center_x + 4, head_y + 10, center_x + 8, head_y + 14, SKIN_BASE)
+    _draw_line(canvas, center_x + 8, head_y + 14, center_x + 10, head_y + 18, SKIN_BASE)
+    # Gauntlets
+    canvas[head_y + 16, center_x + 9] = ARMOR_RED
+    canvas[head_y + 17, center_x + 10] = ARMOR_RED
+
     return canvas
 
-
 def create_spiderqueen_attack():
-    """Create attack SpiderQueen pose - lunging forward with fangs bared"""
+    """Create the attacking Spider Queen pose."""
     width, height = 64, 64
     canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    center_x = 28
-    body_y = 30
+    # Reuse Palette
+    SPIDER_BASE = [80, 20, 20, 255]
+    SPIDER_MID = [120, 40, 40, 255]
+    SPIDER_HIGHLIGHT = [160, 60, 60, 255]
+    SPIDER_SHADOW = [40, 10, 10, 255]
+    SPIDER_GLOW = [255, 100, 50, 255]
     
-    # === LEGS (reared up) ===
-    back_left_legs = [
-        [(center_x - 8, body_y + 10), (center_x - 14, body_y + 16), (center_x - 20, body_y + 20), (center_x - 26, body_y + 26)],
-        [(center_x - 6, body_y + 8), (center_x - 12, body_y + 13), (center_x - 17, body_y + 17), (center_x - 22, body_y + 23)]
+    LEG_DARK = [50, 20, 20, 255]
+    LEG_MID = [100, 40, 40, 255]
+    LEG_TIP = [30, 10, 10, 255]
+    
+    SKIN_BASE = [180, 200, 210, 255]
+    ARMOR_RED = [140, 30, 30, 255]
+    ARMOR_TRIM = [180, 140, 60, 255]
+    HAIR_DARK = [20, 20, 30, 255]
+    HORN_BONE = [200, 190, 180, 255]
+    EYE_GLOW = [255, 50, 50, 255] # Red eyes for attack!
+    
+    center_x = 32
+    
+    # === 1. Spider Lower Body (Lunging forward) ===
+    abdomen_center_x = 32
+    abdomen_center_y = 42 # Slightly higher
+    
+    for y in range(32, 58):
+        for x in range(15, 50):
+            dx = x - abdomen_center_x
+            dy = y - abdomen_center_y
+            if (dx*dx)/(15*15) + (dy*dy)/(11*11) <= 1.0:
+                color = SPIDER_BASE
+                if dy > 3: color = SPIDER_SHADOW
+                elif dy < -3: color = SPIDER_MID
+                if (x % 6 == 0 and y % 5 == 0) and dy > 0:
+                    color = SPIDER_GLOW
+                canvas[y, x] = color
+
+    # === 2. Spider Legs (Aggressive/Raised) ===
+    leg_origins = [
+        (24, 40), (22, 42), (20, 44), (18, 46),
+        (40, 40), (42, 42), (44, 44), (46, 46)
     ]
     
-    back_right_legs = [
-        [(center_x + 8, body_y + 10), (center_x + 14, body_y + 16), (center_x + 20, body_y + 20), (center_x + 26, body_y + 26)],
-        [(center_x + 6, body_y + 8), (center_x + 12, body_y + 13), (center_x + 17, body_y + 17), (center_x + 22, body_y + 23)]
-    ]
+    # Front legs raised high
+    # Left
+    _draw_line(canvas, leg_origins[0][0], leg_origins[0][1], leg_origins[0][0]-8, leg_origins[0][1]-10, LEG_MID) # Up
+    _draw_line(canvas, leg_origins[0][0]-8, leg_origins[0][1]-10, leg_origins[0][0]-4, leg_origins[0][1]-15, LEG_TIP) # Tip
     
-    front_left_legs = [
-        [(center_x - 5, body_y + 2), (center_x - 9, body_y - 3), (center_x - 12, body_y - 7), (center_x - 14, body_y - 8)],
-        [(center_x - 4, body_y), (center_x - 7, body_y - 5), (center_x - 9, body_y - 9), (center_x - 11, body_y - 10)]
-    ]
+    # Right
+    _draw_line(canvas, leg_origins[4][0], leg_origins[4][1], leg_origins[4][0]+8, leg_origins[4][1]-10, LEG_MID)
+    _draw_line(canvas, leg_origins[4][0]+8, leg_origins[4][1]-10, leg_origins[4][0]+4, leg_origins[4][1]-15, LEG_TIP)
+
+    # Other legs planted
+    for i in range(1, 4):
+        # Left
+        ox, oy = leg_origins[i]
+        _draw_line(canvas, ox, oy, ox-6, oy+5, LEG_MID)
+        _draw_line(canvas, ox-6, oy+5, ox-10, oy+10, LEG_DARK)
+        # Right
+        ox, oy = leg_origins[i+4]
+        _draw_line(canvas, ox, oy, ox+6, oy+5, LEG_MID)
+        _draw_line(canvas, ox+6, oy+5, ox+10, oy+10, LEG_DARK)
+
+    # === 3. Human Upper Body (Casting/Attacking) ===
+    waist_y = 38
+    head_y = 16
     
-    front_right_legs = [
-        [(center_x + 5, body_y + 2), (center_x + 9, body_y - 3), (center_x + 12, body_y - 7), (center_x + 14, body_y - 8)],
-        [(center_x + 4, body_y), (center_x + 7, body_y - 5), (center_x + 9, body_y - 9), (center_x + 11, body_y - 10)]
-    ]
+    # Torso
+    for y in range(head_y + 8, waist_y + 2):
+        width_at_y = 4
+        if y < head_y + 12: width_at_y = 5
+        for x in range(center_x - width_at_y // 2, center_x + width_at_y // 2 + 1):
+            if 0 <= x < width:
+                canvas[y, x] = SKIN_BASE
+                if y > head_y + 12:
+                    if x == center_x - width_at_y // 2 or x == center_x + width_at_y // 2:
+                        canvas[y, x] = ARMOR_RED
+
+    # Head
+    for y in range(head_y, head_y + 9):
+        for x in range(center_x - 3, center_x + 4):
+            if (x-center_x)**2 + (y-(head_y+4))**2 <= 16:
+                canvas[y, x] = SKIN_BASE
     
-    draw_legs(canvas, [back_left_legs, back_right_legs, front_left_legs, front_right_legs], width, height)
+    # Angry Face
+    canvas[head_y + 4, center_x - 1] = EYE_GLOW
+    canvas[head_y + 4, center_x + 1] = EYE_GLOW
+    canvas[head_y + 7, center_x] = [50, 0, 0, 255] # Open mouth
+
+    # Hair (Wilder)
+    for y in range(head_y - 4, head_y + 10):
+        for x in range(center_x - 6, center_x + 7):
+            if canvas[y, x][3] == 0:
+                if (x-center_x)**2 + (y-(head_y+2))**2 <= 30:
+                     if random.random() > 0.3: canvas[y, x] = HAIR_DARK
+
+    # Horns
+    _draw_line(canvas, center_x - 2, head_y, center_x - 6, head_y - 8, HORN_BONE)
+    _draw_line(canvas, center_x + 2, head_y, center_x + 6, head_y - 8, HORN_BONE)
+
+    # Arms (Both raised casting magic)
+    # Left
+    _draw_line(canvas, center_x - 4, head_y + 10, center_x - 10, head_y + 8, SKIN_BASE)
+    _draw_line(canvas, center_x - 10, head_y + 8, center_x - 14, head_y + 2, SKIN_BASE)
     
-    # === ABDOMEN ===
-    abdomen_y = body_y + 12
-    
-    for seg in range(12):
-        seg_y = abdomen_y + seg
-        seg_width = int(10 - abs(seg - 6) * 1.4)
-        
-        for sx in range(-seg_width, seg_width + 1):
-            abd_x = center_x + sx
-            abd_y = seg_y
-            if 0 <= abd_x < width and 0 <= abd_y < height:
-                if abs(sx) == seg_width or seg == 0 or seg == 11:
-                    canvas[abd_y][abd_x] = BODY_BLACK
-                elif abs(sx) == seg_width - 1:
-                    canvas[abd_y][abd_x] = FUR_DARK if (abd_x + abd_y) % 2 == 0 else FUR_BROWN
-                elif sx < -seg_width // 2:
-                    canvas[abd_y][abd_x] = BODY_TAN if seg < 6 else BODY_BROWN
-                elif sx > seg_width // 2:
-                    canvas[abd_y][abd_x] = BODY_BROWN
-                else:
-                    canvas[abd_y][abd_x] = BODY_BROWN if seg < 6 else BODY_DARK_BROWN
-    
-    # === CEPHALOTHORAX ===
-    ceph_y = body_y - 6
-    
-    for cy in range(12):
-        ceph_width = int(9 - cy * 0.7)
-        for cx in range(-ceph_width, ceph_width + 1):
-            c_x = center_x + cx
-            c_y = ceph_y + cy
-            if 0 <= c_x < width and 0 <= c_y < height:
-                if abs(cx) == ceph_width or cy == 0 or cy == 11:
-                    canvas[c_y][c_x] = BODY_BLACK
-                elif abs(cx) == ceph_width - 1:
-                    canvas[c_y][c_x] = FUR_BROWN if (c_x + c_y) % 2 == 0 else FUR_DARK
-                elif cy < 6:
-                    canvas[c_y][c_x] = BODY_TAN if cx < 0 else BODY_BROWN
-                else:
-                    canvas[c_y][c_x] = BODY_BROWN if cx < 0 else BODY_DARK_BROWN
-    
-    # === SKULL HEAD ===
-    head_y = ceph_y - 10
-    
-    for hy in range(11):
-        head_width = int(7 - abs(hy - 5) * 0.9)
-        for hx in range(-head_width, head_width + 1):
-            h_x = center_x + hx
-            h_y = head_y + hy
-            if 0 <= h_x < width and 0 <= h_y < height:
-                if abs(hx) == head_width or hy == 0 or hy == 10:
-                    canvas[h_y][h_x] = SKULL_DARK
-                elif hy < 5:
-                    canvas[h_y][h_x] = SKULL_BONE if hx < 0 else SKULL_SHADOW
-                else:
-                    canvas[h_y][h_x] = SKULL_SHADOW if abs(hx) < 2 else (SKULL_BONE if hx < 0 else SKULL_SHADOW)
-    
-    # Red marking (brighter)
-    for ry in range(9):
-        mark_y = head_y + 1 + ry
-        if 0 <= center_x < width and 0 <= mark_y < height:
-            if ry < 5:
-                canvas[mark_y][center_x] = MARKING_ORANGE
-                for side in [-1, 1]:
-                    if 0 <= center_x + side < width:
-                        canvas[mark_y][center_x + side] = MARKING_RED
-            else:
-                canvas[mark_y][center_x] = MARKING_RED
-    
-    # Eyes (glowing)
-    eye_y = head_y + 4
-    for eye_x in [center_x - 3, center_x + 3]:
-        for ey in range(3):
-            for ex in range(3):
-                e_x = eye_x + ex - 1
-                e_y = eye_y + ey - 1
-                if 0 <= e_x < width and 0 <= e_y < height:
-                    if ey == 1 and ex == 1:
-                        canvas[e_y][e_x] = EYE_YELLOW
-                    elif ey == 1 or ex == 1:
-                        canvas[e_y][e_x] = EYE_ORANGE
-                    else:
-                        canvas[e_y][e_x] = SKULL_SOCKET
-    
-    # Small spider eyes
-    for sex, sey in [(center_x - 5, head_y + 2), (center_x + 5, head_y + 2), (center_x - 4, head_y + 1), (center_x + 4, head_y + 1)]:
-        if 0 <= sex < width and 0 <= sey < height:
-            canvas[sey][sex] = EYE_ORANGE
-    
-    # Fangs (extended)
-    for side in [-1, 1]:
-        for fang_seg in range(7):
-            fang_x = center_x + side * (2 + fang_seg // 3)
-            fang_y = head_y + 9 + fang_seg
-            if 0 <= fang_x < width and 0 <= fang_y < height:
-                canvas[fang_y][fang_x] = FANG_WHITE if fang_seg < 4 else FANG_SHADOW
-                if fang_seg < 4 and 0 <= fang_x - side < width:
-                    canvas[fang_y][fang_x - side] = FANG_SHADOW
-    
-    # Spines (bristling)
-    for spx, spy in [(center_x - 7, ceph_y + 2), (center_x - 5, ceph_y + 1), (center_x - 3, ceph_y), (center_x - 1, ceph_y - 1), (center_x + 1, ceph_y - 1), (center_x + 3, ceph_y), (center_x + 5, ceph_y + 1), (center_x + 7, ceph_y + 2)]:
-        for sp in range(4):
-            spine_y = spy - sp
-            if 0 <= spx < width and 0 <= spine_y < height:
-                canvas[spine_y][spx] = SPINE_LIGHT if sp < 2 else SPINE_GRAY
-    
-    # Motion blur
-    for mb in range(10):
-        blur_x = center_x + 8 + mb
-        blur_y = head_y + 3
-        blur_height = 5 - mb // 3
-        
-        for by in range(-blur_height, blur_height + 1):
-            b_y = blur_y + by
-            if 0 <= blur_x < width and 0 <= b_y < height:
-                if canvas[b_y][blur_x][3] == 0:
-                    canvas[b_y][blur_x] = MOTION_BLUR
-    
+    # Right
+    _draw_line(canvas, center_x + 4, head_y + 10, center_x + 10, head_y + 8, SKIN_BASE)
+    _draw_line(canvas, center_x + 10, head_y + 8, center_x + 14, head_y + 2, SKIN_BASE)
+
+    # Magic Effects
+    # Red magic orb above hands
+    for r in range(6):
+        for angle in range(0, 360, 30):
+            rad = angle * 3.14159 / 180
+            mx = int(center_x + r * np.cos(rad))
+            my = int(head_y - 5 + r * np.sin(rad))
+            if 0 <= mx < width and 0 <= my < height:
+                if random.random() > 0.5:
+                    canvas[my, mx] = [255, 50, 50, 200]
+
     return canvas
 
+def _draw_line(canvas, x0, y0, x1, y1, color):
+    """Bresenham's Line Algorithm"""
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+    
+    while True:
+        if 0 <= x0 < canvas.shape[1] and 0 <= y0 < canvas.shape[0]:
+            canvas[y0, x0] = color
+        
+        if x0 == x1 and y0 == y1:
+            break
+        
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
 
 def main():
-    print("Creating SpiderQueen monster images...")
+    print("Creating Spider Queen monster images...")
     
-    spiderqueen_default = create_spiderqueen_default()
-    spiderqueen_attack = create_spiderqueen_attack()
+    spider_default = create_spiderqueen_default()
+    spider_attack = create_spiderqueen_attack()
     
-    img_default = Image.fromarray(spiderqueen_default, 'RGBA')
-    img_default = img_default.resize((256, 256), Image.Resampling.NEAREST)
-    img_default.save('art/spiderqueen_monster.png')
-    print("✓ Saved: art/spiderqueen_monster.png (256x256)")
+    # Convert to PIL and scale up
+    scale = 4
     
-    img_attack = Image.fromarray(spiderqueen_attack, 'RGBA')
-    img_attack = img_attack.resize((256, 256), Image.Resampling.NEAREST)
-    img_attack.save('art/spiderqueen_monster_attack.png')
-    print("✓ Saved: art/spiderqueen_monster_attack.png (256x256)")
+    # Default pose
+    img_default = Image.fromarray(spider_default, 'RGBA')
+    img_default_scaled = img_default.resize((64 * scale, 64 * scale), Image.Resampling.NEAREST)
+    img_default_scaled.save('art/spider_queen.png')
+    print(f"✓ Saved: art/spider_queen.png ({64 * scale}x{64 * scale})")
     
-    print("\n✅ SpiderQueen monster creation complete!")
-    print("\nFeatures:")
-    print("- Default: Horror spider with skull head, 8 hairy legs, red/orange markings")
-    print("- Attack: Lunging forward with front legs raised, fangs extended, eyes glowing")
-    print("\nStyle: Realistic horror spider")
-    print("Colors: Brown/tan fur, skull-like head, red/orange markings, glowing eyes")
+    # Attack animation
+    img_attack = Image.fromarray(spider_attack, 'RGBA')
+    img_attack_scaled = img_attack.resize((64 * scale, 64 * scale), Image.Resampling.NEAREST)
+    img_attack_scaled.save('art/spider_queen_attack.png')
+    print(f"✓ Saved: art/spider_queen_attack.png ({64 * scale}x{64 * scale})")
+    
+    print("\n✅ Spider Queen creation complete!")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
