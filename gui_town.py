@@ -148,8 +148,20 @@ class TownGUI:
         self.gui.print_text("You wave goodbye to the townspeople")
         self.gui.print_text("and head back to your adventures.")
         
+        def return_to_wild():
+            # Restore previous biome (or default to grassland)
+            bg_manager = self.gui.background_manager
+            last_biome = getattr(bg_manager, 'last_biome', 'grassland')
+            
+            # If last biome was somehow town (shouldn't happen but safety check), use grassland
+            if last_biome == 'town':
+                last_biome = 'grassland'
+                
+            self.gui.set_biome_background(last_biome)
+            self.gui.main_menu()
+        
         # Return to main menu after 2 seconds
-        self.gui.root.after(2000, self.gui.main_menu)
+        self.gui.root.after(2000, return_to_wild)
     def _goblin_assault(self):
         """Handle goblin assault on the town - 10% chance when entering town"""
         self.gui.clear_text()
