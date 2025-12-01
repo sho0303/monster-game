@@ -53,6 +53,10 @@ class TownGUI:
         self.gui.print_text("sparkles in the center of the square.")
         self.gui.print_text("\nWhat would you like to do in town?")
         
+        # Voice welcome - DISABLED as per user request (only story text should be voiced)
+        # if hasattr(self.gui, 'voice'):
+        #     self.gui.voice.speak("Welcome to town, traveler.")
+        
         def on_town_select(choice):
             if choice == 1:
                 self._visit_shop()
@@ -83,6 +87,10 @@ class TownGUI:
         self.gui.print_text("🛒 Entering the shop...")
         self.gui.print_text("The shopkeeper greets you warmly.")
         
+        # Voice welcome - DISABLED as per user request (only story text should be voiced)
+        # if hasattr(self.gui, 'voice'):
+        #     self.gui.voice.speak("Welcome to Monster Mart!")
+        
         # Use existing shop system
         self.gui.shop.open()
     
@@ -91,6 +99,10 @@ class TownGUI:
         self.gui.clear_text()
         self.gui.print_text("🍺 Entering the tavern...")
         self.gui.print_text("The friendly bartender welcomes you warmly.")
+        
+        # Voice welcome - DISABLED as per user request (only story text should be voiced)
+        # if hasattr(self.gui, 'voice'):
+        #     self.gui.voice.speak("Pull up a chair by the fire!")
         
         # Use tavern system
         self.gui.tavern.open()

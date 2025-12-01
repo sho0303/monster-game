@@ -13,6 +13,7 @@ from resource_utils import get_resource_path, resource_exists
 from game_state import initialize_game_state
 from game_enums import BiomeType
 from gui_audio import Audio
+from gui_voice import VoiceManager
 from gui_combat import CombatGUI
 from gui_shop import ShopGUI
 from gui_blacksmith import BlacksmithGUI
@@ -62,6 +63,7 @@ class GameGUI:
         # Game state
         self.game_state = None
         self.audio = Audio()
+        self.voice = VoiceManager()
         self.combat: CombatGUI = None
         self.shop: ShopGUI = None
         self.blacksmith: BlacksmithGUI = None
@@ -438,6 +440,11 @@ class GameGUI:
         ]
         
         self._print_colored_parts(parts)
+        
+        # Voice the damage - DISABLED as per user request (only story text should be voiced)
+        # if hasattr(self, 'voice'):
+        #     clean_msg = f"{attacker_name} hits for {damage_amount} damage"
+        #     self.voice.speak(clean_msg)
     
     def print_colored_value(self, text, value, value_type='default', custom_color=None):
         """Print text with a colored value embedded"""
@@ -590,7 +597,7 @@ class GameGUI:
    ENTER - Activate selected button
 
 🔊 Audio:
-   M - Mute/Unmute
+   M - Mute/Unmute Music
    + - Volume up
    - - Volume down
 
@@ -742,6 +749,13 @@ class GameGUI:
                 self.audio.set_volume(0.5)
                 self.print_text("🔊 Audio enabled")
 
+    def _toggle_voice(self):
+        """Toggle voice on/off"""
+        if hasattr(self, 'voice'):
+            is_enabled = self.voice.toggle()
+            status = "enabled" if is_enabled else "disabled"
+            self.print_text(f"🗣️ Voice {status}")
+
     def set_buttons(self, labels, action_callback):
         """Set button labels and action"""
         # Unlock interface when new buttons are being set
@@ -856,6 +870,12 @@ class GameGUI:
                 self.print_text("📖  The Story Begins...")
                 self.print_text("=" * 60)
                 self.print_text("\n(Press any button to continue)")
+                
+                # Speak the prologue text
+                if hasattr(self, 'voice'):
+                    # Join lines with pauses for better narration
+                    full_story = ". ".join(prologue_lines)
+                    self.voice.speak(full_story)
                 
                 # Set up button to continue to title screen
                 self.set_buttons(["Continue"], lambda choice: self.show_title_screen())
