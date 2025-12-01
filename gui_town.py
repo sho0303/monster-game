@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from resource_utils import resource_exists
 
 import config
+from game_enums import BiomeType
 
 if TYPE_CHECKING:
     from gui_interfaces import GameContextProtocol
@@ -34,6 +35,9 @@ class TownGUI:
         
         # Set town background
         self.gui.set_town_background()
+        
+        # Ensure biome is set to town
+        self.gui.current_biome = BiomeType.TOWN
         
         # 10% chance of goblin assault
         if random.random() < 0.10:

@@ -11,6 +11,7 @@ import config
 from logger_utils import get_logger
 from resource_utils import get_resource_path, resource_exists
 from game_state import initialize_game_state
+from game_enums import BiomeType
 from gui_audio import Audio
 from gui_combat import CombatGUI
 from gui_shop import ShopGUI
@@ -61,14 +62,16 @@ class GameGUI:
         # Game state
         self.game_state = None
         self.audio = Audio()
-        self.combat = None
-        self.shop = None
-        self.blacksmith = None
-        self.inventory = None
-        self.monster_encounter = None
-        self.quest_manager = None
-        self.save_load_manager = None
-        self.town = None
+        self.combat: CombatGUI = None
+        self.shop: ShopGUI = None
+        self.blacksmith: BlacksmithGUI = None
+        self.inventory: InventoryGUI = None
+        self.monster_encounter: MonsterEncounterGUI = None
+        self.quest_manager: QuestManager = None
+        self.save_load_manager: SaveLoadManager = None
+        self.town: TownGUI = None
+        self.tavern: TavernGUI = None
+        self.achievements: AchievementManager = None
         
         # Create main layout
         self._create_widgets()

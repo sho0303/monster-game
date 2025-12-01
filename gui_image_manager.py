@@ -90,6 +90,23 @@ class ImageManager:
         except Exception as e:
             logger.error(f"Could not load image '{image_path}': {e}")
             self.print_text(f"Could not load image: {e}")
+            
+            # Create a placeholder image (magenta rectangle)
+            try:
+                canvas_width, canvas_height = self.get_canvas_dimensions()
+                placeholder = Image.new('RGB', (100, 100), color='magenta')
+                center_x = (canvas_width - 100) // 2
+                center_y = (canvas_height - 100) // 2
+                
+                photo = ImageTk.PhotoImage(placeholder)
+                self.image_canvas.create_image(center_x, center_y, image=photo, anchor='nw', tags='foreground')
+                self.canvas_images.append(photo) # Keep reference
+                
+                # Add text "MISSING"
+                self.image_canvas.create_text(center_x + 50, center_y + 50, text="MISSING\nASSET", 
+                                            fill='white', font=('Arial', 10, 'bold'), justify='center', tags='foreground')
+            except Exception as pe:
+                logger.error(f"Failed to create placeholder: {pe}")
     
     def show_images(self, image_paths, layout="auto"):
         """Display multiple images using canvas for proper background compositing

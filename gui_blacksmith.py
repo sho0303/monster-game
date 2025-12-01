@@ -26,7 +26,8 @@ class BlacksmithGUI:
                 'stat': 'attack',
                 'bonus': config.BLACKSMITH_ATTACK_BONUS,
                 'icon': '⚔️',
-                'message': 'Your weapon gleams with deadly sharpness!'
+                'message': 'Your weapon gleams with deadly sharpness!',
+                'sound': config.SOUND_BLACKSMITH_SHARPEN
             },
             'Bolster Armour': {
                 'name': 'Bolster Armour', 
@@ -35,7 +36,8 @@ class BlacksmithGUI:
                 'stat': 'defense',
                 'bonus': config.BLACKSMITH_DEFENSE_BONUS,
                 'icon': '🛡️',
-                'message': 'Your armor is reinforced with expert craftsmanship!'
+                'message': 'Your armor is reinforced with expert craftsmanship!',
+                'sound': config.SOUND_BLACKSMITH_HAMMER
             }
         }
     
@@ -154,16 +156,10 @@ class BlacksmithGUI:
         print(f"DEBUG: Blacksmith work for service: {service['name']}")
         
         # Play appropriate sound effect
-        if service['name'] == 'Bolster Armour':
-            print(f"DEBUG: Playing hammer sound: {config.SOUND_BLACKSMITH_HAMMER}")
-            result = self.gui.audio.play_sound_effect(config.SOUND_BLACKSMITH_HAMMER, volume=1.0)
+        if 'sound' in service:
+            print(f"DEBUG: Playing sound: {service['sound']}")
+            result = self.gui.audio.play_sound_effect(service['sound'], volume=1.0)
             print(f"DEBUG: Play result: {result}")
-        elif service['name'] == 'Sharpen Sword':
-            print(f"DEBUG: Playing sharpen sound: {config.SOUND_BLACKSMITH_SHARPEN}")
-            result = self.gui.audio.play_sound_effect(config.SOUND_BLACKSMITH_SHARPEN, volume=1.0)
-            print(f"DEBUG: Play result: {result}")
-        else:
-            print(f"DEBUG: No sound match for {service['name']}")
         
         # Work sequence
         work_messages = [

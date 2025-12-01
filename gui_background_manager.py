@@ -12,6 +12,7 @@ import random
 import config
 from logger_utils import get_logger
 from resource_utils import get_resource_path
+from game_enums import BiomeType
 
 logger = get_logger(__name__)
 
@@ -50,35 +51,35 @@ class BackgroundManager:
         self.main_menu = main_menu_callback or self._default_main_menu
         
         # Biome state tracking
-        self.current_biome = 'grassland'
-        self.last_biome = 'grassland'
+        self.current_biome = BiomeType.GRASSLAND
+        self.last_biome = BiomeType.GRASSLAND
         
         # Background image reference (prevent garbage collection)
         self.bg_photo = None
         
         # Biome configuration
         self.biome_configs = {
-            'grassland': {
+            BiomeType.GRASSLAND: {
                 'background': config.BIOME_BACKGROUNDS['grassland'],
                 'fallback_color': config.COLOR_BIOME_GRASSLAND,
                 'floor_offset': 0  # Default vertical positioning
             },
-            'desert': {
+            BiomeType.DESERT: {
                 'background': config.BIOME_BACKGROUNDS['desert'], 
                 'fallback_color': config.COLOR_BIOME_DESERT,
                 'floor_offset': 0
             },
-            'dungeon': {
+            BiomeType.DUNGEON: {
                 'background': config.BIOME_BACKGROUNDS['dungeon'],
                 'fallback_color': config.COLOR_BIOME_DUNGEON,
                 'floor_offset': 0
             },
-            'ocean': {
+            BiomeType.OCEAN: {
                 'background': config.BIOME_BACKGROUNDS['ocean'],
                 'fallback_color': config.COLOR_BIOME_OCEAN,
                 'floor_offset': 0
             },
-            'town': {
+            BiomeType.TOWN: {
                 'background': config.BIOME_BACKGROUNDS['town'],
                 'fallback_color': config.COLOR_BIOME_TOWN,
                 'floor_offset': 44  # Calculated from horizon line difference (Y=45 vs Y=38) to align with ground
@@ -151,11 +152,11 @@ class BackgroundManager:
             self.set_background_image(config['background'], config['fallback_color'])
         else:
             # Default to grassland - only update last_biome if we're changing
-            if self.current_biome != 'grassland':
+            if self.current_biome != BiomeType.GRASSLAND:
                 self.last_biome = self.current_biome
             # If already grassland, keep the existing last_biome
             
-            self.current_biome = 'grassland'
+            self.current_biome = BiomeType.GRASSLAND
             self.set_background_image('art/grassy_background.png', '#4a7c59')
     
     def reset_background(self):
@@ -174,7 +175,7 @@ class BackgroundManager:
         """Set the town-specific background"""
         # Use set_biome_background to ensure current_biome is updated to 'town'
         # This is critical for get_floor_offset() to return the correct value
-        self.set_biome_background('town')
+        self.set_biome_background(BiomeType.TOWN)
     
     def set_tavern_background(self):
         """Set the tavern-specific background"""

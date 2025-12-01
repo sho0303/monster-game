@@ -82,7 +82,7 @@ class SaveLoadManager:
             return []
     
     def save_game(self, hero, current_biome=None, save_name=None):
-        """Save current game state to YAML file"""
+        """Save current game state to YAML file with atomic write safety"""
         try:
             # Generate save name if not provided
             if save_name is None:
@@ -110,15 +110,23 @@ class SaveLoadManager:
             if hasattr(self.gui, 'achievements') and self.gui.achievements:
                 save_data['achievements'] = self.gui.achievements.save_to_dict()
             
-            # Save to file
-            save_path = self.saves_dir / save_name
-            with open(save_path, 'w', encoding='utf-8') as f:
+            # Atomic write: Save to temp file first, then rename
+            final_path = self.saves_dir / save_name
+            temp_path = final_path.with_suffix('.tmp')
+            
+            with open(temp_path, 'w', encoding='utf-8') as f:
                 yaml.dump(save_data, f, default_flow_style=False, allow_unicode=True, indent=2)
+                
+            # Rename temp file to final file (atomic operation on POSIX, usually safe on Windows)
+            if temp_path.exists():
+                if final_path.exists():
+                    final_path.unlink() # Remove existing file if overwriting
+                temp_path.rename(final_path)
             
             return {
                 'success': True,
                 'filename': save_name,
-                'path': save_path
+                'path': final_path
             }
         except Exception as e:
             return {
