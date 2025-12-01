@@ -153,6 +153,16 @@ class AchievementManager:
             reward_type="stat_bonus",
             reward_value=5  # +5 attack permanently
         ))
+
+        self.add_achievement(Achievement(
+            id="vampire_hunter",
+            name="Vampire Hunter",
+            description="Defeat the vampire Vlad",
+            category="combat",
+            target_value=1,
+            reward_type="gold_and_xp",
+            reward_value=20  # 20 gold and 20 xp
+        ))
         
         # Exploration Achievements
         self.add_achievement(Achievement(
@@ -314,6 +324,9 @@ class AchievementManager:
         
         if achievement.reward_type == "gold":
             hero['gold'] = hero.get('gold', 0) + achievement.reward_value
+        elif achievement.reward_type == "gold_and_xp":
+            hero['gold'] = hero.get('gold', 0) + achievement.reward_value
+            hero['xp'] = hero.get('xp', 0) + achievement.reward_value
         elif achievement.reward_type == "stat_bonus":
             # Determine which stat based on achievement
             if "attack" in achievement.description.lower() or achievement.id == "apex_predator":
@@ -343,6 +356,9 @@ class AchievementManager:
         self.update_progress("apex_predator", 1 if total_kills <= 100 else 0)
         self.update_progress("death_defier", 1)
         
+        if monster_name == "Vampire":
+            self.update_progress("vampire_hunter", 1)
+
         # Check for final boss defeat
         if is_final_boss:
             self.update_progress("savior_of_monster_world", 1)
