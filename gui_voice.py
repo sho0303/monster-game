@@ -25,6 +25,7 @@ class VoiceManager:
         self.voice_name = "en-GB-SoniaNeural"  # British female, very clear for fantasy
         # Alternatives: en-US-ChristopherNeural (Male), en-US-AriaNeural (Female)
         
+        self.current_channel = None
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()
         logger.info("VoiceManager (Edge TTS) initialized")
@@ -74,12 +75,15 @@ class VoiceManager:
                 
                 # Play and wait for it to finish
                 channel = sound.play()
+                self.current_channel = channel
                 
                 # Wait for playback to finish while keeping GUI responsive
                 # (This thread is separate from GUI thread, so blocking here is fine)
                 if channel:
                     while channel.get_busy():
                         pygame.time.wait(100)
+                
+                self.current_channel = None
             else:
                 logger.warning("Pygame mixer not initialized, cannot play voice")
                 
@@ -112,6 +116,20 @@ class VoiceManager:
         """Remove emojis and extra whitespace for cleaner speech"""
         # Edge TTS handles most things well, but let's strip excessive whitespace
         return " ".join(text.split())
+
+    def interrupt(self):
+        """Stop current speech and clear queue"""
+        # Clear queue
+        while not self.queue.empty():
+            try:
+                self.queue.get_nowait()
+                self.queue.task_done()
+            except queue.Empty:
+                break
+        
+        # Stop current playback
+        if self.current_channel:
+            self.current_channel.stop()
 
     def stop(self):
         """Stop the voice manager thread"""

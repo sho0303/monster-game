@@ -761,6 +761,14 @@ class GameGUI:
         # Unlock interface when new buttons are being set
         self.keyboard_enabled = True
         
+        # Wrap callback to interrupt voice when any button is pressed
+        def wrapped_callback(choice):
+            if hasattr(self, 'voice'):
+                self.voice.interrupt()
+            action_callback(choice)
+            
+        self.current_action = wrapped_callback
+        
         # Filter out empty labels to get actual button count
         filtered_labels = [label for label in labels if label and label.strip()]
         
@@ -774,7 +782,7 @@ class GameGUI:
                 shortcut_label = f"[{i+1}] {label}"
                 self.buttons[i].config(text=shortcut_label, state=tk.NORMAL)
         
-        self.current_action = action_callback
+        # self.current_action is already set to wrapped_callback above
         
         # Reset selection to first enabled button
         self.current_selected_button = 1
