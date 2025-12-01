@@ -65,6 +65,7 @@ class BlacksmithGUI:
     
     def _show_services(self):
         """Display available blacksmith services"""
+        print("DEBUG: Showing blacksmith services")
         self.gui.print_text("=" * 60)
         self.gui.print_text("BLACKSMITH SERVICES:")
         self.gui.print_text("=" * 60)
@@ -80,12 +81,17 @@ class BlacksmithGUI:
         
         # Set buttons for service interaction
         def on_service_action(choice):
+            print(f"DEBUG: Service action selected: {choice}")
             if choice <= len(services_list):
                 selected_service = services_list[choice - 1]
+                print(f"DEBUG: Selected service: {selected_service['name']}")
                 self._purchase_service(selected_service)
             elif choice == len(services_list) + 1:
                 # Return to town
+                print("DEBUG: Leaving blacksmith")
                 self._leave_blacksmith()
+            else:
+                print(f"DEBUG: Invalid choice {choice}")
         
         # Set button labels
         button_labels = []
@@ -98,6 +104,8 @@ class BlacksmithGUI:
     
     def _purchase_service(self, service):
         """Handle service purchase"""
+        print(f"DEBUG: Attempting to purchase {service['name']}")
+        
         # Lock interface to prevent double-purchases
         self.gui.lock_interface()
         
@@ -105,8 +113,11 @@ class BlacksmithGUI:
         service_cost = service['cost']
         hero_gold = hero.get('gold', 0)
         
+        print(f"DEBUG: Hero gold: {hero_gold}, Cost: {service_cost}")
+        
         # Check if hero has enough gold
         if hero_gold < service_cost:
+            print("DEBUG: Not enough gold")
             self.gui.clear_text()
             self.gui.print_text(f"\n❌ Not enough gold for {service['name']}!")
             self.gui.print_text(f"   You have: 💰 {hero_gold}")
@@ -120,6 +131,7 @@ class BlacksmithGUI:
             self.gui.root.after(3000, lambda: [self.gui.clear_text(), self._show_services()])
             return
         
+        print("DEBUG: Gold check passed, deducting gold")
         # Deduct gold
         hero['gold'] -= service_cost
         
@@ -130,12 +142,28 @@ class BlacksmithGUI:
         hero[stat_name] += bonus
         new_value = hero[stat_name]
         
+        print(f"DEBUG: Stat updated. {stat_name}: {old_value} -> {new_value}")
+        
         # Show dramatic blacksmith work sequence
         self._show_blacksmith_work(service, old_value, new_value)
     
     def _show_blacksmith_work(self, service, old_value, new_value):
         """Show animated blacksmith working on the enhancement"""
         self.gui.clear_text()
+        
+        print(f"DEBUG: Blacksmith work for service: {service['name']}")
+        
+        # Play appropriate sound effect
+        if service['name'] == 'Bolster Armour':
+            print(f"DEBUG: Playing hammer sound: {config.SOUND_BLACKSMITH_HAMMER}")
+            result = self.gui.audio.play_sound_effect(config.SOUND_BLACKSMITH_HAMMER, volume=1.0)
+            print(f"DEBUG: Play result: {result}")
+        elif service['name'] == 'Sharpen Sword':
+            print(f"DEBUG: Playing sharpen sound: {config.SOUND_BLACKSMITH_SHARPEN}")
+            result = self.gui.audio.play_sound_effect(config.SOUND_BLACKSMITH_SHARPEN, volume=1.0)
+            print(f"DEBUG: Play result: {result}")
+        else:
+            print(f"DEBUG: No sound match for {service['name']}")
         
         # Work sequence
         work_messages = [

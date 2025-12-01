@@ -1,225 +1,173 @@
-#!/usr/bin/env python3
-"""Bandit Leader Monster Art Generator"""
+"""
+Create pixel art for the Bandit monster and its attack animation.
+"""
+from PIL import Image, ImageDraw
 import numpy as np
-from PIL import Image
-import os
-
+import random
 
 def create_bandit_art():
-    size = 32
-    canvas = np.zeros((size, size, 4), dtype=np.uint8)
+    # Image dimensions
+    width = 64
+    height = 64
+    scale = 4
     
-    SKIN = [210, 180, 140, 255]
-    BLACK = [0, 0, 0, 255]
-    BROWN = [101, 67, 33, 255]
-    DARK_BROWN = [69, 41, 23, 255]
-    RED = [139, 0, 0, 255]  # Bandana
-    GRAY = [192, 192, 192, 255]  # Sword
-    GOLD = [255, 215, 0, 255]
-    LEATHER = [139, 90, 43, 255]
+    # Colors
+    SKIN = [180, 130, 100, 255]
+    SKIN_SHADOW = [140, 100, 80, 255]
+    HAIR = [30, 20, 20, 255] # Dark beard/hair
+    BANDANA_BASE = [200, 50, 50, 255] # Red
+    BANDANA_PATTERN = [255, 100, 50, 255] # Orange stripes
+    COAT_BLUE = [40, 60, 100, 255]
+    COAT_TRIM = [200, 180, 50, 255] # Gold
+    PANTS_GREEN = [80, 90, 60, 255]
+    BOOTS_BROWN = [100, 60, 40, 255]
+    METAL_LIGHT = [200, 200, 210, 255]
+    METAL_DARK = [100, 100, 110, 255]
+    TATTOO_WHITE = [220, 220, 220, 200] # Semi-transparent white
     
-    # Bandana (signature bandit look)
-    for x in range(11, 21):
-        canvas[6][x] = RED
-        canvas[7][x] = RED
-    # Bandana knot
-    canvas[6][21] = RED
-    canvas[7][21] = RED
-    canvas[7][22] = RED
-    
-    # Scruffy face
-    for y in range(8, 14):
-        for x in range(13, 19):
-            if (x-16)**2 + (y-11)**2 <= 9:
-                canvas[y][x] = SKIN
-    
-    # Evil eyes
-    canvas[10][14] = BLACK
-    canvas[10][17] = BLACK
-    canvas[11][14] = BLACK
-    canvas[11][17] = BLACK
-    
-    # Scar across face
-    for x in range(14, 18):
-        canvas[10][x] = DARK_BROWN
-    
-    # Rough beard
-    for y in range(12, 14):
-        for x in range(14, 18):
-            canvas[y][x] = DARK_BROWN
-    
-    # Leather vest
-    for y in range(14, 24):
-        for x in range(12, 20):
-            canvas[y][x] = LEATHER
-    
-    # Belt with buckle
-    for x in range(12, 20):
-        canvas[20][x] = DARK_BROWN
-    canvas[20][15] = GOLD
-    canvas[20][16] = GOLD
-    
-    # Left arm (holding sword)
-    for y in range(16, 22):
-        canvas[y][10] = SKIN
-        canvas[y][11] = SKIN
-    
-    # Sword blade
-    for y in range(8, 18):
-        canvas[y][8] = GRAY
-        canvas[y][9] = GRAY
-    canvas[7][8] = [255, 255, 255, 255]  # Tip
-    
-    # Sword handle
-    canvas[18][8] = BROWN
-    canvas[19][8] = BROWN
-    canvas[18][9] = BROWN
-    canvas[19][9] = BROWN
-    
-    # Right arm (fist/coin pouch)
-    for y in range(16, 22):
-        canvas[y][20] = SKIN
-        canvas[y][21] = SKIN
-    
-    # Coin pouch
-    for y in range(20, 24):
-        for x in range(21, 25):
-            canvas[y][x] = DARK_BROWN
-    # Gold coins spilling
-    canvas[22][24] = GOLD
-    canvas[23][25] = GOLD
-    canvas[24][26] = GOLD
-    
-    # Pants
-    for y in range(24, 30):
-        for x in range(13, 19):
-            canvas[y][x] = BLACK
-    
-    # Boots
-    for y in range(30, 32):
-        for x in range(12, 16):
-            canvas[y][x] = DARK_BROWN
-        for x in range(16, 20):
-            canvas[y][x] = DARK_BROWN
-    
-    return canvas
+    def draw_bandit(is_attack=False):
+        canvas = np.zeros((height, width, 4), dtype=np.uint8)
+        
+        def draw_pixel(x, y, color):
+            if 0 <= x < width and 0 <= y < height:
+                canvas[y][x] = color
+                
+        def draw_rect(x, y, w, h, color):
+            for i in range(w):
+                for j in range(h):
+                    draw_pixel(x + i, y + j, color)
 
+        # Center position
+        cx = width // 2
+        cy = height // 2
+        
+        # Offset for attack lunge
+        x_off = -5 if is_attack else 0
+        
+        # === LEGS ===
+        # Left Leg
+        draw_rect(cx - 8 + x_off, cy + 10, 6, 18, PANTS_GREEN)
+        draw_rect(cx - 8 + x_off, cy + 20, 6, 12, BOOTS_BROWN) # Boot
+        
+        # Right Leg (stepped back if attacking)
+        rx_off = 5 if is_attack else 0
+        draw_rect(cx + 2 + x_off + rx_off, cy + 10, 6, 18, PANTS_GREEN)
+        draw_rect(cx + 2 + x_off + rx_off, cy + 20, 6, 12, BOOTS_BROWN) # Boot
+        
+        # === TORSO ===
+        # Blue Coat
+        draw_rect(cx - 10 + x_off, cy - 5, 20, 18, COAT_BLUE)
+        # Gold Buttons/Trim
+        for y in range(cy - 5, cy + 13, 4):
+            draw_pixel(cx - 4 + x_off, y, COAT_TRIM)
+            draw_pixel(cx + 3 + x_off, y, COAT_TRIM)
+            
+        # Belt/Sash
+        draw_rect(cx - 10 + x_off, cy + 10, 20, 3, [60, 40, 30, 255])
+        
+        # === HEAD ===
+        head_y = cy - 18
+        # Face shape
+        draw_rect(cx - 7 + x_off, head_y, 14, 14, SKIN)
+        
+        # Beard (Dark, bushy)
+        for x in range(cx - 7 + x_off, cx + 8 + x_off):
+            for y in range(head_y + 8, head_y + 16):
+                if (x - (cx + x_off))**2 + (y - (head_y + 8))**2 < 60: # Rounded beard
+                    draw_pixel(x, y, HAIR)
+                    
+        # Bandana (Red with stripes)
+        for x in range(cx - 8 + x_off, cx + 9 + x_off):
+            for y in range(head_y - 4, head_y + 2):
+                col = BANDANA_BASE
+                if (x + y) % 4 == 0: col = BANDANA_PATTERN
+                draw_pixel(x, y, col)
+        # Bandana knot/tails on left
+        draw_pixel(cx - 9 + x_off, head_y, BANDANA_BASE)
+        draw_pixel(cx - 10 + x_off, head_y + 1, BANDANA_BASE)
+        
+        # Eyes
+        draw_pixel(cx - 3 + x_off, head_y + 5, [255, 255, 255, 255])
+        draw_pixel(cx - 3 + x_off, head_y + 5, [0, 0, 0, 255]) # Pupil
+        draw_pixel(cx + 2 + x_off, head_y + 5, [255, 255, 255, 255])
+        draw_pixel(cx + 2 + x_off, head_y + 5, [0, 0, 0, 255]) # Pupil
+        
+        # === ARMS ===
+        # Left Arm (Viewer's Left) - Resting or clenched
+        for x in range(cx - 16 + x_off, cx - 10 + x_off):
+            for y in range(cy - 5, cy + 10):
+                draw_pixel(x, y, SKIN)
+                # Tattoos (White circles)
+                if (x * y) % 17 == 0:
+                    draw_pixel(x, y, TATTOO_WHITE)
+        # Shoulder pad
+        draw_rect(cx - 17 + x_off, cy - 7, 8, 5, COAT_BLUE)
+        
+        # Right Arm (Viewer's Right) - Holding Dagger
+        # If attacking, arm is extended forward
+        arm_x = cx + 10 + x_off
+        arm_y = cy
+        
+        if is_attack:
+            # Extended arm
+            for x in range(cx + 10 + x_off, cx + 22 + x_off):
+                for y in range(cy - 2, cy + 4):
+                    draw_pixel(x, y, SKIN)
+            hand_x = cx + 22 + x_off
+            hand_y = cy
+        else:
+            # Bent arm holding dagger up
+            for x in range(cx + 10 + x_off, cx + 16 + x_off):
+                for y in range(cy - 5, cy + 5):
+                    draw_pixel(x, y, SKIN)
+            hand_x = cx + 14 + x_off
+            hand_y = cy + 2
+            
+        # Shoulder pad
+        draw_rect(cx + 9 + x_off, cy - 7, 8, 5, COAT_BLUE)
+        
+        # Tattoos on right arm
+        if not is_attack:
+            draw_pixel(cx + 12 + x_off, cy - 2, TATTOO_WHITE)
+            draw_pixel(cx + 13 + x_off, cy + 2, TATTOO_WHITE)
 
-def create_bandit_attack_art():
-    size = 32
-    canvas = np.zeros((size, size, 4), dtype=np.uint8)
-    
-    SKIN = [210, 180, 140, 255]
-    BLACK = [0, 0, 0, 255]
-    BROWN = [101, 67, 33, 255]
-    DARK_BROWN = [69, 41, 23, 255]
-    RED = [139, 0, 0, 255]
-    GRAY = [192, 192, 192, 255]
-    WHITE = [255, 255, 255, 255]
-    LEATHER = [139, 90, 43, 255]
-    SLASH = [200, 200, 200, 180]
-    
-    # Bandana
-    for x in range(9, 19):
-        canvas[8][x] = RED
-        canvas[9][x] = RED
-    canvas[8][19] = RED
-    
-    # Face (snarling)
-    for y in range(10, 16):
-        for x in range(11, 17):
-            canvas[y][x] = SKIN
-    
-    # Angry eyes
-    canvas[12][12] = BLACK
-    canvas[12][15] = BLACK
-    canvas[13][12] = RED
-    canvas[13][15] = RED
-    
-    # Scar
-    for x in range(12, 16):
-        canvas[12][x] = DARK_BROWN
-    
-    # Grimace
-    for x in range(12, 16):
-        canvas[14][x] = BLACK
-    
-    # Vest (action pose)
-    for y in range(16, 24):
-        for x in range(10, 18):
-            canvas[y][x] = LEATHER
-    
-    # Sword arm extended (slashing)
-    for y in range(14, 20):
-        for x in range(18, 24):
-            canvas[y][x] = SKIN
-    
-    # SWORD SLASH
-    # Blade in motion
-    for i in range(12):
-        x = 20 + i
-        y = 8 + i
-        if x < 31 and y < 32:
-            canvas[y][x] = GRAY
-            if x + 1 < 32:
-                canvas[y][x+1] = GRAY
-    
-    # Blade tip
-    canvas[6][20] = WHITE
-    canvas[7][21] = WHITE
-    
-    # Sword handle
-    canvas[18][22] = BROWN
-    canvas[19][22] = BROWN
-    canvas[19][23] = BROWN
-    
-    # SLASH EFFECT
-    for i in range(14):
-        x = 22 + i
-        y = 10 + i
-        if x < 32 and y < 32:
-            canvas[y][x] = SLASH
-    
-    # Motion lines
-    for i in range(5):
-        canvas[10+i][26+i] = [150, 150, 150, 100]
-    
-    # Other arm bracing
-    for y in range(18, 22):
-        canvas[y][6] = SKIN
-        canvas[y][7] = SKIN
-    
-    # Legs in fighting stance
-    for y in range(24, 30):
-        canvas[y][12] = BLACK
-        canvas[y][13] = BLACK
-        canvas[y][15] = BLACK
-        canvas[y][16] = BLACK
-    
-    # Dust from movement
-    for x in range(8, 18, 2):
-        canvas[28][x] = [150, 150, 150, 100]
-        canvas[29][x] = [150, 150, 150, 80]
-    
-    return canvas
+        # === WEAPON (Dagger) ===
+        # Handle
+        draw_rect(hand_x, hand_y - 2, 3, 6, [100, 80, 20, 255]) # Gold/Wood handle
+        
+        # Blade
+        if is_attack:
+            # Pointing right/forward
+            for i in range(10):
+                draw_pixel(hand_x + 3 + i, hand_y, METAL_LIGHT)
+                draw_pixel(hand_x + 3 + i, hand_y + 1, METAL_DARK) # Shadow
+            # Tip
+            draw_pixel(hand_x + 13, hand_y, METAL_LIGHT)
+        else:
+            # Pointing up/diagonal
+            for i in range(8):
+                draw_pixel(hand_x + 1 + i, hand_y - 3 + i, METAL_LIGHT) # Back edge
+                draw_pixel(hand_x + 2 + i, hand_y - 3 + i, METAL_DARK) # Sharp edge
+                
+        # Scimitar on hip (Sheathed)
+        # Curved shape on left hip
+        for i in range(10):
+            sx = cx - 8 + x_off - i
+            sy = cy + 12 + (i // 2)
+            draw_pixel(sx, sy, [50, 50, 60, 255]) # Sheath color
+            
+        return Image.fromarray(canvas, 'RGBA')
 
-
-def save_images():
-    art_dir = "../art"
-    os.makedirs(art_dir, exist_ok=True)
+    # Generate and save images
+    img_normal = draw_bandit(is_attack=False)
+    img_normal = img_normal.resize((width * scale, height * scale), Image.Resampling.NEAREST)
+    img_normal.save('art/bandit.png')
+    print(f"Saved art/bandit.png")
     
-    img = Image.fromarray(create_bandit_art(), 'RGBA')
-    img = img.resize((256, 256), Image.NEAREST)
-    img.save(f"{art_dir}/bandit_monster.png")
-    print(f"✅ Created: {art_dir}/bandit_monster.png")
-    
-    attack = Image.fromarray(create_bandit_attack_art(), 'RGBA')
-    attack = attack.resize((256, 256), Image.NEAREST)
-    attack.save(f"{art_dir}/bandit_monster_attack.png")
-    print(f"✅ Created: {art_dir}/bandit_monster_attack.png")
-
+    img_attack = draw_bandit(is_attack=True)
+    img_attack = img_attack.resize((width * scale, height * scale), Image.Resampling.NEAREST)
+    img_attack.save('art/bandit_attack.png')
+    print(f"Saved art/bandit_attack.png")
 
 if __name__ == "__main__":
-    print("🗡️ Generating Bandit Leader Art...")
-    save_images()
-    print("🗡️ Complete!")
+    create_bandit_art()

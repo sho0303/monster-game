@@ -1,13 +1,13 @@
 Bandit Leader:
   name: Bandit Leader
-  hp: 50
-  maxhp: 50
-  attack: 10
-  defense: 8
-  gold: 100
+  hp: 40
+  maxhp: 40
+  attack: 20
+  defense: 5
+  gold: 50
   level: 5
   xp: 5
-  art: art/bandit_monster.png
+  art: art/bandit.png
   attack_sound: sword-clash.mp3
-  biome: town
-  attack_art: art/bandit_monster_attack.png
+  biome: desert
+  attack_art: art/bandit_attack.png
