@@ -1,215 +1,194 @@
+"""
+Create a pixel art shop background PNG
+"""
 from PIL import Image, ImageDraw
+import numpy as np
 import random
+import math
 
-def create_fantasy_shop_background(width=512, height=256, scale_factor=8):
-    """Create a pixel art fantasy shop background"""
+def create_shop_background():
+    """Create a pixel art fantasy shop interior"""
+    width = 128
+    height = 64
+    canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    # Create base image at lower resolution for pixel art effect
-    base_width = width // scale_factor
-    base_height = height // scale_factor
-    img = Image.new('RGB', (base_width, base_height), (0, 0, 0))
-    draw = ImageDraw.Draw(img)
+    # === COLORS ===
+    # Wood (Floor, Counter, Shelves)
+    WOOD_DARK = [70, 40, 20, 255]
+    WOOD_MID = [100, 60, 30, 255]
+    WOOD_LIGHT = [130, 80, 40, 255]
+    WOOD_HIGHLIGHT = [160, 100, 50, 255]
     
-    # Color palette for fantasy shop
-    colors = {
-        'wall': (101, 67, 33),           # Dark brown wood
-        'wall_light': (139, 90, 43),     # Lighter brown wood
-        'floor': (83, 53, 10),           # Dark wood floor
-        'floor_light': (101, 67, 33),    # Lighter wood floor
-        'counter': (160, 100, 40),       # Counter wood
-        'counter_top': (180, 120, 60),   # Counter top
-        'shelf': (120, 80, 40),          # Shelf wood
-        'shelf_light': (140, 100, 50),   # Lighter shelf
-        'potion_red': (200, 50, 50),     # Red potion
-        'potion_blue': (50, 100, 200),   # Blue potion
-        'potion_green': (50, 200, 100),  # Green potion
-        'potion_purple': (150, 50, 200), # Purple potion
-        'bottle': (220, 220, 220),       # Glass bottle
-        'gold': (255, 215, 0),           # Gold coins/items
-        'silver': (192, 192, 192),       # Silver items
-        'weapon': (100, 100, 100),       # Metal weapons
-        'rope': (139, 115, 85),          # Rope/string
-        'candle': (255, 255, 150),       # Candle flame
-        'wax': (245, 245, 220),          # Candle wax
-        'shadow': (40, 25, 5),           # Shadow areas
-        'barrel': (101, 67, 33),         # Barrel wood
-        'barrel_metal': (80, 80, 80),    # Barrel metal bands
-    }
+    # Stone (Walls)
+    STONE_DARK = [60, 60, 70, 255]
+    STONE_MID = [90, 90, 100, 255]
+    STONE_LIGHT = [120, 120, 130, 255]
     
-    # Fill background with wall color
-    draw.rectangle([0, 0, base_width, base_height], fill=colors['wall'])
+    # Background/Shadows
+    SHADOW = [30, 20, 10, 100] # Semi-transparent shadow
+    BLACK = [0, 0, 0, 255]
     
-    # Create wood plank texture on walls
-    for y in range(0, base_height, 4):
-        # Alternate light and dark planks
-        plank_color = colors['wall_light'] if (y // 4) % 2 == 0 else colors['wall']
-        draw.rectangle([0, y, base_width, y + 3], fill=plank_color)
-        # Add wood grain lines
-        for x in range(2, base_width, 8):
-            draw.point((x, y + 1), fill=colors['shadow'])
+    # Items on shelves
+    POTION_RED = [200, 50, 50, 255]
+    POTION_BLUE = [50, 50, 200, 255]
+    POTION_GREEN = [50, 200, 50, 255]
+    GOLD = [255, 215, 0, 255]
+    STEEL = [150, 150, 170, 255]
     
-    # Create stone floor
-    floor_start_y = base_height - 12
-    for y in range(floor_start_y, base_height):
-        draw.rectangle([0, y, base_width, y], fill=colors['floor'])
-        if y % 2 == 0:
-            for x in range(0, base_width, 8):
-                draw.rectangle([x, y, x + 7, y], fill=colors['floor_light'])
-    
-    # Create merchant counter (bottom right)
-    counter_x = base_width - 20
-    counter_y = floor_start_y - 8
-    counter_width = 20
-    counter_height = 8
-    
-    # Counter base
-    draw.rectangle([counter_x, counter_y, counter_x + counter_width, counter_y + counter_height], 
-                  fill=colors['counter'])
-    # Counter top
-    draw.rectangle([counter_x, counter_y, counter_x + counter_width, counter_y + 1], 
-                  fill=colors['counter_top'])
-    
-    # Add coins on counter
-    for i in range(3):
-        coin_x = counter_x + 2 + i * 4
-        coin_y = counter_y - 1
-        draw.ellipse([coin_x, coin_y, coin_x + 2, coin_y + 1], fill=colors['gold'])
-    
-    # Create wall shelves (left side)
-    shelf_positions = [
-        (2, 8, 16, 3),   # Top shelf
-        (2, 16, 16, 3),  # Middle shelf
-        (2, 24, 16, 3),  # Bottom shelf
-    ]
-    
-    for shelf_x, shelf_y, shelf_w, shelf_h in shelf_positions:
-        # Shelf base
-        draw.rectangle([shelf_x, shelf_y, shelf_x + shelf_w, shelf_y + shelf_h], 
-                      fill=colors['shelf'])
-        # Shelf top highlight
-        draw.rectangle([shelf_x, shelf_y, shelf_x + shelf_w, shelf_y + 1], 
-                      fill=colors['shelf_light'])
-        # Shelf shadow
-        draw.rectangle([shelf_x, shelf_y + shelf_h - 1, shelf_x + shelf_w, shelf_y + shelf_h], 
-                      fill=colors['shadow'])
-    
-    # Add potions on shelves
-    potion_colors = [colors['potion_red'], colors['potion_blue'], colors['potion_green'], colors['potion_purple']]
-    
-    # Top shelf potions
-    for i in range(4):
-        potion_x = 4 + i * 3
-        potion_y = 4
-        # Bottle
-        draw.rectangle([potion_x, potion_y, potion_x + 2, potion_y + 4], fill=colors['bottle'])
-        # Potion liquid
-        draw.rectangle([potion_x, potion_y + 1, potion_x + 2, potion_y + 3], 
-                      fill=potion_colors[i % len(potion_colors)])
-        # Cork
-        draw.rectangle([potion_x, potion_y, potion_x + 2, potion_y], fill=colors['barrel'])
-    
-    # Middle shelf - weapons and tools
-    weapon_positions = [(4, 12), (8, 12), (12, 12), (15, 12)]
-    for i, (wx, wy) in enumerate(weapon_positions):
-        if i % 2 == 0:
-            # Sword
-            draw.rectangle([wx, wy, wx + 1, wy + 4], fill=colors['weapon'])
-            draw.rectangle([wx, wy + 4, wx + 1, wy + 5], fill=colors['barrel'])  # Handle
-        else:
-            # Staff/wand
-            draw.rectangle([wx, wy, wx, wy + 4], fill=colors['barrel'])
-            draw.point((wx, wy), fill=colors['gold'])  # Magical tip
-    
-    # Bottom shelf - books and scrolls
-    for i in range(5):
-        book_x = 3 + i * 2
-        book_y = 20
-        book_colors = [colors['potion_red'], colors['potion_blue'], colors['barrel'], colors['potion_green']]
-        draw.rectangle([book_x, book_y, book_x + 1, book_y + 3], 
-                      fill=book_colors[i % len(book_colors)])
-    
-    # Create hanging items (right side)
-    for i in range(3):
-        rope_x = base_width - 15 + i * 4
-        rope_y = 4
-        # Rope
-        draw.line([rope_x, rope_y, rope_x, rope_y + 6], fill=colors['rope'])
-        # Hanging item
-        if i == 0:
-            # Lantern
-            draw.rectangle([rope_x - 1, rope_y + 6, rope_x + 1, rope_y + 9], fill=colors['weapon'])
-            draw.point((rope_x, rope_y + 7), fill=colors['candle'])
-        elif i == 1:
-            # Shield
-            draw.ellipse([rope_x - 1, rope_y + 6, rope_x + 2, rope_y + 9], fill=colors['silver'])
-        else:
-            # Herbs/dried goods
-            draw.rectangle([rope_x - 1, rope_y + 6, rope_x + 1, rope_y + 8], fill=colors['potion_green'])
-    
-    # Add barrels in corner
-    barrel_positions = [(base_width - 10, floor_start_y - 6), (base_width - 6, floor_start_y - 6)]
-    for barrel_x, barrel_y in barrel_positions:
-        # Barrel body
-        draw.ellipse([barrel_x, barrel_y, barrel_x + 4, barrel_y + 6], fill=colors['barrel'])
-        # Metal bands
-        draw.rectangle([barrel_x, barrel_y + 1, barrel_x + 4, barrel_y + 2], fill=colors['barrel_metal'])
-        draw.rectangle([barrel_x, barrel_y + 4, barrel_x + 4, barrel_y + 5], fill=colors['barrel_metal'])
-    
-    # Add candles for ambient lighting
-    candle_positions = [(20, 6), (base_width - 25, 10)]
-    for candle_x, candle_y in candle_positions:
-        # Candle base
-        draw.rectangle([candle_x, candle_y + 2, candle_x + 1, candle_y + 6], fill=colors['wax'])
-        # Flame
-        draw.point((candle_x, candle_y), fill=colors['candle'])
-        draw.point((candle_x, candle_y + 1), fill=colors['potion_red'])
-    
-    # Add some ambient details
-    # Cobwebs in corners
-    web_points = [(1, 1), (base_width - 2, 2)]
-    for web_x, web_y in web_points:
-        draw.point((web_x, web_y), fill=colors['silver'])
-        draw.point((web_x + 1, web_y + 1), fill=colors['silver'])
-    
-    # Add some scattered coins on floor
-    for i in range(5):
-        coin_x = random.randint(5, base_width - 10)
-        coin_y = floor_start_y + random.randint(2, 8)
-        draw.point((coin_x, coin_y), fill=colors['gold'])
-    
-    # Scale up the image for final output
-    img_scaled = img.resize((width, height), Image.Resampling.NEAREST)
-    
-    return img_scaled
+    # Helper to draw pixel
+    def draw_pixel(x, y, color):
+        if 0 <= x < width and 0 <= y < height:
+            # Simple alpha blending
+            if len(color) == 4 and color[3] < 255:
+                current = canvas[y][x]
+                alpha = color[3] / 255.0
+                for c in range(3):
+                    canvas[y][x][c] = int(current[c] * (1 - alpha) + color[c] * alpha)
+                canvas[y][x][3] = 255 # Assume opaque result for simplicity
+            else:
+                canvas[y][x] = color
 
-def main():
-    """Create and save the fantasy shop background"""
-    print("Creating fantasy shop background...")
+    # === 1. WALLS & FLOOR ===
+    floor_y = 40 # Where the wall meets the floor
     
-    # Create the background image
-    shop_bg = create_fantasy_shop_background(512, 256, 8)
+    # Draw Wall (Stone bricks)
+    for y in range(floor_y):
+        for x in range(width):
+            # Base wall color
+            col = STONE_MID
+            
+            # Brick pattern
+            brick_h = 8
+            brick_w = 16
+            row = y // brick_h
+            offset = (row % 2) * (brick_w // 2)
+            
+            # Mortar lines
+            if y % brick_h == 0 or (x + offset) % brick_w == 0:
+                col = STONE_DARK
+            # Highlights
+            elif y % brick_h == 1 or (x + offset) % brick_w == 1:
+                col = STONE_LIGHT
+            # Texture
+            elif (x * y * 13) % 100 < 5:
+                col = STONE_DARK
+                
+            draw_pixel(x, y, col)
+            
+    # Draw Floor (Wood planks)
+    for y in range(floor_y, height):
+        for x in range(width):
+            # Perspective effect for planks?
+            # Simple horizontal planks for now
+            col = WOOD_MID
+            
+            plank_h = 6
+            if (y - floor_y) % plank_h == 0:
+                col = WOOD_DARK
+            elif (x * y * 7) % 100 < 5: # Wood grain
+                col = WOOD_LIGHT
+                
+            draw_pixel(x, y, col)
+
+    # === 2. SHELVES (Background) ===
+    shelf_y_positions = [15, 28]
+    shelf_depth = 4
     
-    # Save the image
-    output_path = "../art/shop_background.png"
-    shop_bg.save(output_path)
-    print(f"Fantasy shop background saved to: {output_path}")
+    for sy in shelf_y_positions:
+        # Draw shelf board
+        for x in range(10, width - 10):
+            # Shelf shadow underneath
+            for y in range(sy + 1, sy + 4):
+                draw_pixel(x, y, SHADOW)
+                
+            # Shelf top
+            draw_pixel(x, sy, WOOD_LIGHT)
+            # Shelf front face
+            draw_pixel(x, sy + 1, WOOD_DARK)
+            
+        # Draw items on shelf
+        for x in range(15, width - 15, 8):
+            if random.random() > 0.3: # 70% chance of item
+                item_type = random.choice(['potion', 'book', 'ingot'])
+                
+                if item_type == 'potion':
+                    color = random.choice([POTION_RED, POTION_BLUE, POTION_GREEN])
+                    # Bottle shape
+                    draw_pixel(x, sy - 1, color)
+                    draw_pixel(x, sy - 2, color)
+                    draw_pixel(x, sy - 3, [200, 200, 200, 150]) # Glass neck
+                    
+                elif item_type == 'book':
+                    color = random.choice([[100, 50, 50, 255], [50, 50, 100, 255]])
+                    # Book spine
+                    for by in range(1, 5):
+                        draw_pixel(x, sy - by, color)
+                        draw_pixel(x+1, sy - by, color)
+                        
+                elif item_type == 'ingot':
+                    # Stack of gold/steel
+                    color = random.choice([GOLD, STEEL])
+                    draw_pixel(x, sy - 1, color)
+                    draw_pixel(x+1, sy - 1, color)
+                    draw_pixel(x+2, sy - 1, color)
+                    draw_pixel(x+1, sy - 2, color)
+
+    # === 3. COUNTER (Foreground) ===
+    counter_top_y = 45
+    counter_height = height - counter_top_y
     
-    # Also create a larger version for high-res displays
-    shop_bg_large = create_fantasy_shop_background(1024, 512, 8)
-    output_path_large = "../art/shop_background_large.png"
-    shop_bg_large.save(output_path_large)
-    print(f"Large fantasy shop background saved to: {output_path_large}")
+    for y in range(counter_top_y, height):
+        for x in range(width):
+            # Counter takes up full width? Or maybe centered?
+            # Let's make it full width for the "shop view" feel
+            
+            # Counter Top Surface (perspective)
+            if y < counter_top_y + 5:
+                col = WOOD_LIGHT
+                if y == counter_top_y:
+                    col = WOOD_HIGHLIGHT # Edge highlight
+                elif (x * 3) % 20 == 0: # Wood grain
+                    col = WOOD_MID
+            # Counter Front Face
+            else:
+                col = WOOD_MID
+                # Vertical panels
+                if x % 32 == 0 or x % 32 == 31:
+                    col = WOOD_DARK
+                # Wood grain texture
+                elif (x * y * 17) % 100 < 5:
+                    col = WOOD_DARK
+                # Shadow under the lip
+                if y == counter_top_y + 5:
+                    col = SHADOW
+                    
+            draw_pixel(x, y, col)
+
+    # === 4. LIGHTING/ATMOSPHERE ===
+    # Vignette
+    for y in range(height):
+        for x in range(width):
+            dist_from_center = ((x - width/2)**2 + (y - height/2)**2)**0.5
+            max_dist = (width/2)**2 + (height/2)**2
+            
+            if dist_from_center > 40:
+                opacity = int((dist_from_center - 40) * 2)
+                if opacity > 150: opacity = 150
+                draw_pixel(x, y, [0, 0, 0, opacity])
+
+    # Save image
+    img = Image.fromarray(canvas, 'RGBA')
     
-    print("Fantasy shop background creation complete!")
-    print("\nFeatures created:")
-    print("- Wood plank walls with texture")
-    print("- Stone tile floor")
-    print("- Wall-mounted shelves with potions, weapons, and books")
-    print("- Merchant counter with gold coins")
-    print("- Hanging items (lantern, shield, herbs)")
-    print("- Storage barrels")
-    print("- Ambient candle lighting")
-    print("- Atmospheric details (cobwebs, scattered coins)")
+    # Scale up 4x (matching ocean background)
+    scale_factor = 4
+    final_width = width * scale_factor
+    final_height = height * scale_factor
+    img = img.resize((final_width, final_height), Image.Resampling.NEAREST)
+    
+    img.save('art/shop_background.png')
+    print(f"✓ Saved: art/shop_background.png ({final_width}x{final_height})")
 
 if __name__ == "__main__":
-    main()
+    print("Creating shop background...")
+    create_shop_background()
+    print("✅ Shop background creation complete!")
