@@ -115,6 +115,22 @@ def create_town_background():
             width_at_y = (y - (cy - ch - 25)) * 1.5
             if abs(x - (tx + 6)) < width_at_y:
                 draw_pixel(x, y, ROOF_RED)
+
+    # Castle Windows (Main Body)
+    for wx in [cx + 6, cx + 20]:
+        wy = cy - 20
+        for y in range(wy, wy + 10):
+            for x in range(wx, wx + 4):
+                # Arched top
+                if y > wy + 1 or abs(x - (wx + 1.5)) < 1.5:
+                    draw_pixel(x, y, [40, 40, 50, 255]) # Dark interior
+                    
+    # Tower Window (Arrow Slit)
+    twx = tx + 5
+    twy = cy - ch - 10
+    for y in range(twy, twy + 6):
+        for x in range(twx, twx + 2):
+            draw_pixel(x, y, [40, 40, 50, 255])
                 
     # Church Door (Arched)
     dx = cx + 10
@@ -141,6 +157,25 @@ def create_town_background():
                 if (x - hx) % 12 == 0: col = WOOD_BROWN
                 # Removed diagonal cross beam
                 draw_pixel(x, y, col)
+
+        # House Windows
+        for wx_offset in [4, 16]:
+            wx = hx + wx_offset
+            wy = hy - 14
+            # Window frame
+            for y in range(wy, wy + 6):
+                for x in range(wx, wx + 5):
+                    draw_pixel(x, y, WOOD_BROWN)
+            # Window glass
+            is_lit = random.random() > 0.7
+            for y in range(wy + 1, wy + 5):
+                for x in range(wx + 1, wx + 4):
+                    col = [100, 120, 140, 255] # Dark blue glass
+                    if is_lit: col = [220, 200, 100, 255] # Lit yellow
+                    draw_pixel(x, y, col)
+            # Cross pane
+            draw_pixel(wx + 2, wy + 2, WOOD_BROWN) # Vertical
+            draw_pixel(wx + 2, wy + 3, WOOD_BROWN)
                 
         # Doors
         dx = hx + hw // 2 - 4
