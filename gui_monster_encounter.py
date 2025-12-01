@@ -377,6 +377,10 @@ class MonsterEncounterGUI:
             spacing_x = canvas_width // 3
             start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
             
+            # Apply biome-specific floor offset
+            floor_offset = self.gui.background_manager.get_floor_offset()
+            start_y += floor_offset
+            
             # Set combat positions for animation
             self.gui.combat.combat_hero_x = spacing_x - hero_img_size // 2
             self.gui.combat.combat_monster_x = 2 * spacing_x - monster_img_size // 2
@@ -505,6 +509,10 @@ class MonsterEncounterGUI:
         
         spacing_x = canvas_width // 3
         start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
+        
+        # Apply biome-specific floor offset for proper positioning
+        floor_offset = self.gui.background_manager.get_floor_offset()
+        start_y += floor_offset
         
         # Final positions for hero (left) and monster (right)
         hero_final_x = spacing_x - hero_img_size // 2

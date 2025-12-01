@@ -60,23 +60,28 @@ class BackgroundManager:
         self.biome_configs = {
             'grassland': {
                 'background': config.BIOME_BACKGROUNDS['grassland'],
-                'fallback_color': config.COLOR_BIOME_GRASSLAND
+                'fallback_color': config.COLOR_BIOME_GRASSLAND,
+                'floor_offset': 0  # Default vertical positioning
             },
             'desert': {
                 'background': config.BIOME_BACKGROUNDS['desert'], 
-                'fallback_color': config.COLOR_BIOME_DESERT
+                'fallback_color': config.COLOR_BIOME_DESERT,
+                'floor_offset': 0
             },
             'dungeon': {
                 'background': config.BIOME_BACKGROUNDS['dungeon'],
-                'fallback_color': config.COLOR_BIOME_DUNGEON
+                'fallback_color': config.COLOR_BIOME_DUNGEON,
+                'floor_offset': 0
             },
             'ocean': {
                 'background': config.BIOME_BACKGROUNDS['ocean'],
-                'fallback_color': config.COLOR_BIOME_OCEAN
+                'fallback_color': config.COLOR_BIOME_OCEAN,
+                'floor_offset': 0
             },
             'town': {
                 'background': config.BIOME_BACKGROUNDS['town'],
-                'fallback_color': config.COLOR_BIOME_TOWN
+                'fallback_color': config.COLOR_BIOME_TOWN,
+                'floor_offset': 44  # Calculated from horizon line difference (Y=45 vs Y=38) to align with ground
             }
         }
         
@@ -167,7 +172,9 @@ class BackgroundManager:
     
     def set_town_background(self):
         """Set the town-specific background"""
-        self.set_background_image('art/town_background.png', '#2B4C3D')
+        # Use set_biome_background to ensure current_biome is updated to 'town'
+        # This is critical for get_floor_offset() to return the correct value
+        self.set_biome_background('town')
     
     def set_tavern_background(self):
         """Set the tavern-specific background"""
@@ -360,6 +367,27 @@ class BackgroundManager:
             dict: Biome configuration or None if not found
         """
         return self.biome_configs.get(biome_name)
+    
+    def get_floor_offset(self, biome_name=None):
+        """Get the vertical floor offset for character positioning in a biome
+        
+        Args:
+            biome_name: Name of the biome (default: current biome)
+            
+        Returns:
+            int: Vertical offset in pixels to adjust character positioning
+        """
+        if biome_name is None:
+            biome_name = self.current_biome
+        
+        config = self.biome_configs.get(biome_name, {})
+        offset = config.get('floor_offset', 0)
+        
+        # Debug print for town offset to verify it's working
+        if biome_name == 'town':
+            print(f"DEBUG: get_floor_offset('town') returning {offset}")
+            
+        return offset
     
     def get_available_biomes(self, combat_only=False):
         """Get list of available biomes

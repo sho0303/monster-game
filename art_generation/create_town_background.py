@@ -1,403 +1,244 @@
-#!/usr/bin/env python3
 """
-Create pixel art town biome background PNG to match game art style
+Create a pixel art town background PNG
 """
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 import random
 import math
 
 def create_town_background():
-    """Create a pixel art fantasy wooden village landscape"""
-    # Create a pixel art canvas (same dimensions as other biomes)
-    width = 64
-    height = 32
+    """Create a pixel art fantasy town square based on reference"""
+    width = 128
+    height = 64
     canvas = np.zeros((height, width, 4), dtype=np.uint8)
     
-    # Town color palette (fantasy wooden village tones)
-    # Sky colors - peaceful village sky
-    SKY_BLUE = [135, 206, 235, 255]      # Light blue sky
-    SKY_LIGHT = [176, 224, 230, 255]     # Lighter blue near horizon
-    CLOUD_WHITE = [248, 248, 255, 255]   # White clouds
-    CLOUD_GRAY = [192, 192, 192, 255]    # Cloud shading
+    # === COLORS ===
+    # Sky
+    SKY_BLUE = [100, 180, 240, 255]
+    CLOUD_WHITE = [255, 255, 255, 255]
     
-    # Building colors - primarily wooden
-    WOOD_BROWN = [139, 69, 19, 255]      # Main wooden walls (dark brown)
-    WOOD_LIGHT = [160, 82, 45, 255]      # Light wood planks
-    WOOD_MEDIUM = [120, 60, 30, 255]     # Medium wood tone
-    WOOD_DARK = [101, 67, 33, 255]       # Dark wood accents
-    LOG_BROWN = [83, 53, 10, 255]        # Log cabin wood
-    PLASTER_CREAM = [245, 245, 220, 255] # Cream plaster (Tudor style)
+    # Landscape
+    GRASS_LIGHT = [100, 180, 60, 255]
+    GRASS_DARK = [60, 140, 40, 255]
     
-    # Roof colors - natural materials
-    THATCH_BROWN = [205, 133, 63, 255]   # Thatched roofs (main)
-    THATCH_DARK = [160, 100, 50, 255]    # Thatch shadows
-    THATCH_GOLD = [218, 165, 32, 255]    # Golden thatch
-    WOOD_SHINGLE = [139, 90, 43, 255]    # Wooden shingles
-    MOSS_GREEN = [107, 142, 35, 255]     # Mossy roof patches
+    # Buildings (Stone)
+    STONE_LIGHT = [180, 180, 190, 255]
+    STONE_MID = [140, 140, 150, 255]
+    STONE_DARK = [100, 100, 110, 255]
+    MOSS_GREEN = [80, 140, 60, 255]
     
-    # Village features
-    DIRT_BROWN = [160, 82, 45, 255]      # Dirt roads
-    DIRT_DARK = [139, 69, 19, 255]       # Dirt shadows/ruts
-    GRAVEL_DARK = [105, 105, 105, 255]   # Dark grey gravel
-    GRAVEL_MEDIUM = [128, 128, 128, 255] # Medium grey gravel
-    GRAVEL_LIGHT = [169, 169, 169, 255]  # Light grey gravel accents
-    WELL_STONE = [169, 169, 169, 255]    # Well stones
-    WELL_WATER = [0, 191, 255, 255]      # Well water
+    # Buildings (Wood/Plaster)
+    WALL_CREAM = [240, 230, 200, 255]
+    WOOD_BROWN = [100, 70, 40, 255]
+    ROOF_RED = [180, 80, 70, 255]
+    ROOF_DARK = [140, 50, 40, 255]
     
-    # Details
-    WINDOW_YELLOW = [255, 255, 0, 255]   # Lit windows
-    WINDOW_DARK = [139, 69, 19, 255]     # Window frames
-    DOOR_BLACK = [0, 0, 0, 255]          # Black doors
-    DOOR_BROWN = [101, 67, 33, 255]      # Brown door frames
-    SMOKE_GRAY = [211, 211, 211, 255]    # Chimney smoke
+    # Ground
+    COBBLE_LIGHT = [170, 170, 160, 255]
+    COBBLE_DARK = [140, 140, 130, 255]
     
-    # SKY GRADIENT (top 60% of image)
-    sky_height = int(height * 0.6)  # Sky takes up top 60%
-    
-    for y in range(sky_height):
-        # Create vertical gradient from light blue at top to lighter blue near horizon
-        gradient_ratio = y / sky_height
-        
-        # Blend between sky colors for peaceful town atmosphere
-        r = int(SKY_BLUE[0] + (SKY_LIGHT[0] - SKY_BLUE[0]) * gradient_ratio)
-        g = int(SKY_BLUE[1] + (SKY_LIGHT[1] - SKY_BLUE[1]) * gradient_ratio)
-        b = int(SKY_BLUE[2] + (SKY_LIGHT[2] - SKY_BLUE[2]) * gradient_ratio)
-        
-        sky_color = [r, g, b, 255]
-        
-        # Fill the row with sky gradient
-        for x in range(width):
-            canvas[y, x] = sky_color
-    
-    # CLOUDS - peaceful town clouds
-    cloud_positions = [
-        (12, 3, 8, 3),   # x, y, width, height - fluffy cloud
-        (38, 5, 6, 2),   # smaller cloud
-        (52, 2, 7, 3),   # wispy cloud
-    ]
-    
-    for cloud_x, cloud_y, cloud_w, cloud_h in cloud_positions:
-        for dy in range(cloud_h):
-            for dx in range(cloud_w):
-                x = cloud_x + dx
-                y = cloud_y + dy
-                if 0 <= x < width and 0 <= y < sky_height:
-                    # Create fluffy cloud texture
-                    if random.random() < 0.8:  # 80% cloud density
-                        if dy == 0 or dx == 0 or dx == cloud_w-1:
-                            canvas[y, x] = CLOUD_GRAY  # Cloud edges
-                        else:
-                            canvas[y, x] = CLOUD_WHITE  # Cloud center
-    
-    # GROUND LEVEL - dirt roads (bottom 40%)
-    ground_start_y = sky_height
-    
-    # Create base dirt road layer
-    for y in range(ground_start_y, height):
-        for x in range(width):
-            canvas[y, x] = DIRT_BROWN
-    
-    # Add dirt road texture and wagon ruts
-    for y in range(ground_start_y, height):
-        for x in range(width):
-            if (x + y) % 5 == 0:  # Create dirt texture pattern
-                if random.random() < 0.4:
-                    canvas[y, x] = DIRT_DARK
-            # Add wagon ruts (parallel lines)
-            if x == width // 3 or x == (2 * width) // 3:
-                if random.random() < 0.6:
-                    canvas[y, x] = DIRT_DARK
-    
-    # Add horizontal main gravel road running through the village
-    main_road_y = ground_start_y + 2  # Road positioned 2 pixels below ground start
-    road_width = 3  # 3-pixel wide road
-    
-    for y in range(main_road_y, min(main_road_y + road_width, height)):
-        for x in range(width):
-            # Create gravel road surface with varied stone colors
-            rand_val = random.random()
-            if rand_val < 0.5:
-                canvas[y, x] = GRAVEL_DARK    # Dark grey gravel (main surface)
-            elif rand_val < 0.8:
-                canvas[y, x] = GRAVEL_MEDIUM  # Medium grey gravel
+    # Helper to draw pixel
+    def draw_pixel(x, y, color):
+        if 0 <= x < width and 0 <= y < height:
+            if len(color) == 4 and color[3] < 255:
+                current = canvas[y][x]
+                alpha = color[3] / 255.0
+                for c in range(3):
+                    canvas[y][x][c] = int(current[c] * (1 - alpha) + color[c] * alpha)
+                canvas[y][x][3] = 255
             else:
-                canvas[y, x] = GRAVEL_LIGHT   # Light grey gravel accents
-            
-            # Add wheel ruts along the road (slightly darker gravel)
-            if x % 8 == 2 or x % 8 == 6:  # Parallel wheel tracks
-                if random.random() < 0.7:
-                    canvas[y, x] = [85, 85, 85, 255]  # Very dark grey for wheel ruts
-    
-    # SMALL VILLAGE HOUSES - 3 cozy houses with proper proportions
-    building_specs = [
-        # x, y, width, height, wall_color, roof_color, roof_type
-        (8, ground_start_y - 5, 7, 4, WOOD_BROWN, THATCH_BROWN, 'peak'),       # Left cottage (smaller)
-        (25, ground_start_y - 7, 10, 5, LOG_BROWN, THATCH_GOLD, 'peak'),       # Center house (largest)
-        (45, ground_start_y - 6, 8, 4, WOOD_LIGHT, THATCH_DARK, 'peak'),       # Right cottage
-    ]
-    
-    # First, add building foundations and shadows
-    for bld_x, bld_y, bld_w, bld_h, wall_color, roof_color, roof_type in building_specs:
-        # Add wooden foundation logs at ground level
-        foundation_y = ground_start_y
-        for dx in range(bld_w + 2):  # Foundation extends 1 pixel on each side
-            x = bld_x - 1 + dx
-            if 0 <= x < width and 0 <= foundation_y < height:
-                canvas[foundation_y, x] = WOOD_DARK  # Dark wooden foundation
-                # Add foundation depth in dirt
-                if foundation_y + 1 < height:
-                    canvas[foundation_y + 1, x] = DIRT_DARK
-        
-        # Add shadow to the right and bottom of buildings
-        for dy in range(bld_h + 1):
-            # Right shadow
-            shadow_x = bld_x + bld_w
-            shadow_y = bld_y + dy
-            if 0 <= shadow_x < width and 0 <= shadow_y < height:
-                if canvas[shadow_y, shadow_x][3] > 0:  # Don't overwrite existing content
-                    # Darken existing pixels for shadow effect
-                    current = canvas[shadow_y, shadow_x]
-                    canvas[shadow_y, shadow_x] = [
-                        max(0, int(current[0]) - 40),  # Darken red
-                        max(0, int(current[1]) - 40),  # Darken green  
-                        max(0, int(current[2]) - 40),  # Darken blue
-                        current[3]                     # Keep alpha
-                    ]
-    
-    for bld_x, bld_y, bld_w, bld_h, wall_color, roof_color, roof_type in building_specs:
-        # Draw building walls - extend to ground level
-        building_bottom = ground_start_y
-        actual_height = building_bottom - bld_y + 1
-        
-        for dy in range(actual_height):
-            for dx in range(bld_w):
-                x = bld_x + dx
-                y = bld_y + dy
-                if 0 <= x < width and 0 <= y <= building_bottom:
-                    # Add wood plank texture
-                    if dx == 0 or dy == actual_height - 1:
-                        canvas[y, x] = WOOD_DARK  # Wall edges darker (wood trim)
-                    elif y >= building_bottom - 1:
-                        canvas[y, x] = WOOD_DARK  # Bottom edge darker (foundation connection)
-                    elif wall_color == PLASTER_CREAM:
-                        # Tudor-style with wood beams
-                        if dx % 3 == 0 or dy % 4 == 0:
-                            canvas[y, x] = WOOD_BROWN  # Wood beam pattern
-                        else:
-                            canvas[y, x] = wall_color  # Plaster fill
-                    else:
-                        canvas[y, x] = wall_color
-        
-        # Draw roof
-        if roof_type == 'peak':
-            # Classic V-shaped triangular roof
-            roof_height = 3
-            center_x = bld_x + bld_w // 2
-            
-            for dy in range(roof_height):
-                # Create V-shape by drawing from center outward
-                width_at_level = dy + 1
-                for side_offset in range(width_at_level):
-                    y = bld_y - roof_height + dy
-                    
-                    # Left side of V
-                    x_left = center_x - side_offset
-                    if 0 <= x_left < width and 0 <= y < height:
-                        if side_offset == width_at_level - 1 or dy == 0:
-                            canvas[y, x_left] = THATCH_DARK  # V-shape edges darker
-                        else:
-                            # Add moss patches on some roofs  
-                            if roof_color == THATCH_BROWN and random.random() < 0.1:
-                                canvas[y, x_left] = MOSS_GREEN
-                            else:
-                                canvas[y, x_left] = roof_color
-                    
-                    # Right side of V (avoid double-drawing center pixel)
-                    if side_offset > 0:
-                        x_right = center_x + side_offset
-                        if 0 <= x_right < width and 0 <= y < height:
-                            if side_offset == width_at_level - 1 or dy == 0:
-                                canvas[y, x_right] = THATCH_DARK  # V-shape edges darker
-                            else:
-                                # Add moss patches on some roofs
-                                if roof_color == THATCH_BROWN and random.random() < 0.1:
-                                    canvas[y, x_right] = MOSS_GREEN
-                                else:
-                                    canvas[y, x_right] = roof_color
-        else:  # flat roof (shouldn't happen with wooden buildings, but keep for safety)
-            for dx in range(bld_w):
-                x = bld_x + dx
-                y = bld_y - 1
-                if 0 <= x < width and 0 <= y < height:
-                    canvas[y, x] = roof_color
-        
-        # Add windows (2x2 pixels each)
-        if bld_w >= 4 and bld_h >= 6:
-            # Window positions
-            win_positions = [(bld_x + 1, bld_y + 2), (bld_x + bld_w - 3, bld_y + 2)]
-            if bld_h >= 8:  # Add second floor windows
-                win_positions.extend([(bld_x + 1, bld_y + bld_h - 4), (bld_x + bld_w - 3, bld_y + bld_h - 4)])
-            
-            for win_x, win_y in win_positions:
-                if 0 <= win_x + 1 < width and 0 <= win_y + 1 < height:
-                    # Window frame
-                    canvas[win_y, win_x] = WINDOW_DARK
-                    canvas[win_y, win_x + 1] = WINDOW_DARK
-                    canvas[win_y + 1, win_x] = WINDOW_DARK
-                    canvas[win_y + 1, win_x + 1] = WINDOW_DARK
-                    
-                    # Window light (chance of being lit)
-                    if random.random() < 0.6:
-                        if 0 <= win_x < width and 0 <= win_y < height:
-                            canvas[win_y, win_x] = WINDOW_YELLOW
-        
-        # Add door (for all buildings since we only have 2)
-        if bld_w >= 3:
-            door_x = bld_x + bld_w // 2
-            door_y = bld_y + bld_h - 3
-            if 0 <= door_x < width and 0 <= door_y + 2 < height:
-                # Black door with brown frame
-                canvas[door_y, door_x] = DOOR_BLACK     # Top of door
-                canvas[door_y + 1, door_x] = DOOR_BLACK # Middle of door  
-                canvas[door_y + 2, door_x] = DOOR_BLACK # Bottom of door
-                
-                # Brown door frame
-                if door_x - 1 >= 0:
-                    canvas[door_y, door_x - 1] = DOOR_BROWN     # Left frame
-                    canvas[door_y + 1, door_x - 1] = DOOR_BROWN
-                    canvas[door_y + 2, door_x - 1] = DOOR_BROWN
-                if door_x + 1 < width:
-                    canvas[door_y, door_x + 1] = DOOR_BROWN     # Right frame
-                    canvas[door_y + 1, door_x + 1] = DOOR_BROWN
-                    canvas[door_y + 2, door_x + 1] = DOOR_BROWN
-    
-    # VILLAGE WELL - central feature
-    well_x, well_y = width // 2 - 2, ground_start_y + 2
-    
-    # Well base (4x2 pixels) - stone construction
-    for dy in range(2):
-        for dx in range(4):
-            x = well_x + dx
-            y = well_y + dy
-            if 0 <= x < width and 0 <= y < height:
-                if dx == 0 or dx == 3 or dy == 0:
-                    canvas[y, x] = WOOD_DARK  # Well edges (wooden frame)
-                else:
-                    canvas[y, x] = WELL_STONE
-    
-    # Well water center
-    water_x, water_y = well_x + 1, well_y - 1
-    if 0 <= water_x + 1 < width and 0 <= water_y < height:
-        canvas[water_y, water_x] = WELL_WATER
-        canvas[water_y, water_x + 1] = WELL_WATER
-    
-    # Well roof/covering (simple wooden roof)
-    for dx in range(6):
-        x = well_x - 1 + dx
-        y = well_y - 2
-        if 0 <= x < width and 0 <= y < height:
-            canvas[y, x] = WOOD_SHINGLE
-    
-    # Well posts
-    post_positions = [well_x - 1, well_x + 4]
-    for post_x in post_positions:
-        for post_dy in range(3):
-            y = well_y - 2 + post_dy
-            if 0 <= post_x < width and 0 <= y < height:
-                canvas[y, post_x] = WOOD_BROWN
-    
-    # CHIMNEY SMOKE - add some life to the village houses
-    chimney_positions = [
-        (19, ground_start_y - 10),  # From left cottage chimney
-        (40, ground_start_y - 11),  # From right house chimney
-    ]
-    
-    for smoke_x, smoke_y in chimney_positions:
-        # Small wispy smoke trail from cozy houses
-        for i in range(4):  # Shorter smoke trails for smaller houses
-            x = smoke_x + random.randint(-1, 1)
-            y = smoke_y - i
-            if 0 <= x < width and 0 <= y < height and random.random() < 0.8:
-                canvas[y, x] = SMOKE_GRAY
-    
-    # VILLAGE DETAILS - market stalls, wooden posts, etc.
-    # Simple wooden market stall
-    stall_x, stall_y = 4, ground_start_y + 1
-    for dx in range(3):
-        for dy in range(2):
-            x = stall_x + dx
-            y = stall_y + dy
-            if 0 <= x < width and 0 <= y < height:
-                canvas[y, x] = WOOD_LIGHT
-    
-    # Stall canvas awning (natural colors)
-    for dx in range(4):
-        x = stall_x - 1 + dx
-        y = stall_y - 1
-        if 0 <= x < width and 0 <= y < height:
-            canvas[y, x] = PLASTER_CREAM  # Canvas awning
-    
-    # Wooden fence posts / hitching posts
-    post_positions = [12, 28, 45]
-    for post_x in post_positions:
-        post_y = ground_start_y + 1
-        if 0 <= post_x < width and 0 <= post_y + 2 < height:
-            # Wooden fence post
-            canvas[post_y, post_x] = WOOD_DARK
-            canvas[post_y + 1, post_x] = WOOD_DARK
-            # Lantern hanging from post (rustic lighting)
-            if 0 <= post_y - 1 < height:
-                canvas[post_y - 1, post_x] = WINDOW_YELLOW
-    
-    return canvas
+                canvas[y][x] = color
 
-def main():
-    """Create and save the town background"""
-    print("🏘️ Creating pixel art fantasy wooden village background...")
+    # === 1. SKY ===
+    for y in range(height):
+        for x in range(width):
+            if y < 40:
+                draw_pixel(x, y, SKY_BLUE)
+                
+    # Clouds
+    for i in range(8):
+        cx = random.randint(0, width)
+        cy = random.randint(0, 25)
+        r = random.randint(5, 15)
+        for y in range(cy - r, cy + r):
+            for x in range(cx - r*2, cx + r*2):
+                if ((x-cx)/(r*2))**2 + ((y-cy)/r)**2 < 1.0:
+                    draw_pixel(x, y, CLOUD_WHITE)
+
+    # === 2. BACKGROUND HILLS ===
+    for x in range(width):
+        # Rolling hills
+        hy = 35 + int(math.sin(x * 0.05) * 5)
+        for y in range(hy, 45):
+            draw_pixel(x, y, GRASS_LIGHT)
+            
+    # Distant houses on hills
+    for i in range(3):
+        hx = 40 + i * 30
+        hy = 32 + (i % 2) * 3
+        # Tiny house
+        for y in range(hy, hy + 6):
+            for x in range(hx, hx + 6):
+                draw_pixel(x, y, WALL_CREAM)
+        # Roof
+        for y in range(hy - 3, hy):
+            for x in range(hx - 1, hx + 7):
+                if y > hy - 3 + abs(x - (hx + 3)) * 0.5:
+                    draw_pixel(x, y, ROOF_RED)
+
+    # === 3. MIDGROUND BUILDINGS ===
     
-    # Create the town landscape
-    town_data = create_town_background()
+    # Large Stone Church (Right side)
+    cx = 85
+    cy = 45
+    cw = 30
+    ch = 35
     
-    # Convert to PIL Image
-    town_img = Image.fromarray(town_data, 'RGBA')
+    # Main body
+    for y in range(cy - ch, cy):
+        for x in range(cx, cx + cw):
+            col = STONE_MID
+            if x % 10 == 0 or y % 8 == 0: col = STONE_DARK # Bricks
+            if random.random() > 0.9: col = MOSS_GREEN # Moss
+            draw_pixel(x, y, col)
+            
+    # Tower
+    tx = cx + 5
+    for y in range(cy - ch - 15, cy - ch):
+        for x in range(tx, tx + 12):
+            draw_pixel(x, y, STONE_MID)
+            
+    # Tower Roof
+    for y in range(cy - ch - 25, cy - ch - 15):
+        for x in range(tx - 2, tx + 14):
+            # Pointed roof
+            width_at_y = (y - (cy - ch - 25)) * 1.5
+            if abs(x - (tx + 6)) < width_at_y:
+                draw_pixel(x, y, ROOF_RED)
+                
+    # Church Door (Arched)
+    dx = cx + 10
+    dy = cy
+    for y in range(dy - 12, dy):
+        for x in range(dx, dx + 10):
+            if y > dy - 8 or ((x - (dx+5))**2 + (y - (dy-8))**2 < 20):
+                draw_pixel(x, y, WOOD_BROWN)
+                
+    # Timber Houses (Left side)
+    for i in range(2):
+        hx = 5 + i * 35
+        hy = 48
+        hw = 25
+        hh = 20
+        
+        # Walls
+        for y in range(hy - hh, hy):
+            for x in range(hx, hx + hw):
+                col = WALL_CREAM
+                # Timber framing
+                if x == hx or x == hx + hw - 1 or y == hy - hh or y == hy - 1:
+                    col = WOOD_BROWN
+                if (x - hx) % 12 == 0: col = WOOD_BROWN
+                # Removed diagonal cross beam
+                draw_pixel(x, y, col)
+                
+        # Doors
+        dx = hx + hw // 2 - 4
+        dy = hy
+        for y in range(dy - 10, dy):
+            for x in range(dx, dx + 8):
+                # Arched top
+                if y > dy - 8 or ((x - (dx+3.5))**2 + (y - (dy-8))**2 < 16):
+                    draw_pixel(x, y, WOOD_BROWN)
+                    # Iron banding
+                    if y == dy - 5 or y == dy - 9:
+                        draw_pixel(x, y, [60, 60, 70, 255])
+                    # Handle
+                    if x == dx + 6 and y == dy - 5:
+                        draw_pixel(x, y, [200, 200, 50, 255])
+
+        # Roof
+        for y in range(hy - hh - 10, hy - hh):
+            for x in range(hx - 2, hx + hw + 2):
+                center = hx + hw // 2
+                if abs(x - center) < (y - (hy - hh - 10)) * 1.5:
+                    draw_pixel(x, y, ROOF_RED)
+
+    # === 4. FOREGROUND ===
     
-    # Scale up for final output (8x scaling for pixel art effect)
-    scale_factor = 8
-    final_width = town_data.shape[1] * scale_factor
-    final_height = town_data.shape[0] * scale_factor
+    # Cobblestone Ground
+    for y in range(45, height):
+        for x in range(width):
+            col = COBBLE_LIGHT
+            # Perspective stones
+            scale = (y - 45) / 20.0 + 0.5
+            if (x + (y%2)*5) % int(8 * scale) == 0 or y % int(4 * scale) == 0:
+                col = COBBLE_DARK
+            draw_pixel(x, y, col)
+            
+    # Fountain (Center Foreground)
+    fx = width // 2
+    fy = 58
     
-    # Use NEAREST neighbor to maintain crisp pixel art edges
-    town_scaled = town_img.resize((final_width, final_height), Image.Resampling.NEAREST)
+    # Water pool base
+    for y in range(fy - 3, fy + 5):
+        for x in range(fx - 20, fx + 20):
+            # Ellipse pool
+            if ((x-fx)/20)**2 + ((y-fy)/4)**2 < 1.0:
+                draw_pixel(x, y, STONE_MID) # Rim
+                # Water inside
+                if ((x-fx)/16)**2 + ((y-fy)/3)**2 < 1.0:
+                     draw_pixel(x, y, [60, 160, 220, 255])
+                     # Ripples
+                     if random.random() > 0.9:
+                         draw_pixel(x, y, [200, 240, 255, 200])
+
+    # Center pillar
+    for y in range(fy - 12, fy):
+        for x in range(fx - 3, fx + 4):
+             draw_pixel(x, y, STONE_MID)
+             if x == fx - 3 or x == fx + 3: draw_pixel(x, y, STONE_DARK)
+
+    # Top bowl
+    by = fy - 12
+    for y in range(by - 2, by + 2):
+        for x in range(fx - 8, fx + 8):
+            if ((x-fx)/8)**2 + ((y-by)/2)**2 < 1.0:
+                draw_pixel(x, y, STONE_MID)
+                
+    # Water spray
+    for i in range(20):
+        sx = fx + random.randint(-2, 2)
+        sy = by - random.randint(0, 8)
+        draw_pixel(sx, sy, [200, 240, 255, 200])
+        # Falling water
+        if random.random() > 0.5:
+            ox = random.randint(-6, 6)
+            oy = by + random.randint(2, 10)
+            draw_pixel(fx + ox, oy, [150, 200, 255, 180])
+
+    # Stairs (Right Foreground)
+    sx = 100
+    sy = 50
+    for i in range(5):
+        step_y = sy + i * 3
+        step_x = sx + i * 4
+        for y in range(step_y, height):
+            for x in range(step_x, width):
+                draw_pixel(x, y, STONE_LIGHT)
+                if y == step_y: draw_pixel(x, y, STONE_MID) # Step edge
+
+    # Save image
+    img = Image.fromarray(canvas, 'RGBA')
     
-    # Save the town background
-    output_path = "art/town_background.png"
-    town_scaled.save(output_path)
-    print(f"✅ Town background saved to: {output_path}")
+    # Scale up 4x
+    scale_factor = 4
+    final_width = width * scale_factor
+    final_height = height * scale_factor
+    img = img.resize((final_width, final_height), Image.Resampling.NEAREST)
     
-    # Also create a larger version for higher resolution displays
-    large_width = final_width * 2
-    large_height = final_height * 2
-    town_large = town_img.resize((large_width, large_height), Image.Resampling.NEAREST)
-    output_path_large = "art/town_background_large.png"
-    town_large.save(output_path_large)
-    print(f"✅ Large town background saved to: {output_path_large}")
-    
-    print("🏘️ Small fantasy village background creation complete!")
-    print("\n🎨 Cozy village features created:")
-    print("   - Peaceful blue sky with fluffy clouds")
-    print("   - 3 small wooden houses with varied designs")
-    print("   - Classic V-shaped thatched roofs with natural colors")
-    print("   - Horizontal main gravel road through village")
-    print("   - Vertical dirt paths with wagon ruts")
-    print("   - Central village well with wooden cover")
-    print("   - Black doors with brown wooden frames")
-    print("   - Lit cottage windows and cozy atmosphere")
-    print("   - Gentle chimney smoke from hearths")
-    print("   - Small market stall and wooden fence posts")
-    print("   - Natural village scale and atmosphere")
-    print("   - Pixel art style matching other biomes")
-    print(f"   - Final size: {final_width}x{final_height} pixels")
+    img.save('art/town_background.png')
+    print(f"✓ Saved: art/town_background.png ({final_width}x{final_height})")
 
 if __name__ == "__main__":
-    main()
+    create_town_background()

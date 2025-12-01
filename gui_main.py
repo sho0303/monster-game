@@ -139,6 +139,9 @@ class GameGUI:
             clear_text_callback=self.clear_text,
             main_menu_callback=self.main_menu
         )
+        
+        # Link background manager to image manager for floor offset positioning
+        self.image_manager.background_manager = self.background_manager
     
     @property
     def current_biome(self):

@@ -209,6 +209,10 @@ class CombatGUI:
         spacing_x = canvas_width // 3
         start_y = (canvas_height - max(hero_img_size, monster_img_size)) // 2
         
+        # Apply biome-specific floor offset for proper positioning
+        floor_offset = self.image_display.background_manager.get_floor_offset()
+        start_y += floor_offset
+        
         # Final positions for hero (left) and monster (right)
         hero_final_x = spacing_x - hero_img_size // 2
         monster_final_x = 2 * spacing_x - monster_img_size // 2
@@ -608,6 +612,10 @@ class CombatGUI:
             spacing_x = canvas_width // 3
             start_y = (canvas_height - img_size) // 2
             
+            # Apply biome-specific floor offset
+            floor_offset = self.image_display.background_manager.get_floor_offset()
+            start_y += floor_offset
+            
             self.image_display._add_canvas_image('art/crossed_swords.png', spacing_x - img_size // 2, start_y, img_size, img_size)
             self.image_display._add_canvas_image('art/crossed_swords.png', 2 * spacing_x - img_size // 2, start_y, img_size, img_size)
 
@@ -735,6 +743,10 @@ class CombatGUI:
         
         # Calculate vertical position (same centering logic as combat)
         start_y = (canvas_height - base_img_size) // 2
+        
+        # Apply biome-specific floor offset
+        floor_offset = self.image_display.background_manager.get_floor_offset()
+        start_y += floor_offset
         
         # Position hero on left side (same horizontal spacing as combat)
         spacing_x = canvas_width // 3

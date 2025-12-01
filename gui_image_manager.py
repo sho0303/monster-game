@@ -79,6 +79,11 @@ class ImageManager:
             # Calculate center position based on actual canvas size
             center_x = (canvas_width - img_width) // 2
             center_y = (canvas_height - img_height) // 2
+            
+            # Apply biome-specific floor offset if background manager is available
+            if hasattr(self, 'background_manager') and self.background_manager:
+                center_y += self.background_manager.get_floor_offset()
+            
             # Use natural size (don't pass width/height to avoid resizing)
             self.add_canvas_image(image_path, center_x, center_y)
             
@@ -115,6 +120,12 @@ class ImageManager:
             img_size = min(canvas_width // 3, canvas_height // 2, 120)
             spacing_x = canvas_width // 3
             start_y = (canvas_height - img_size) // 2
+            
+            # Apply biome-specific floor offset if background manager is available
+            if hasattr(self, 'background_manager') and self.background_manager:
+                floor_offset = self.background_manager.get_floor_offset()
+                start_y += floor_offset
+            
             positions = [(spacing_x - img_size//2, start_y), (2*spacing_x - img_size//2, start_y)]
             size = (img_size, img_size)
         elif num_images == 3:
